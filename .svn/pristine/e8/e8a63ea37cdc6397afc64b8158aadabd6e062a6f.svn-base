@@ -1,0 +1,64 @@
+package com.gsccs.cms.core.service.impl;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.gsccs.cms.core.dao.WxConfigMapper;
+import com.gsccs.cms.core.model.WxConfig;
+import com.gsccs.cms.core.model.WxConfigExample;
+import com.gsccs.cms.core.service.WxConfigService;;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月14日
+ */
+
+public class WxConfigServiceImpl implements WxConfigService {
+	
+	@Resource
+	WxConfigMapper wxConfigMapper;
+
+	@Override
+	public String insert(WxConfig wxConfig) {
+		if(wxConfig!=null){
+			wxConfigMapper.insert(wxConfig);
+			return wxConfig.getAppId();
+		}
+		return null;
+	}
+
+	@Override
+	public void update(WxConfig wxConfig) {
+		if(wxConfig!=null){
+			wxConfigMapper.updateByPrimaryKey(wxConfig);
+		}
+
+	}
+
+	@Override
+	public WxConfig findById(String id) {
+		if(StringUtils.isNotEmpty(id)){
+			return wxConfigMapper.selectByPrimaryKey(id);
+		}
+		return null;
+	}
+
+	@Override
+	public List<WxConfig> findAll(WxConfig wxConfig) {
+		WxConfigExample example=new WxConfigExample();
+		//Criteria criteria=example.createCriteria();
+		return wxConfigMapper.selectByExample(example);
+	}
+
+	@Override
+	public void del(String id) {
+		if(StringUtils.isNotEmpty(id)){
+			wxConfigMapper.deleteByPrimaryKey(id);
+		}
+	}
+}
+

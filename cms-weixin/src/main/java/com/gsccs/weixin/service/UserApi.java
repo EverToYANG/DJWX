@@ -1,0 +1,46 @@
+package com.gsccs.weixin.service;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.weixin.model.WxApp;
+
+import io.github.elkan1788.mpsdk4j.vo.api.FollowList;
+import io.github.elkan1788.mpsdk4j.vo.api.Follower;
+import io.github.elkan1788.mpsdk4j.vo.api.Follower2;
+
+
+
+/**
+ * 用户接口API
+ * 
+ * @author 刘杰
+ *
+ * @date 2016年9月18日
+ */
+@Service
+public class UserApi extends WXAppConfig {
+
+	// 设置用户备注名
+	public boolean updateRemark(WxApp wxApp,String openId, String remark){
+		return getAPI(wxApp).updateRemark(openId, remark);
+	}
+
+	// 获取关注用户列表
+	public FollowList getFollowerList(WxApp wxApp,String nextOpenId){
+		return getAPI(wxApp).getFollowerList(nextOpenId);
+	}
+
+	// 获取用户基本信息
+	public Follower getFollower(WxApp wxApp,String openId, String lang){
+		return getAPI(wxApp).getFollower(openId, lang);
+	}
+
+	// 批量获取用户基本信息[最多拉取100条]
+	public List<Follower> getFollowers(WxApp wxApp,Collection<Follower2> users){
+		return getAPI(wxApp).getFollowers(users);
+	}
+
+}

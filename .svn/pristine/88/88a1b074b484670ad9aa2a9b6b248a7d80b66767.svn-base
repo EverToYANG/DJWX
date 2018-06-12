@@ -1,0 +1,507 @@
+package com.gsccs.cms.controller.auth;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.model.Roles;
+import com.gsccs.cms.auth.model.Unit;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.OperlogService;
+import com.gsccs.cms.auth.service.RoleUserService;
+import com.gsccs.cms.auth.service.UnitUserService;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.MD5;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+
+/**
+ * 用户管理相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/sysmg")
+public class UserController extends BaseController {
+
+	@Resource
+	private UserService userService;
+	@Resource
+	private RoleUserService roleUserService;
+	@Resource
+	private UnitUserService unitUserService;
+	@Resource
+	private OperlogService operlogService;
+
+	/**
+	 * 用户管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/user.do")
+	public String user(Users user,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = "") String order, ModelMap map,
+			HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		List<Users> userList = null;
+		if (!subject.hasRole(AuthConst.SYS_ADMIN)) {
+			String unitIds = getLoginUnitIdsSql(user);
+			if (null != unitIds && unitIds.trim().length() > 0) {
+				user.setSql(" id in (select users from sys_unit_user where unit in ("
+						+ unitIds + ")) ");
+			} else {
+				user.setSql(" id = '" + user.getId() + "'");
+			}
+		}
+		userList = userService.find(user, order, currPage, pageSize);
+		int totalCount = userService.count(user);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("loginname");
+		pager.appendParam("companyname");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("user.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", userList);
+		map.put("order", order);
+		return "sysmg/user";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userEdit.do")
+	public String userEdit(Users user, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (user != null && user.getId() != null
+				&& user.getId().trim().length() > 0) {
+			user = userService.findById(user.getId());
+			map.put("user", user);
+		}
+		return "sysmg/userEdit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userEditDo.do")
+	public String userEditDo(Users user,
+			String pageFuncId, ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		String oper = "添加";
+		try {
+			if (user != null && StringUtils.isNotEmpty(user.getId())) {
+				oper = "修改";
+				Users olduser = userService.findById(user.getId());
+				if (olduser != null) {
+					// 如果修改了名称则判断用户名称是否已存在
+					if (!olduser.getName().equals(user.getName())) {
+						// 判断用户名称是否已存在
+						if (userService.have(user) > 0) {
+							map.put("msg", "此用户名称已存在!");
+							map.put("isCloseWindow", true);
+							return "admin/msg";
+						}
+					}
+					String unitid = request.getParameter("unitid");
+					olduser.setName(user.getName());
+					olduser.setSex(user.getSex());
+					olduser.setIsmail(user.getIsmail());
+					olduser.setBirthday(user.getBirthday());
+					olduser.setCorpid(user.getCorpid());
+					olduser.setPhone(user.getPhone());
+					olduser.setEmail(user.getEmail());
+					olduser.setUnitid(unitid);
+					olduser.setUnitNames(user.getUnitNames());
+					// 更新
+					userService.update(olduser);
+				}
+			} else {
+				// 添加
+				// 判断用户名称是否已存在
+				if (userService.have(user) > 0) {
+					map.put("msg", "此用户名称已存在!");
+					map.put("isCloseWindow", true);
+					return "admin/msg";
+				}
+				user.setId(UUID.randomUUID().toString());
+				user.setAddTime(new Date());
+				user.setIsok("1");
+				user.setLoginFailNum(0);
+				user.setPwd(MD5.MD5(user.getPwd()));
+				if (user.getBirthday() == null) {
+					user.setBirthday(new Date());
+				}
+				String unitid = request.getParameter("unitid");
+				String roleid = request.getParameter("roleid");
+				user.setUnitid(unitid);
+				// 添加
+				userService.save(user);
+				// 如果设置有角色则添加角色人员关联
+				if (StringUtils.isNotEmpty(roleid)) {
+					String roleids[] = roleid.split(";");
+					if (roleids != null && roleids.length > 0) {
+						Roles role;
+						for (int i = 0; i < roleids.length; i++) {
+							if (roleids[i].trim().length() > 0) {
+								if (!roleUserService.haveRoleUser(roleids[i],
+										user.getId())) {
+									role = roleService.findById(roleids[i]);
+									if (role != null) {
+										roleUserService.add(roleids[i],
+												user.getId());
+										operlogService.log(
+												getLoginUser().getLoginname(),
+												"添加角色人员关联(" + role.getName()
+														+ " "
+														+ user.getLoginname()
+														+ ")成功", request);
+									}
+								}
+							}
+						}
+					}
+				}
+				// 如果设置有单位则添加单位人员关联
+				
+			}
+			oper += "用户 " + user.getName() + " 成功!";
+			map.put("forwardSeconds", 3);
+		} catch (Exception e) {
+			oper += "用户 " + user.getName() + " 失败:" + e.toString() + "!";
+			map.put("forwardSeconds", 0);
+		}
+		operlogService.log(getLoginUser().getLoginname(), oper, request);
+		map.put("msg", oper);
+		map.put("isCloseWindow", true);
+		map.put("forwardUrl", "user.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 个人资料页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userProfile.do")
+	public String userProfile(@CurrentUser Users user, ModelMap map) {
+		map.put("user", user);
+		return "sysmg/userProfile";
+	}
+
+	/**
+	 * 个人资料
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userProfileDo.do")
+	public String userProfileDo(Users user, ModelMap map) {
+		try {
+			if (user != null && StringUtils.isNotEmpty(user.getId())) {
+				Users olduser = userService.findById(user.getId());
+				if (olduser != null) {
+					// 更新
+					olduser.setBirthday(user.getBirthday());
+					olduser.setEmail(user.getEmail());
+					olduser.setName(user.getName());
+					olduser.setSex(user.getSex());
+					olduser.setCorpid(user.getCorpid());
+					olduser.setPhone(user.getPhone());
+					olduser.setBirthdayStr(user.getBirthdayStr());
+					userService.update(olduser);
+					session.setAttribute(AuthConst.CURRENT_USER, olduser);
+				}
+			}
+			msg = "个人资料更新 " + user.getName() + " 成功!";
+			map.put("forwardSeconds", 3);
+		} catch (Exception e) {
+			msg = "个人资料更新 " + user.getName() + " 失败:" + e.toString() + "!";
+			map.put("forwardSeconds", 0);
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("forwardUrl", "userProfile.do");
+		return "admin/msg";
+	}
+
+	/**
+	 * 密码设置页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userPwd.do")
+	public String userPwd(@CurrentUser Users user, ModelMap map) {
+		map.put("user", user);
+		return "sysmg/userPwd";
+	}
+
+	/**
+	 * 密码设置
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userPwdDo.do")
+	public String userPwdDo(Users user, String oldpwd, ModelMap map)
+			throws AuthException, SiteCheckException {
+		try {
+			if (user != null && StringUtils.isNotEmpty(user.getId())) {
+				Users olduser = userService.findById(user.getId());
+				if (olduser != null) {
+					// 先判断原密码是否正确
+					if (!MD5.MD5(oldpwd).equals(olduser.getPwd())) {
+						msg = "当前密码不正确!";
+					} else {
+						olduser.setPwd(MD5.MD5(user.getPwd()));
+						userService.update(olduser);
+						session.setAttribute(AuthConst.CURRENT_USER, olduser);
+						msg = "密码更新成功!";
+					}
+				}
+			}
+			map.put("forwardSeconds", 3);
+		} catch (Exception e) {
+			msg = "密码更新失败:" + e.toString() + "!";
+			map.put("forwardSeconds", 0);
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("forwardUrl", "userPwd.do");
+		return "admin/msg";
+	}
+
+	/**
+	 * 授权页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userAuth.do")
+	public String userAuth(Users user,
+			ModelMap map, HttpServletResponse response){
+		Subject subject = SecurityUtils.getSubject();
+		if (user != null && user.getId() != null
+				&& user.getId().trim().length() > 0) {
+			// 查询所有有效角色
+			Roles role = new Roles();
+			role.setIsok("1");
+			List<Roles> roleList = roleService.findAll(role, "",
+					subject.hasRole(AuthConst.SYS_ADMIN) ? null : getLoginUser());
+			// 如此用户有此角色权限则默认选中
+			if (roleList != null && roleList.size() > 0) {
+				for (int i = 0; i < roleList.size(); i++) {
+					if (roleUserService.haveRoleUser(roleList.get(i).getId(),
+							user.getId())) {
+						roleList.get(i).setHaveRoleUser(true);
+					} else {
+						roleList.get(i).setHaveRoleUser(false);
+					}
+				}
+			}
+			map.put("roles", roleList);
+			map.put("user", user);
+		}
+		return "sysmg/userAuth";
+	}
+
+	/**
+	 * 用户授权
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userAuthDo.do")
+	public String userAuthDo(String userid, String rolenames, String[] ids,
+			String pageFuncId, ModelMap map, HttpServletResponse response){
+		if (userid != null && userid.trim().length() > 0 && ids != null) {
+			Users authUser = userService.findById(userid);
+			if (authUser != null) {
+				try {
+					// 先删除原来的
+					roleUserService.delByUser(userid);
+					if (ids != null && ids.length > 0) {
+						for (int i = 0; i < ids.length; i++) {
+							if (ids[i].trim().length() > 0) {
+								roleUserService.add(ids[i], userid);
+							}
+						}
+					}
+					// 设置用户的角色名称
+					authUser.setRoleNames(rolenames);
+					userService.update(authUser);
+					msg = "给人员" + authUser.getName() + "("
+							+ authUser.getLoginname() + ")" + "授权(" + rolenames
+							+ ")成功";
+				} catch (Exception e) {
+					msg = "给人员" + authUser.getName() + "("
+							+ authUser.getLoginname() + ")" + "授权(" + rolenames
+							+ ") 失败:" + e.getMessage();
+				}
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("js", "parent.updateRolenames('" + userid + "','" + rolenames
+				+ "')");
+		map.put("isCloseWindow", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 启用/禁用
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userState.do")
+	public String state(String ids, String state, String names,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		String logContent = "";
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				String oper = "1".equals(state) ? "启用" : "禁用";
+				try {
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							userService.updateState(idArr[i].trim(), state);
+						}
+					}
+
+					msg = "1";
+					logContent = "" + oper + "用户(" + names + ")成功!";
+				} catch (Exception e) {
+					msg = oper + "用户失败!";
+					logContent = "" + oper + "用户(" + names + ")失败:"
+							+ e.toString() + "!";
+				}
+			}
+		}
+		operlogService.log(getLoginName(), logContent, request);
+		ResponseUtil.writeUTF(response, msg);
+		return null;
+	}
+
+	/**
+	 * 重置密码页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userResetPwd.do")
+	public String userResetPwd() throws AuthException, SiteCheckException {
+		return "sysmg/userResetPwd";
+	}
+
+	/**
+	 * 重置密码
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userResetPwdDo.do")
+	public String userResetPwdDo(String ids, String names, String newpwd,
+			ModelMap map) throws AuthException, SiteCheckException {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				try {
+					// 重置密码
+					Users user = new Users();
+					user.setPwd(MD5.MD5(newpwd));
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							user.setId(idArr[i].trim());
+							userService.updatePwd(user);
+						}
+					}
+					msg = "密码重置(" + names + ")成功!";
+				} catch (Exception e) {
+					msg = "密码重置(" + names + ")失败:" + e.toString() + "!";
+				}
+			}
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		return "admin/msg";
+	}
+
+	// 删除
+	@RequestMapping("/userDel.do")
+	public String del(String ids, String names, String pageFuncId, ModelMap map)
+			throws AuthException, SiteCheckException {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				try {
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							// 删除用户
+							userService.delete(idArr[i].trim());
+						}
+					}
+					msg = "删除用户(" + names + ")成功!";
+				} catch (Exception e) {
+					msg = "删除用户(" + names + ")失败:" + e.toString() + "!";
+				}
+			}
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("forwardUrl", "user.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 日期型数据转换，将页面上的表示日期限的字符串，转换为Date型
+	 * **/
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		dateFormat.setLenient(true);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, true));
+	}
+}

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.member.dao.PartyMgroupMapper">
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.member.model.PartyMgroup">
+		<id column="id" property="id" jdbcType="VARCHAR" />
+		<result column="type" property="type" jdbcType="INTEGER" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="orderNum" property="ordernum" jdbcType="INTEGER" />
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		id, type, name, orderNum
+	</sql>
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.member.model.PartyMgroupExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from cms_partym_group
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	<sql id="selectPageByExampleSql">
+		SELECT *
+		FROM cms_partym_group
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</sql>
+	<select id="selectPageByExample" parameterType="com.gsccs.cms.member.model.PartyMgroupExample"
+		resultMap="BaseResultMap">
+		<include refid="selectPageByExampleSql" />
+	</select>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from cms_partym_group
+		where id = #{id,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from
+		cms_partym_group
+		where id = #{id,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.member.model.PartyMgroupExample">
+		delete from cms_partym_group
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" parameterType="com.gsccs.cms.member.model.PartyMgroup">
+		insert into cms_partym_group
+		(id, type, name,
+		orderNum
+		)
+		values (#{id,jdbcType=VARCHAR},
+		#{type,jdbcType=INTEGER},
+		#{name,jdbcType=VARCHAR},
+		#{ordernum,jdbcType=INTEGER}
+		)
+	</insert>
+
+	<select id="countByExample" parameterType="com.gsccs.cms.member.model.PartyMgroupExample"
+		resultType="java.lang.Integer">
+		select count(*) from cms_partym_group
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<update id="updateByExampleSelective" parameterType="map">
+		update cms_partym_group
+		<set>
+			<if test="record.id != null">
+				id = #{record.id,jdbcType=VARCHAR},
+			</if>
+			<if test="record.type != null">
+				type = #{record.type,jdbcType=INTEGER},
+			</if>
+			<if test="record.name != null">
+				name = #{record.name,jdbcType=VARCHAR},
+			</if>
+			<if test="record.ordernum != null">
+				orderNum = #{record.ordernum,jdbcType=INTEGER},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update cms_partym_group
+		set id = #{record.id,jdbcType=VARCHAR},
+		type =
+		#{record.type,jdbcType=INTEGER},
+		name =
+		#{record.name,jdbcType=VARCHAR},
+		orderNum =
+		#{record.ordernum,jdbcType=INTEGER}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.member.model.PartyMgroup">
+		update cms_partym_group
+		<set>
+			<if test="type != null">
+				type = #{type,jdbcType=INTEGER},
+			</if>
+			<if test="name != null">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="ordernum != null">
+				orderNum = #{ordernum,jdbcType=INTEGER},
+			</if>
+		</set>
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.member.model.PartyMgroup">
+		update
+		cms_partym_group
+		set type = #{type,jdbcType=INTEGER},
+		name =
+		#{name,jdbcType=VARCHAR},
+		orderNum = #{ordernum,jdbcType=INTEGER},
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+	<sql id="Example_Clause">
+		<foreach collection="oredCriteria" item="criteria" separator="or">
+			<if test="criteria.valid">
+				<trim>
+					<foreach collection="criteria.criteria" item="criterion">
+						<choose>
+							<when test="criterion.noValue">
+								and ${criterion.condition}
+							</when>
+							<when test="criterion.singleValue">
+								and ${criterion.condition} #{criterion.value}
+							</when>
+							<when test="criterion.betweenValue">
+								and ${criterion.condition} #{criterion.value} and
+								#{criterion.secondValue}
+							</when>
+							<when test="criterion.listValue">
+								and ${criterion.condition}
+								<foreach close=")" collection="criterion.value" item="listItem"
+									open="(" separator=",">
+									#{listItem}
+								</foreach>
+							</when>
+						</choose>
+					</foreach>
+				</trim>
+			</if>
+		</foreach>
+	</sql>
+</mapper>

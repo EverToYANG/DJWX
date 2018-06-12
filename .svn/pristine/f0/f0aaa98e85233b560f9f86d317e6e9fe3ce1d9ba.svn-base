@@ -1,0 +1,289 @@
+package com.gsccs.cms.controller.core;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.model.Unit;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.UnitService;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.module.model.Mail;
+import com.gsccs.cms.module.service.MailService;
+
+/**
+ * 互动信件
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/cms")
+public class MailController extends CmsBaseController {
+
+	@Resource
+	private MailService mailService;
+	@Resource
+	private UnitService unitService;
+	@Resource
+	private UserService userService;
+
+	/**
+	 * 列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/mail.do")
+	public String mail(@CurrentUser Users currentUser,Mail mail,
+			@RequestParam(defaultValue = " m.addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+
+		List<Unit> unitList = unitService.findByPar("", "1", "1", false);
+		map.put("unitList", unitList);
+
+		Users user = new Users();
+		user.setIsmail("1");
+		List<Users> userList = userService.find(user, false);
+		map.put("userList", userList);
+
+		String[] mailtypes = getConfig().get("mailType").toString().split(",");
+		map.put("mailtypes", mailtypes);
+
+		if (mail == null) {
+			mail = new Mail();
+		}
+		if (!isSysAdmin()) {
+			// 不是admin,只能查看自己所属单位或个人的
+			if ("unit".equals(mail.getType())) {
+				mail.setUnitids(getLoginUnitIdsSql(currentUser));
+				if (mail.getUnitids().trim().length() == 0) {
+					mail.setUnitids("'no'");
+				}
+			} else if ("user".equals(mail.getType())) {
+				mail.setUserid(currentUser.getId());
+			}
+		}
+		List<Mail> mailList = mailService.find(mail, order, currPage, pageSize,
+				false);
+		int totalCount = mailService.count(mail, false);
+
+		Pager pager = new Pager(request);
+		pager.appendParam("type");
+		pager.appendParam("querycode");
+		pager.appendParam("mailtype");
+		pager.appendParam("title");
+		pager.appendParam("writer");
+		pager.appendParam("state");
+		pager.appendParam("unitid");
+		pager.appendParam("userid");
+		pager.appendParam("isopen");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("mail.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", mailList);
+		map.put("order", order);
+		map.put("mail", mail);
+
+		return "cms/mail";
+	}
+
+	/**
+	 * 转交 页面
+	 * 
+	 * @return
+	 */
+	// @FuncAuth(codes="mail")
+	@RequestMapping("/mailForward.do")
+	public String mailForward(Mail mail, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+
+		List<Unit> unitList = unitService.findByPar("", "1", "1", false);
+		map.put("unitList", unitList);
+
+		Users user = new Users();
+		user.setIsmail("1");
+		List<Users> userList = userService.find(user, false);
+		map.put("userList", userList);
+		map.put("mail", mail);
+
+		return "cms/mailForward";
+	}
+
+	/**
+	 * 转交
+	 * 
+	 * @return
+	 */
+	
+	// @FuncAuth(codes="mail")
+	@RequestMapping("/mailForwardDo.do")
+	public String mailForwardDo(Mail mail, String forwardtype, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (mail != null && mail.getId() != null
+				&& mail.getId().trim().length() > 0) {
+			Mail updateMail = new Mail();
+			updateMail.setId(mail.getId());
+			// 设置流转流程
+			Mail oldmail = mailService.findById(mail.getId());
+			String proflow = "";
+			if (oldmail.getProflow() == null
+					|| oldmail.getProflow().trim().length() == 0) {
+				if (oldmail.getUnitid() != null
+						&& oldmail.getUnitid().trim().length() > 0) {
+					proflow = oldmail.getUnitname();
+				} else if (oldmail.getUserid() != null
+						&& oldmail.getUserid().trim().length() > 0) {
+					proflow = oldmail.getUsername();
+				} else {
+					proflow = "其他";
+				}
+			} else {
+				proflow = oldmail.getProflow();
+			}
+			proflow += " --> ";
+			String toname = "";
+			if ("unit".equals(forwardtype)) {
+				updateMail.setUnitid(mail.getUnitid());
+				updateMail.setUserid("");
+				proflow += mail.getUnitname();
+				toname = mail.getUnitname();
+			} else {
+				updateMail.setUnitid("");
+				updateMail.setUserid(mail.getUserid());
+				proflow += mail.getUsername();
+				toname = mail.getUsername();
+			}
+			updateMail.setProflow(proflow);
+			try {
+				mailService.update(updateMail);
+				msg = oldmail.getTitle() + " 信件转交给 " + toname;
+			} catch (Exception e) {
+				msg = oldmail.getTitle() + " 信件转交给 " + toname + " 时失败:"
+						+ e.getMessage();
+			} finally {
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 办理 页面
+	 * 
+	 * @return
+	 */
+	// @FuncAuth(codes="mail")
+	@RequestMapping("/mailPro.do")
+	public String mailPro(Mail mail, ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		String type = mail.getType();
+		if (mail != null && mail.getId() != null
+				&& mail.getId().trim().length() > 0) {
+			mail = mailService.findById(mail.getId());
+			mail.setType(type);
+		}
+		map.put("mail", mail);
+		return "cms/mailPro";
+	}
+
+	/**
+	 * 办理
+	 * 
+	 * @return
+	 */
+	
+	// @FuncAuth(codes="mail")
+	@RequestMapping("/mailProDo.do")
+	public String mailProDo(Mail mail, String pageFuncId, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (mail != null && mail.getId() != null
+				&& mail.getId().trim().length() > 0) {
+			Mail updateMail = new Mail();
+			updateMail.setId(mail.getId());
+			updateMail.setRecontent(mail.getRecontent());
+			updateMail.setRetime(new Date());
+			updateMail.setState("1");
+			Mail oldmail = mailService.findById(mail.getId());
+			try {
+				mailService.update(updateMail);
+				msg = oldmail.getTitle() + " 信件办结成功 ";
+				map.put("forwardSeconds", 3);
+			} catch (Exception e) {
+				map.put("forwardSeconds", 0);
+				msg = oldmail.getTitle() + " 信件办结时失败:" + e.getMessage();
+			} finally {
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "mail.do?type=" + mail.getType() + "&pageFuncId="
+				+ pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @return
+	 */
+	// @FuncAuth(codes="mail")
+	@RequestMapping("/mailDel.do")
+	public String mailDel(String ids, String type, String pageFuncId,
+			ModelMap map, HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Mail mail = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							mail = mailService.findById(idArr[i]);
+							if (mail != null) {
+								mailService.del(mail.getId());
+								msg = "删除信件(" + mail.getTitle() + ")成功!";
+							}
+							map.put("forwardSeconds", 3);
+						} catch (Exception e) {
+							map.put("forwardSeconds", 0);
+							e.printStackTrace();
+							msg = "删除信件(" + mail.getTitle() + ")失败:"
+									+ e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "mail.do?type=" + type + "&pageFuncId="
+				+ pageFuncId);
+		return "admin/msg";
+	}
+}

@@ -1,0 +1,17 @@
+
+function createChannel(){
+	if(isCheck()){
+		$("#errorDiv").html("正在处理中,请稍候..."); 
+		$("#errorDiv").fadeIn("slow"); 
+		document.getElementById("form1").submit();
+	}else{
+		$("#errorDiv").fadeIn("slow"); 
+		$("#errorInfo").html("请选择数据"); 
+	}
+}
+function createAll(){
+	$("#errorDiv").html("正在处理中,请稍候..."); 
+	$("#errorDiv").fadeIn("slow"); 
+	document.getElementById("createType").value="all";
+	document.getElementById("form1").submit();
+}

@@ -1,0 +1,153 @@
+package com.gsccs.cms.controller.web;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.bass.utils.DateUtil;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Visit;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.VisitService;
+
+import freemarker.template.TemplateModelException;
+
+/**
+ * 首页处理
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+public class WebIndexController extends BaseController {
+
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private ConfigService configService;
+	@Resource
+	private VisitService visitService;
+
+	/**
+	 * 首页
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws TemplateModelException
+	 */
+	@RequestMapping("/index.html")
+	public String index(ModelMap map, HttpServletResponse response){
+		// 检查是否有站点符合访问域名
+		Site site = siteService.findByDomain(request.getServerName(), true);
+		String url = "site/CMS/index.html";
+		if (site != null) {
+			url = "site/" + site.getSourcepath() + "/index.html";
+		} else {
+			String defaultSite = "CMS";
+			Map<String, Object> configMap = null;
+			// 检查是否设置默认站点
+			if (getApplication().getAttribute("config") != null) {
+				configMap = (Map<String, Object>) getApplication()
+						.getAttribute("config");
+			} else {
+				// 如果context中没有，则提取并设置
+				List<Config> configList = configService.find();
+				configMap = new HashMap<String, Object>();
+				if (configList != null && configList.size() > 0) {
+					for (int i = 0; i < configList.size(); i++) {
+						configMap.put(configList.get(i).getCode(), configList
+								.get(i).getConfigvalue());
+					}
+				}
+				getApplication().setAttribute("config", configMap);
+			}
+			if (configMap.get("site") != null
+					&& configMap.get("site").toString().trim().length() > 0) {
+				defaultSite = configMap.get("site").toString().trim();
+			}
+			site = siteService.findBySourcepath(defaultSite);
+			url = "site/" + site.getSourcepath() + "/index.html";
+		}
+
+		if (site != null) {
+			// 处理访问记录
+			Visit visit = new Visit();
+			visit.setSiteid(site.getId());
+			visit.setAddtime(new Date());
+			visit.setIp(request.getRemoteAddr());
+			String uri = request.getRequestURI().replaceFirst(
+					request.getContextPath(), "");
+			String queryString = request.getQueryString();
+			visit.setUrl(uri + (queryString != null ? "?" + queryString : ""));
+			visitService.add(visit);
+		}
+		try {
+			request.getRequestDispatcher(url).forward(request, response);
+		} catch (ServletException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * index.html访问量统计
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/clickIndexDo.json")
+	public String index_ajaxClick(String siteid,ModelMap map,HttpServletRequest request,
+			HttpServletResponse response) {
+		//今天的访问量
+		int todayNum = 0;
+		//总的访问量
+		int totalNum = 0;
+		int clicknum = 0;
+		Visit visit = null;
+		if (StringUtils.isNotEmpty(siteid)) {
+			visit = new Visit();
+	
+			visit.setSiteid(siteid);
+			totalNum = visitService.count(visit, true);
+			
+			
+			java.text.SimpleDateFormat df = new java.text.SimpleDateFormat(
+					"yyyy-MM-dd");
+			java.util.Calendar calendar = java.util.Calendar.getInstance();
+			String today = df.format(calendar.getTime());
+			visit.setStarttime(DateUtil.parse(today, "yyyy-MM-dd"));
+			todayNum = visitService.count(visit, true);
+			
+		}
+		
+		if (visit != null) {
+			// 添加访问记录
+			visit.setAddtime(new Date());
+			visit.setIp(request.getRemoteAddr());
+			visitService.add(visit);
+		}
+		
+		ResponseUtil.writeUTF(response, "" + todayNum,""+totalNum);
+		return null;
+	}
+	
+	
+}

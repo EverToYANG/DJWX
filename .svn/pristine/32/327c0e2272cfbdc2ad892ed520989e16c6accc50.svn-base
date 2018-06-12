@@ -1,0 +1,320 @@
+package com.gsccs.cms.controller.exam;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.auth.service.UnitService;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.core.service.SensitiveService;
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseFeed;
+import com.gsccs.cms.course.model.CourseInfo;
+import com.gsccs.cms.course.model.CourseUser;
+import com.gsccs.cms.course.service.CourseService;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.PartyMember;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.weixin.model.WxApp;
+import com.gsccs.cms.weixin.service.WxAppService;
+import com.gsccs.cms.wx.service.MpMsgService;
+
+/**
+ * 课程管理
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/course")
+public class CourseController extends CmsBaseController {
+
+	private String WXAPPID = "wx1562950d23bf4c3a";
+
+	//private String DOMAIN = "http://www.pcwxdj.com";
+	private String DOMAIN = "http://dunhuangwenbohui.cn/wx";
+	// 模板名称：党课提醒
+	private String tmlShortId = "OPENTM407110104";
+	// 模板消息字体颜色
+	private static final String TEMPLATE_FRONT_COLOR = "#32CD32";
+
+	@Resource
+	private CourseService courseService;
+	@Resource
+	private UnitService unitService;
+	@Resource
+	private SensitiveService sensitiveService;
+	@Resource
+	private MemberService memberService;
+	@Resource
+	private WxAppService wxAppService;
+	@Resource
+	private ConfigService configService;
+	@Resource
+	private MpMsgService mpMsgService;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String courseList(Course param,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = "addtime desc") String order,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		List<Course> courseList = courseService.find(param, order, currPage,
+				pageSize);
+		int totalCount = courseService.count(param);
+		Pager pager = new Pager(request);
+		pager.appendParam("id");
+		pager.appendParam("title");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", courseList);
+		map.put("order", order);
+		return "course/course_list";
+	}
+
+	/**
+	 * 新增页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/form.do")
+	public String form(String id, ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			Course course = courseService.getCourse(Integer.parseInt(id));
+			map.put("course", course);
+			return "course/course_form";
+		} else {
+			Member member = new Member();
+			member.setWxappid(WXAPPID);
+			List<Member> partyMember = memberService.find(member, "");
+
+			map.put("partyMember", partyMember);
+			return "course/course_form";
+		}
+	}
+
+	/**
+	 * 保存
+	 * 
+	 * @param map
+	 * @return
+	 * @throws ParseException
+	 */
+	@RequestMapping("/save.do")
+	public String editDo(Course course, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response,
+			String openids) {
+		String oper = "添加";
+
+		WxApp wxApp = wxAppService.findById(WXAPPID);
+
+		if (null == course) {
+			msg = "课程保存失败";
+			map.put("msg", msg);
+			map.put("isCloseWindow", true);
+			map.put("isRefresh", true);
+			return "admin/msg";
+		}
+		try {
+			Integer courseid = course.getId();
+			// 添加course
+			String[] openid = openids.split(";");
+			course.setPlannum(Integer.valueOf(openid.length));
+			if (null != courseid) {
+				courseService.editCourse(course);
+			} else {
+				courseid = courseService.addCourse(course);
+			}
+
+			if (null == courseid) {
+				msg = "课程保存失败，请检查数据是否正确";
+				map.put("msg", msg);
+				map.put("isCloseWindow", true);
+				map.put("isRefresh", true);
+				return "admin/msg";
+			}
+			// 添加course user
+			for (String str : openid) {
+				CourseUser user = new CourseUser();
+				user.setId(UUID.randomUUID().toString());
+				user.setCourseid(courseid + "");
+				user.setUserid(str);
+				courseService.add(user);
+			}
+
+			String url = DOMAIN + "/web/course-" + courseid + ".html";
+			System.out.println(url);
+
+			Map<String, String> data = new HashMap<String, String>();
+			data.put("first", "你好，你有一条上课通知");
+			data.put("keyword1", course.getName());
+			data.put("keyword2", course.getAddtimestr());
+			data.put("keyword3", course.getAddress());
+			data.put("keyword4", "");
+			data.put("keyword5", "测试人");
+			data.put("remark", "请认真学习!");
+
+			Member member = new Member();
+			member.setWxappid(WXAPPID);
+			List<Member> memberList = memberService.find(member, "");
+
+			for (Member m : memberList) {
+				mpMsgService.sendMsg(WXAPPID, m.getId(),
+						tmlShortId, url, data);
+			}
+			msg = oper + "课程(" + course.getName() + ")成功!";
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/del.do")
+	public String del(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Course course = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							course = courseService.getCourse(Integer
+									.parseInt(idArr[i]));
+							if (course != null) {
+								courseService.delCourseById(course.getId());
+								msg = "删除课程(" + course.getName() + ")成功!";
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+							msg = "删除课程(" + course.getName() + ")失败:"
+									+ e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "course/list.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	@RequestMapping("/complete.do")
+	public String complete(Integer id, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		List<CourseInfo> infoList = courseService.findInfoList(id);
+		map.put("list", infoList);
+		return "course/course_infos";
+	}
+
+	/**
+	 * 课程资料
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoList.do")
+	public String infolist(Integer id, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		List<CourseInfo> infoList = courseService.findInfoList(id);
+		map.put("list", infoList);
+		return "course/course_infos";
+	}
+
+	/**
+	 * 课程反馈
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/feedList.do")
+	public String feedList(Integer id, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		List<CourseFeed> feedList = courseService.findFeedList(null, id);
+		if (null != feedList && feedList.size() > 0) {
+			for (CourseFeed feed : feedList) {
+				List<CourseFeed> replyList = courseService
+						.findByParid(feed.getId());
+				feed.setReplyList(replyList);
+			}
+		}
+		map.put("list", feedList);
+		return "course/course_feeds";
+	}
+
+	/**
+	 * 课程人员
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/userList.do")
+	public String userList(Integer id, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		Course course = courseService.getCourse(id);
+		List<PartyMember> userList = courseService.findByCourseid(id);
+		map.put("list", userList);
+		map.put("course", course);
+		return "course/course_users";
+	}
+
+	/**
+	 * 日期型数据转换，将页面上的表示日期限的字符串，转换为Date型
+	 * **/
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat(
+				"yyyy-MM-dd HH:mm:ss");
+		dateFormat.setLenient(true);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, true));
+
+	}
+
+}

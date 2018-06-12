@@ -1,0 +1,909 @@
+package com.gsccs.cms.controller.core;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.bass.utils.HtmlCode;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.bass.utils.ZipTools;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Templet;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.TempletChannelService;
+import com.gsccs.cms.core.service.TempletLinkService;
+import com.gsccs.cms.core.service.TempletService;
+import com.gsccs.cms.core.service.TempletSiteService;
+import com.gsccs.cms.core.util.CmsConst;
+
+/**
+ * 模板相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller
+@RequestMapping("/templet")
+public class TempletController extends CmsBaseController {
+
+	@Resource
+	private TempletService templetService;
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private TempletSiteService templetSiteService;
+	@Resource
+	private TempletChannelService templetChannelService;
+	@Resource
+	private TempletLinkService templetLinkService;
+
+	/**
+	 * 站点模板选择页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetSelect.do")
+	public String templetSelect(String siteid, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(siteid)) {
+			// 站点编辑时
+			Site site = siteService.findById(siteid);
+
+			if (site != null) {
+				Templet templet = new Templet();
+				templet.setUsesites(site.getId());
+				templet.setNoDel("1");
+
+				// List<Templet> templetList =
+				// templetService.findAll(templet,"orderNum");
+
+				List<String> sList = templetSiteService
+						.findTemIdsBySite(siteid);
+				List<Templet> templetList = null;
+				if (null != sList && sList.size() > 0) {
+					templetList = templetService.findAllBysiteId(sList,
+							templet, "orderNum");
+					// findBysiteId(sList, templet, "orderNum", 1, 10);
+				}
+				map.put("siteId", siteid);
+				map.put("templetList", templetList);
+			}
+		} else {
+			// 添加新站点时
+			Templet templet = new Templet();
+			templet.setUsesites("newSite");
+			templet.setNoDel("1");
+			List<Templet> templetList = templetService.findAll(templet,
+					"orderNum");
+			map.put("siteId", siteid);
+			map.put("templetList", templetList);
+		}
+		return "cms/templetSelect";
+	}
+
+	/**
+	 * 模板文件选择页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetSelectFile.do")
+	public String templetSelectFile(String id, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			Templet templet = templetService.findById(id);
+			map.put("templet", templet);
+
+			// 判断根目录有无子文件夹
+			/*
+			 * if (FileUtil.hasSonFolder(request.getRealPath("/") + "/templet/"
+			 * + templet.getId())) { map.put("rootHasSon", "1"); }
+			 */
+
+			Config tempPathConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String rootPath = tempPathConfig.getConfigvalue();
+
+			if (FileUtil.hasSonFolder(rootPath + File.separator
+					+ templet.getId())) {
+				map.put("rootHasSon", "1");
+			}
+		}
+		return "cms/templetSelectFile";
+	}
+
+	/**
+	 * 全局模版管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templet.do")
+	public String templet(Templet templet,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "4") int pageSize,
+			@RequestParam(defaultValue = "ordernum") String order,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (templet == null) {
+			templet = new Templet();
+		}
+		templet.setNoDel("1");
+		// 普通用户只查看自己添加的
+		List<Templet> list = templetService.find(templet, order, currPage,
+				pageSize);
+		int totalCount = templetService.count(templet);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("replaceto");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("templet.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", list);
+		map.put("order", order);
+		return "cms/templet";
+	}
+
+	/**
+	 * 添加页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetAdd.do")
+	public String templetAdd(ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		return "cms/templetAdd";
+	}
+
+	/**
+	 * 全局管理模版编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetEdit.do")
+	public String templetEdit(String id, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			map.put("templet", templetService.findById(id));
+		}
+		return "cms/templetEdit";
+	}
+
+	/**
+	 * 全局管理模版编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetEditDo.do")
+	public String templetEditDo(
+			@CurrentUser Users user,
+			Templet templet,
+			@RequestParam(value = "uploadFile", required = false) MultipartFile uploadFile,
+			@RequestParam(value = "imgfile", required = false) MultipartFile imgfile,
+			String oldImg, String pageFuncId, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		String oper = "添加";
+		try {
+
+			Config tempPathConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String rootPath = tempPathConfig.getConfigvalue();
+
+			if (templet != null && templet.getId() != null) {
+				String tempPath = rootPath + "/" + templet.getId() + "/";
+
+				Templet oldTemplet = templetService.findById(templet.getId());
+				if (oldTemplet != null) {
+					oldTemplet.setName(templet.getName());
+					oldTemplet.setOrdernum(templet.getOrdernum());
+					oldTemplet.setState(templet.getState());
+					oldTemplet.setUsesitenames(templet.getUsesitenames());
+					oldTemplet.setUsesites(templet.getUsesites());
+					oper = "修改";
+
+					// 2014-8-8 修改 模板预览图进行修改
+					if (!oldImg.equals(oldTemplet.getImg())) {
+						if (oldTemplet.getImg() != null
+								&& oldTemplet.getImg().trim().length() > 0) {
+							FileUtil.del(request.getRealPath("/").replace("\\",
+									"/")
+									+ oldTemplet.getImg().trim());
+						}
+					} else {
+						templet.setImg(oldImg);
+					}
+					if (imgfile != null && imgfile.getSize() > 0) {
+						// 生成目标文件
+						String ext = FileUtil.getExt(
+								imgfile.getOriginalFilename()).toLowerCase();
+						if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+								&& !".gif".equals(ext) && !".png".equals(ext)) {
+							map.put("msg", "模版预览图片只能上传jpg,jpeg,gif,png格式的图片!");
+							map.put("isBack", true);
+							return "admin/msg";
+						}
+						// 预览图Id与模版Id相同
+						File targetFile = new File(tempPath + templet.getId()
+								+ ext);
+						File folder = new File(tempPath);
+						if (!folder.exists()) {
+							folder.mkdir();
+						}
+						if (!targetFile.exists()) {
+							targetFile.createNewFile();
+						}
+						// 复制到目标文件
+						FileUtil.copy(imgfile, targetFile);
+						// 生成访问地址
+						oldTemplet.setImg("/" + templet.getId() + "/"
+								+ templet.getId() + ext);
+					}
+					templetService.update(oldTemplet);
+				}
+			} else {
+
+				if (templet.getOrdernum() == null) {
+					templet.setOrdernum(templetService.maxNum());
+				}
+				// 添加
+				templet.setAdduser(user.getId());
+				templetService.add(templet);
+				// 生成模板目录
+				if (uploadFile != null && uploadFile.getSize() > 0) {
+					// 生成目标文件
+					String ext = FileUtil.getExt(
+							uploadFile.getOriginalFilename()).toLowerCase();
+					if (!".zip".equals(ext)) {
+						map.put("msg", "请上传格式为zip的压缩文件!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+
+					File targetFile = new File(rootPath + "/" + templet.getId()
+							+ ext);
+					File folder = new File(rootPath + "/" + templet.getId()
+							+ "/");
+
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(uploadFile, targetFile);
+					// 解压
+					ZipTools.unZip(rootPath + "/" + templet.getId() + ext,
+							rootPath + "/" + templet.getId() + "/");
+					// 判断是否有初始化数据
+					// 栏目数据
+					templetChannelService.importChannels(templet, request);
+					// 链接分类数据
+					templetLinkService.importLinks(templet, request);
+
+				} else { // 默认站点模板
+
+					FileUtil.copyDirectiory(rootPath + "/default", rootPath
+							+ "/" + templet.getId() + "/");
+				}
+
+				if (imgfile != null && imgfile.getSize() > 0) {
+					// 生成目标文件
+					String ext = FileUtil.getExt(imgfile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "模版预览图片只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					// 预览图Id与模版Id相同
+					File targetFile = new File(rootPath + "/" + templet.getId()
+							+ "/" + templet.getId() + ext);
+					File folder = new File(rootPath + "/" + templet.getId()
+							+ "/");
+					if (!folder.exists()) {
+						folder.mkdir();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(imgfile, targetFile);
+					// 生成模版预览图访问地址
+					templet.setImg("/" + templet.getId() + "/"
+							+ templet.getId() + ext);
+				}
+				templetService.update(templet);
+				map.put("forwardSeconds", 3);
+			}
+			msg = oper + "模板(" + templet.getName() + ")成功!";
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = oper + "模板(" + templet.getName() + ")失败:" + e.toString()
+					+ "!";
+			map.put("forwardSeconds", 0);
+		}
+		map.put("msg", msg);
+		if ("修改".equals(oper)) {
+			map.put("isCloseWindow", true);
+			map.put("isRefresh", true);
+		} else {
+			map.put("forwardUrl", "templet.do?pageFuncId=" + pageFuncId);
+		}
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetDel.do")
+	public String templetDel(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Templet templet = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							templet = templetService.findById(idArr[i]);
+							if (templet != null) {
+								templet.setState(Templet.STATE_DEL);
+								templetService.update(templet);
+								msg = "删除模板(" + templet.getName() + ")成功!";
+							}
+						} catch (Exception e) {
+							msg = "删除模板(" + templet.getName() + ")失败:"
+									+ e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "templet.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 排序
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetOrder.do")
+	public String templetOrder(String id, String type,
+			ModelMap map, HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (StringUtils.isNotEmpty(id)) {
+			Templet templet = templetService.findById(id);
+			if (templet != null) {
+				String msg = "";
+				try {
+					if ("up".equals(type)) {
+						msg += "上升";
+						templetService.up(templet);
+					} else if ("down".equals(type)) {
+						msg += "下降";
+						templetService.down(templet);
+					}
+				} catch (Exception e) {
+					msg += "模板 " + templet.getName() + " 失败:" + e.toString();
+				}
+				msg += "模板 " + templet.getName() + " 成功";
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		return templet(null, 1, 10, "ordernum", map, request, response);
+	}
+
+	/**
+	 * 文件管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetFileManage.do")
+	public String templetFileManage(String id, String pageFuncId, ModelMap map,
+			HttpServletResponse response){
+		Config tempPathConfig = configService
+				.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+		String rootPath = tempPathConfig.getConfigvalue();
+		if (StringUtils.isNotEmpty(id)) {
+			Templet templet = templetService.findById(id);
+			map.put("templet", templet);
+			// 判断根目录有无子文件夹
+			if (FileUtil.hasSonFolder(rootPath + "/" + templet.getId())) {
+				map.put("rootHasSon", "1");
+			}
+		}
+		return "cms/templetFileManage";
+	}
+
+	/**
+	 * 查询子文件夹
+	 * 
+	 * @param map
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	// @FuncAuth(codes="templet")
+	@RequestMapping("/templetFolderSon.do")
+	public String templetFolderSon(String pid, String plevel, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException, UnsupportedEncodingException {
+		if (pid != null && pid.trim().length() > 0) {
+			pid = URLDecoder.decode(pid, "utf-8");
+
+			Config tempPathConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String rootPath = tempPathConfig.getConfigvalue();
+
+			List<File> sonFiles = FileUtil.getFolders(rootPath + "/" + pid);
+
+			if (null != sonFiles) {
+				System.out.println("folders root:" + pid);
+				System.out.println("folders:" + sonFiles.size());
+			}
+			map.put("currFolderPath", pid);
+			map.put("folders", sonFiles);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/templetFolderSon";
+	}
+
+	/**
+	 * 获取目录下所有文件
+	 * 
+	 * @param map
+	 * @return
+	 * @throws
+	 */
+	@RequestMapping("/templetFileSon.do")
+	public String templetFileSon(String root, String type, ModelMap map,
+			HttpServletResponse response) {
+		if (root != null && root.trim().length() > 0) {
+			// root 也就是templetId
+			try {
+				root = URLDecoder.decode(root, "utf-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			map.put("root", root);
+
+			Config tempPathConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String rootPath = tempPathConfig.getConfigvalue();
+			String currFolder = root.replace(rootPath + "/", "");
+			if (currFolder.indexOf("/") > -1) {
+				currFolder = currFolder.substring(currFolder.indexOf("/"));
+			} else {
+				currFolder = "根目录";
+			}
+
+			String temlPath = rootPath + File.separator + root;
+			if (null != FileUtil.getFiles(temlPath)) {
+				System.out.println("file root:" + temlPath);
+				System.out.println("sonFiles:"
+						+ FileUtil.getFiles(temlPath).size());
+			}
+			map.put("sonFiles", FileUtil.getFiles(temlPath));
+			map.put("currFolder", currFolder);
+		}
+		if ("select".equals(type)) {
+			return "cms/templetFileSonSelect";
+		}
+		return "cms/templetFileSon";
+	}
+
+	/**
+	 * 文件上传页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetUploadFile.do")
+	public String templetUploadFile(ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		return "cms/templetUploadFile";
+	}
+
+	/**
+	 * 文件上传
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	@RequestMapping("/templetUploadFileDo.do")
+	public String templetUploadFileDo(
+			String root,
+			@RequestParam(value = "uploadFile", required = false) MultipartFile uploadFile,
+			ModelMap map, HttpServletResponse response) {
+		if (uploadFile != null && uploadFile.getSize() > 0) {
+
+			try {
+				Config tempPathConfig = configService
+						.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+				String rootPath = tempPathConfig.getConfigvalue();
+
+				root = URLDecoder.decode(root, "utf-8");
+				// 生成目标文件
+				String ext = FileUtil.getExt(uploadFile.getOriginalFilename())
+						.toLowerCase();
+				String allowExts = ",html,css,js,bmp,gif,jpeg,jpg,png swf,flv,7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip";
+				if (allowExts.indexOf(ext.replace(".", "")) < 0) {
+					map.put("msg", "只能上传" + allowExts + "格式的文件!");
+					map.put("isBack", true);
+					return "admin/msg";
+				}
+				File targetFile = new File(rootPath + File.separator + root
+						+ File.separator + FileUtil.getFileName(uploadFile));
+				if (!targetFile.exists()) {
+					try {
+						targetFile.createNewFile();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else {
+					map.put("msg", "此文件已存在!");
+					map.put("isBack", true);
+					return "admin/msg";
+				}
+				// 复制到目标文件
+				FileUtil.copy(uploadFile, targetFile);
+				msg = "文件上传 " + FileUtil.getFileName(uploadFile) + " 成功";
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "文件上传 " + FileUtil.getFileName(uploadFile) + " 失败:"
+						+ e.getMessage();
+			}
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("isRefresh", "true");
+		map.put("isCloseWindow", "true");
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 文件编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 * @throws
+	 */
+	@RequestMapping("/templetFileEdit.do")
+	public String templetFileEdit(String filePaths, String currFolder,
+			ModelMap map, HttpServletResponse response) {
+		if (filePaths != null && filePaths.trim().length() > 0) {
+			File currFile = null;
+			try {
+				currFile = new File(URLDecoder.decode(filePaths, "UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			if (currFile != null) {
+				String fileName = currFile.getName().substring(0,
+						currFile.getName().lastIndexOf("."));
+				String fileExt = currFile.getName().substring(
+						currFile.getName().lastIndexOf("."));
+				String fileContent = HtmlCode.encode(FileUtil
+						.readFile(currFile));
+				map.put("currFile", currFile);
+				map.put("fileName", fileName);
+				map.put("fileExt", fileExt);
+				map.put("fileContent", fileContent);
+			}
+		}
+		return "cms/templetFileEdit";
+	}
+
+	/**
+	 * 文件编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetFileEditDo.do")
+	public String templetFileEditDo(String filePaths, String fileName,
+			String fileExt, String currFolder, String fileContent,
+			ModelMap map, HttpServletResponse response) {
+		String oper = "添加";
+		File currFile = null;
+		try {
+			Config tempPathConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String rootPath = tempPathConfig.getConfigvalue();
+
+			if (filePaths != null && filePaths.trim().length() > 0) {
+				oper = "修改";
+				currFile = new File(filePaths);
+				if (currFile.exists()) {
+					// 存在则更新
+					// 判断是否重命名
+					if (!currFile.getName().equals(fileName + fileExt)) {
+						// 判断文件是否存在，如存在则不能保存
+						File newFile = new File(rootPath + File.separator
+								+ URLDecoder.decode(currFolder)
+								+ File.separator + fileName + fileExt);
+						if (newFile.exists()) {
+							map.put("msg", "此文件名已存在!");
+							map.put("isBack", true);
+							return "admin/msg";
+						}
+						// 重命名需要删除原来名称的文件
+						FileUtil.deleteFile(currFile);
+						//
+						FileUtil.writeFile(newFile, fileContent);
+					} else {
+						FileUtil.writeFile(currFile, fileContent);
+					}
+				} else {
+					FileUtil.writeFile(currFile, fileContent);
+				}
+			} else {
+				// 添加
+				if (currFolder != null && currFolder.trim().length() > 0
+						&& fileName != null && fileName.trim().length() > 0) {
+					// 判断文件是否存在，如存在则不能保存
+					currFile = new File(rootPath + "/"
+							+ URLDecoder.decode(currFolder) + "/" + fileName
+							+ fileExt);
+					if (currFile.exists()) {
+						map.put("msg", "此文件名已存在!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					// 保存文件
+					FileUtil.writeFile(currFile, fileContent);
+				}
+			}
+			msg = oper + "模板文件(" + currFolder + "/" + fileName + ")成功!";
+		} catch (Exception e) {
+			msg = oper + "模板文件(" + currFolder + "/" + fileName + ")失败:"
+					+ e.toString() + "!";
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("isRefresh", "true");
+		map.put("isCloseWindow", "true");
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 文件删除
+	 * 
+	 * @param map
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	@RequestMapping("/templetFileDel.do")
+	public String templetFileDel(String filePaths, String currFolder,
+			ModelMap map, HttpServletResponse response) {
+		if (filePaths != null && filePaths.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] filePathArr = filePaths.split(";");
+			if (filePathArr != null && filePathArr.length > 0) {
+				for (int i = 0; i < filePathArr.length; i++) {
+					if (filePathArr[i].trim().length() > 0) {
+						try {
+							FileUtil.del(URLDecoder.decode(filePathArr[i],
+									"utf-8"));
+							msg = "删除模板文件("
+									+ URLDecoder
+											.decode(filePathArr[i], "utf-8")
+											.replace(
+													request.getRealPath("/")
+															.replace("\\", "/"),
+													"") + ")成功!";
+						} catch (Exception e) {
+							msg = "删除模板文件失败:" + e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "templetFileSon.do?root=" + currFolder);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 创建文件夹页面
+	 * 
+	 * @param map
+	 * @return
+	 * @throws
+	 */
+	@RequestMapping("/templetFolderEdit.do")
+	public String templetFolderEdit(String filePaths, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException, UnsupportedEncodingException {
+		if (filePaths != null && filePaths.trim().length() > 0) {
+			File currFile = new File(URLDecoder.decode(filePaths, "UTF-8"));
+			if (currFile != null) {
+				map.put("filePaths", filePaths);
+				map.put("currFile", currFile);
+				map.put("fileName", currFile.getName());
+			}
+		}
+		return "cms/templetFolderEdit";
+	}
+
+	/**
+	 * 文件夹编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetFolderEditDo.do")
+	public String templetFolderEditDo(String currFolder, String filePaths,
+			String fileName, ModelMap map, HttpServletResponse response) {
+		String oper = "创建";
+		File currFile = null;
+		try {
+			Config tempPathConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String rootPath = tempPathConfig.getConfigvalue();
+
+			if (StringUtils.isNotEmpty(filePaths)) {
+				oper = "重命名";
+				currFile = new File(rootPath + "/" + filePaths);
+				if (currFile.exists()) {
+					// 存在则更新
+					// 判断是否重命名
+					if (!currFile.getName().equals(fileName)) {
+						// 判断文件是否存在，如存在则不能保存
+						File newFile = new File(currFile
+								.getPath()
+								.replace("\\", "/")
+								.substring(
+										0,
+										currFile.getPath().replace("\\", "/")
+												.lastIndexOf("/") + 1)
+								+ "/" + fileName);
+
+						if (newFile.exists()) {
+							map.put("msg", "此文件夹名已存在!");
+							map.put("isBack", true);
+							return "admin/msg";
+						}
+						// 重命名需要删除原来名称的文件
+						currFile.renameTo(newFile);
+					}
+				}
+			} else {
+				// 添加
+				if (StringUtils.isNotEmpty(currFolder)
+						&& StringUtils.isNotEmpty(fileName)) {
+					// 判断文件是否存在，如存在则不能保存
+					currFile = new File(rootPath + File.separator + currFolder
+							+ File.separator + fileName);
+					if (currFile.exists()) {
+						map.put("msg", "此文件夹名已存在!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					currFile.mkdir();
+				}
+			}
+			msg = oper + "模板文件夹(" + currFolder + "/" + fileName + ")成功!";
+		} catch (Exception e) {
+			msg = oper + "模板文件夹(" + currFolder + "/" + fileName + ")失败:"
+					+ e.toString() + "!";
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("isRefresh", "true");
+		map.put("isCloseWindow", "true");
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 文件夹删除
+	 * 
+	 * @param map
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	@RequestMapping("/templetFolderDel.do")
+	public String templetFolderDel(String filePaths, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException, UnsupportedEncodingException {
+		if (filePaths != null && filePaths.trim().length() > 0) {
+			try {
+				FileUtil.del(URLDecoder.decode(filePaths, "utf-8"));
+				msg = "删除模板文件夹("
+						+ URLDecoder.decode(filePaths, "utf-8").replace(
+								request.getRealPath("/"), "") + ")成功!";
+			} catch (Exception e) {
+				msg = "删除模板文件夹("
+						+ URLDecoder.decode(filePaths, "utf-8").replace(
+								request.getRealPath("/"), "") + ")失败:"
+						+ e.toString() + "!";
+			}
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("isRefresh", "true");
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetExport.do")
+	public String templetExport(String id, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			Templet templet = templetService.findById(id);
+			if (templet != null) {
+				// 生成zip文件
+				try {
+					// 生成模板栏目xml文件
+					templetChannelService.createXML(templet, request);
+					// 生成模板链接xml文件
+					templetLinkService.createXML(templet, request);
+					ZipTools.zip(request.getRealPath("/") + "/templet/"
+							+ templet.getId() + "/", request.getRealPath("/")
+							+ "/templet/" + templet.getId() + ".zip");
+					map.put("autojs",
+							"window.open('../../templet/" + templet.getId()
+									+ ".zip');");
+					msg = "导出成功";
+				} catch (Exception e) {
+					e.printStackTrace();
+					msg = "导出失败:" + e.getMessage();
+				}
+			}
+		}
+		map.put("isBack", "true");
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+}

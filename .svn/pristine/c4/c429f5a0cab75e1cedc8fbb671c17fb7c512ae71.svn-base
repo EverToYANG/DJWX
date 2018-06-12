@@ -1,0 +1,217 @@
+var goodsTypes="";
+//添加根栏目
+function addRoot() {
+	location.href = "categoryEdit.do?pageFuncId=" + $("#pageFuncId").val();
+}
+
+// 添加品牌（品牌与类目是一对一还是一对多关系？）
+function addBands() {
+	location.href = "brandsEdit.do?pageFuncId=" + $("#pageFuncId").val();
+}
+
+// 表单验证
+function formCheck() {
+	var isCheck = true;
+	if ($.trim($("#name").val()) == "") {
+		$("#nameHelp").html("必须填写");
+		$("#nameDiv").addClass("error");
+		$("#name").focus();
+		isCheck = false;
+	} else {
+		$("#nameHelp").html("");
+		$("#nameDiv").removeClass("error");
+	}
+	return isCheck;
+}
+// 编辑
+function edit() {
+	if (isCheckOne()) {
+		location.href = 'categoryEdit.do?id=' + getCheckOneValue()
+				+ "&pageFuncId=" + $("#pageFuncId").val();
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+
+function delImg() {
+	$("#oldImgSpan").fadeOut("slow");
+	$("#oldImg").val("");
+}
+// 添加下级
+function addSon() {
+	if (isCheckOne()) {
+		location.href = 'categoryEdit.do?pid=' + getCheckOneValue()
+				+ "&pageFuncId=" + $("#pageFuncId").val();
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+// 转移
+function par() {
+	if (isCheckOne()) {
+		openWindow('转移', 'categoryTree.do?pageFuncId=' + $("#pageFuncId").val()
+				+ '&isroot=1&categoryClick=pardo&id=' + getCheckOneValue(),
+				500, 500, 'true');
+		$("#errorDiv").fadeOut("slow");
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+
+// 删除
+function del() {
+	if (isCheck()) {
+		var confirm = $.scojs_confirm({
+			content : "确定删除操作么?此操作将同时删除子栏目并且无法回退!",
+			action : function() {
+				location.href = "categoryDel.do?pageFuncId="
+						+ $("#pageFuncId").val() + "&ids=" + getCheckValue();
+			}
+		});
+		confirm.show();
+		$("#errorDiv").fadeOut("slow");
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择数据");
+	}
+}
+
+
+// 编辑类目属性
+function typeAttr() {
+	
+	if (isCheckOne()) {
+		location.href = 'typeAttr.do?cateId=' + getCheckOneValue()
+				+ "&pageFuncId=" + $("#pageFuncId").val();
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+
+
+/**
+ * 检查表单输入的数据
+ */
+function validate() {
+	validator = new Validator("theForm");
+	validator.required("cat_name", catname_empty);
+	if (parseInt(document.forms['theForm'].elements['grade'].value) > 10
+			|| parseInt(document.forms['theForm'].elements['grade'].value) < 0) {
+		validator.addErrorMsg('价格分级数量只能是0-10之内的整数');
+	}
+	return validator.passed();
+}
+
+/**
+ * 请求商品类型属性
+ * @param typeid
+ * @param id
+ */
+function reqAttr(typeid,id){
+	
+	var typesAttrs="";
+	if (typeid==""){
+		return;
+	}
+	var tarId="#"+id+"";
+	$.ajax({
+		type: "post",
+		url: "typesAttrs_json.do?typeId="+typeid,
+		success: function(data, textStatus){
+			var obj = eval("("+data+")");
+			for (var i=0;i<obj.length;i++){
+				typesAttrs = typesAttrs+"<option value='"+obj[i].attrId+"'>"+obj[i].attrName+"</option>";
+			}
+			$(tarId).append(typesAttrs);
+		},
+		complete: function(XMLHttpRequest, textStatus){
+			//HideLoading();
+		},
+		error: function(){
+			//请求出错处理
+		}
+	});
+}
+
+/**
+ * 请求商品类型
+ */
+function reqGoodsType(){
+	if (goodsTypes==""){
+		$.ajax({
+			type: "post",
+			url: "goodsTypes_json.do",
+			/*beforeSend: function(XMLHttpRequest){
+				//ShowLoading();
+			},*/
+			success: function(data, textStatus){
+				var obj = eval("("+data+")");
+				for (var i=0;i<obj.length;i++){
+					goodsTypes = goodsTypes+"<option value='"+obj[i].typeId+"'>"+obj[i].typeName+"</option>";
+				}
+				$(".filter_type").append(goodsTypes);
+				//alert("length"+data.length);
+				//alert("size"+data.size());
+				/*$(".ajax.ajaxResult").html("");*/
+				/*$("item",data).each(function(i, domEle){
+					alert(i);
+					//$(".ajax.ajaxResult").append("<li>"+$(domEle).children("title").text()+"</li>");
+				});*/
+			},
+			complete: function(XMLHttpRequest, textStatus){
+				//HideLoading();
+			},
+			error: function(){
+				//请求出错处理
+			}
+		});
+	}
+}
+
+
+//增加图片
+function addAttr(){
+	var id = Math.uuidFast(); 
+	var str="";  
+	str+="<tr id='attr_tr"+id+"'>";  
+	str+="<td>";  
+	str+="<input id='attrs"+id+"' uniform='true' type='checkbox' name='attrs' value='"+id+"'/>";  
+	str+="</td>";
+	str+="<td>";  
+	str+="<select name='filter_type'  uniform='true' onchange=\"reqAttr(this.value,'filter_attr_"+id+"')\">";
+	str+="<option value=\"\">请选择商品类型</option>";
+	str+=goodsTypes;
+	str+="</select>";
+	str+="<td>";  
+	str+="<select name='filter_attr' id='filter_attr_"+id+"' uniform='true'>";
+	str+="<option value=\"\">请选择筛选属性</option>";
+	str+="</select>";
+	str+="</td>";  
+	str+="</tr>";  
+	$("#attrTbody").append(str); 
+	$('input[uniform=true]').uniform();
+}
+
+
+//删除图片
+function delAttr(){
+	var objs=document.getElementsByName("attrs");
+	var ids=new Array();
+	if(objs!=null && objs.length>0){
+		for(var i=0;i<objs.length;i++){
+			if(objs[i].checked){
+				ids[ids.length]=objs[i].value;
+			}
+		}
+	}
+	if(ids.length>0){
+		for(var i=0;i<ids.length;i++){
+			$("#attr_tr"+ids[i]).remove();
+			$("#delOldAttrs").val($("#delOldAttrs").val()+ids[i]+";");
+		}
+	}
+}

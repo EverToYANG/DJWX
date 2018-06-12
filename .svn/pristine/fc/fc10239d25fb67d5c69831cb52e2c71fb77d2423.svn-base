@@ -1,0 +1,37 @@
+package com.gsccs.cms.controller.web;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.module.model.Applyopen;
+
+/**
+ * 
+ * 微信应用
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebWxAppController")
+@RequestMapping("/wx")
+public class WebWxAppController{
+
+	
+
+	/**
+	 * 保存
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/index.html")
+	public String applyopenSave(Applyopen applyopen, String siteid,
+			String templetPath, ModelMap map, HttpServletResponse response) {
+		
+		return "/wxApp/index";
+	}
+
+}

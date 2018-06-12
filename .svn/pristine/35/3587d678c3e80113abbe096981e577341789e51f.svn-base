@@ -1,0 +1,143 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html class="hb-loaded" style="font-size: 40px;">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="yes">
+    <script src="${pageContext.request.contextPath}/static/common/js/jquery-1.8.3.min.js" type="text/javascript"></script>
+    <!--link( rel="stylesheet" href="http://c.csdnimg.cn/public/common/toolbar/css/index.css" )-->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/weui/css/bootstrap.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/weui/css/avatar.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/weui/css/common.css">
+    <!-- [if IE 7]-->
+    <!--link( rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/font-awesome-ie7.min.css" )-->
+    <!-- [endif]-->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/weui/css/main.css">
+    <!-- [if lt IE 9]-->
+    <script src="${pageContext.request.contextPath}/static/weui/js/html5shiv.min.js"></script>
+    <!-- [endif]-->
+    <title></title>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/static/weui/js/blog_mobile.js"></script>
+</head>
+<body>
+	<script type="text/javascript" src="${pageContext.request.contextPath}/static/weui/js/blogarticlelist.js"></script>
+	<script type="text/javascript">
+	    var username = '${member.id}';
+	</script>
+
+	<div class="blog_main">
+	      <div class="blog_top_wrap">
+	        <div class="blog_top">
+	        	<i id="menu_J" class="iconfont icon_l"></i>
+	          	<h2 class="blog_top_t">党建服务</h2>
+	        </div>
+	      </div>
+	      <div class="main_list">
+	        <dl class="personal clearfix">
+	          <dt><a href="#"><img src="${member.img }" alt="img"></a>
+	              <a href="#" class="per_user">${member.name }</a>
+	          </dt>
+	          <dd class="clearfix">
+	            <ul class="personal_list">
+	              <li><em>302</em><span>我的课程</span></li>
+	              <li><em>305</em><span>我的总结</span></li>
+	              <li><em>590</em><span>我的反馈</span></li>
+	              <li><em>901</em><span>评论</span></li>
+	            </ul>
+	          </dd>
+	        </dl>
+	        <div class="blog_wrap" page="2">
+				<div class="total_blog">
+	            	<label><span>我的收藏</span><em>（63）</em></label>
+	            	<i class="iconfont arrow_down"></i>
+	          	</div>
+	          	<div class="filter_category">
+					<a href="#">Android学习笔记</a>    
+					<a href="#">Android自定义View</a>    
+	          	</div>
+	          	
+	          	<dl class="blog_list clearfix">
+					<dt><a href="http://m.blog.csdn.net/article/details?id=52736383">
+	                              【原创】
+	                         Android6.0权限管理到RxPermissions源码分析</a></dt>
+	                 <dd><span><em>2016-10-05 00:16:24</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">93阅读</a></span></dd>
+				</dl>
+				
+	            <dl class="blog_list clearfix">
+	                     <dt><a href="http://m.blog.csdn.net/article/details?id=50197795">
+	                              	【原创】Android中HandlerThread和IntentService详解</a></dt>
+	                     <dd><span><em>2015-12-06 20:26:37</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">253阅读</a></span></dd>
+	           </dl>
+	           <div id="pageindex" style="display:none">1</div>
+	           <div id="pagecount" style="display:none">3</div>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=52736383">【原创】Android6.0权限管理到RxPermissions源码分析</a></dt>         
+				<dd><span><em>2016-10-05 00:16:24</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">93阅读</a></span></dd>     
+			</dl>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=52710930">【原创】从热更新到Nuwa源码分析</a></dt>         
+				<dd><span><em>2016-09-30 14:03:01</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">46阅读</a></span></dd>     
+			</dl>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=52665270">【翻译】在Android中使用正确的姿势写一个string.xml</a></dt>         <dd><span><em>2016-09-25 23:14:34</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">724阅读</a></span></dd>     
+			</dl>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=52262382">【原创】使用RxJava自己构造一个三级缓存的实例</a></dt>         <dd><span><em>2016-08-20 17:08:59</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">168阅读</a></span></dd>     
+			</dl>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=52138490">【原创】RecycleView从显示到下拉刷新和加载更多</a></dt>         
+				<dd><span><em>2016-08-06 21:00:21</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">329阅读</a></span></dd>     
+			</dl>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=51935175">【原创】注解(Annotation)从实例开始</a></dt>         
+				<dd><span><em>2016-07-17 22:40:00</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">81阅读</a></span></dd>     
+			</dl>
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=51912498">【原创】RxJava中的Subject和常见的生命周期管理</a></dt>         
+				<dd><span><em>2016-07-14 20:14:23</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">172阅读</a></span></dd>     
+			</dl>
+			
+			<dl class="blog_list clearfix"> 
+				<dt><a href="http://m.blog.csdn.net/article/details?id=50859246">【原创】Android高效网络请求Retrofit框架</a></dt>         
+				<dd><span><em>2016-03-11 22:22:19</em><em>|</em><a href="http://m.blog.csdn.net/blog/index?username=Neacy_Zz#">277阅读</a></span></dd>     
+			</dl>
+			</div>
+		</div>
+	
+		<div class="leftNav">
+			<div class="left_top">
+					<a href="${site.sitedomain }/web/home.html"><img src="${member.img }"></a>
+					<a href="${site.sitedomain }/web/home.html" class="sign">${member.name }</a> 
+			</div>
+			        
+			<ul class="nav_list">
+			        <li><a href="#"><i>•</i><span>党性教育</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+					<li><a href="#"><i>•</i><span>党建要闻</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+					<li><a href="#"><i>•</i><span>理论研究</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+					<li><a href="#"><i>•</i><span>通知公告</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+			</ul>
+				
+			<ul class="nav_list">
+					<li><a href="#"><i>•</i><span>学习交流</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+					<li><a href="#"><i>•</i><span>事项受理</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+					<li><a href="#"><i>•</i><span>互动交流</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+					<li><a href="#"><i>•</i><span>个人中心</span><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-right.png" alt="img" class="arrow_r"></a></li>
+			</ul>
+		</div>
+	   <div id="mask"></div>
+	 </div>   
+
+	<div class="ad_box">
+      <div class="ad_l"><a href="http://ms.csdn.net/download.html"><img src="./index_files/index_AD.jpg" alt="img"></a><span>即使是一小步<br>也想与你分享</span></div>
+      <div class="ad_r"><a href="http://ms.csdn.net/download.html" class="open_btn">打开</a><i class="ad_close iconfont"></i></div>
+    </div>
+
+	<div class="backToTop" style="display: none;"><img src="${pageContext.request.contextPath}/static/weui/images/iconfont-up.png" alt="img"></div>
+    <div class="blog_footer">©2016 ${site.name }</div>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/static/weui/js/fontSize.js"></script>
+</body>
+</html>

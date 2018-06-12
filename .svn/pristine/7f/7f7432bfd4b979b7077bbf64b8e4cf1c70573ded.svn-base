@@ -1,0 +1,105 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="fs" uri="/fs-tags"%>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+	content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>${unit.name }</title>
+<script
+	src="${pageContext.request.contextPath}/static/web/js/jquery.min.js"
+	type="text/javascript"></script>
+<script
+	src="${pageContext.request.contextPath}/static/web/js/jquery.form.js"
+	type="text/javascript"></script>
+
+<link
+	href="${pageContext.request.contextPath}/static/web/css/zAlert.css"
+	rel="stylesheet" type="text/css">
+<script src="${pageContext.request.contextPath}/static/web/js/zAlert.js"
+	type="text/javascript"></script>
+<link href="${pageContext.request.contextPath}/static/web/css/base.css"
+	rel="stylesheet" type="text/css">
+<link href="${pageContext.request.contextPath}/static/web/css/css.css"
+	rel="stylesheet" type="text/css">
+<link href="${pageContext.request.contextPath}/static/web/css/style.css"
+	rel="stylesheet" type="text/css">
+<script
+	src="${pageContext.request.contextPath}/static/web/js/jquery.json-2.3.min.js"
+	type="text/javascript"></script>
+<style type="text/css">
+select {
+	line-height: 35px;
+	font-size: 14px;
+}
+
+img {
+	width: 49px;
+	height: 49px;
+}
+
+.graph {
+	width: 95%;
+	border: 1px solid #F8B3D0;
+	height: 25px;
+}
+
+#bar {
+	display: block;
+	background: #FFE7F4;
+	float: left;
+	height: 100%;
+	text-align: center;
+}
+
+#barNum {
+	position: absolute;
+}
+</style>
+<script type="text/javascript">
+$(function () {
+	$(".course-tab").click(function(){
+	  $(".course-tab").removeClass("active");
+	  $(this).addClass("active");
+	  var tabid = $(this).attr("data-id");
+	  $(".apply-form").hide();
+	  $("#"+tabid).show();
+	});
+});      
+</script>
+</head>
+<body style="background-color: rgb(254, 251, 243);" verify_mobile="0">
+	<div class="header">
+		<ul class="clearfix">
+			<li class="course-tab active" data-id="c_user" style="width: 50%;"><a href="javascript:void(0);"><i></i>党员名单</a></li>
+			<li class="course-tab" data-id="c_main" style="width: 50%;"><a href="javascript:void(0);"><i></i>支部活动</a></li>
+        </ul>
+	</div>
+	
+	<div id="c_main" class="apply-form" style="display: none;">
+		<c:forEach items="${courseList }" var="course">
+		<div class="label clearfix">
+			<span class="label-left" style="width: 77%;"><a href="${pageContext.request.contextPath}/web/course.html?id=${course.id}">${course.name }</a></span>
+			<span class="label-right" style="width: 23%;">${course.addtimestr }</span>
+		</div>
+		</c:forEach>
+	</div>
+	
+	<div id="c_user" class="apply-form" style="display: ;">
+		<c:forEach items="${memberList }" var="member">
+		<div class="label clearfix">
+			<span class="label-left" style="width: 25%;">${member.name }&nbsp;&nbsp;  </span>
+			<span class="label-left" style="width: 25%;">${member.sex }&nbsp;&nbsp;  </span>
+			<span class="label-left" style="width: 25%;">${member.email }&nbsp;&nbsp;  </span>
+			<span class="label-right" style="width: 25%;">&nbsp;&nbsp;
+			<c:if test="${member.grouptype==1 }">流动党员</c:if>
+			<c:if test="${member.grouptype==2 }">离退休党员</c:if>
+			</span>
+		</div>
+		</c:forEach>
+	</div>
+	
+</body>
+</html>

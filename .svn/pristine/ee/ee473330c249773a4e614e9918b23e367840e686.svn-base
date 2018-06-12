@@ -1,0 +1,153 @@
+package com.gsccs.cms.core.service.impl;
+
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.core.dao.ChannelMapper;
+import com.gsccs.cms.core.dao.RoleWxAppMapper;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.ChannelExample;
+import com.gsccs.cms.core.model.RoleWxapp;
+import com.gsccs.cms.core.model.RoleWxappExample;
+import com.gsccs.cms.core.model.RoleWxappExample.Criteria;
+import com.gsccs.cms.core.service.RoleWxAppService;
+import com.gsccs.cms.weixin.dao.WxAppMapper;
+
+@Service("roleWxAppService")
+public class RoleWxappServiceImpl implements RoleWxAppService {
+
+	@Resource
+	private RoleWxAppMapper roleWxAppMapper;
+	@Resource
+	private WxAppMapper wxAppMapper;
+
+	/**
+	 * 根据角色删除
+	 * 
+	 * @param roleid
+	 */
+	public void delByRole(String roleid) {
+		RoleWxappExample example = new RoleWxappExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andRoleidEqualTo(roleid);
+		roleWxAppMapper.deleteByExample(example);
+	}
+
+	/**
+	 * 根据角色删除
+	 * 
+	 * @param roleid
+	 */
+	public void delByRoleSite(String roleid, String siteid) {
+		RoleWxappExample example = new RoleWxappExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andRoleidEqualTo(roleid);
+		criteria.andSql(" wxappid in (select id from cms_channel where site='"
+				+ siteid + "') ");
+		roleWxAppMapper.deleteByExample(example);
+	}
+
+	/**
+	 * 保存
+	 * 
+	 * @param roleid
+	 * @param wxappid
+	 */
+	public void save(String roleid, String wxappid) {
+		RoleWxapp roleapp = new RoleWxapp();
+		roleapp.setId(UUID.randomUUID().toString());
+		roleapp.setRoleid(roleid);
+		roleapp.setWxappid(wxappid);
+		roleWxAppMapper.insert(roleapp);
+	}
+
+	/**
+	 * 判断是否有权限
+	 * 
+	 * @param roleid
+	 * @param wxappid
+	 */
+	public boolean have(String roleid, String wxappid) {
+		RoleWxappExample example = new RoleWxappExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andRoleidEqualTo(roleid);
+		criteria.andWxappidEqualTo(wxappid);
+		return roleWxAppMapper.countByExample(example) > 0;
+	}
+
+	/**
+	 * 判断是否有权限
+	 * 
+	 * @param roleid
+	 * @param wxappid
+	 */
+	public boolean haves(String roles, String wxappid) {
+		RoleWxappExample example = new RoleWxappExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andSql(" roleid in (" + roles + ") ");
+		criteria.andWxappidEqualTo(wxappid);
+		return roleWxAppMapper.countByExample(example) > 0;
+	}
+
+	/**
+	 * 生成授权树
+	 * 
+	 * @param roleid
+	 * @return
+	 */
+	public String createTreeSon(HttpServletRequest request, List<Channel> list,
+			String pid, String roleid, StringBuffer html, int treeItemLevel,
+			String pidpath) {
+		if (StringUtils.isNotEmpty(roleid)) {
+			// 生成子级
+			if (list != null && list.size() > 0) {
+				boolean hasChildren = false;
+				for (int i = 0; i < list.size(); i++) {
+					if (pid.equals((list.get(i).getParid()))) {
+						hasChildren = false;
+						html.append("<tr treeItemLevel='" + treeItemLevel
+								+ "'>");
+						html.append("<td><input "
+								+ (have(roleid, list.get(i).getId()) ? "checked"
+										: "") + " onclick='treeIdCheck(\""
+								+ pidpath + "_" + list.get(i).getId()
+								+ "\")'  type='checkbox' name='ids' value='"
+								+ list.get(i).getId() + "' id='" + pidpath
+								+ "_" + list.get(i).getId() + "'/></td>");
+						html.append("<td>");
+						for (int j = 1; j < treeItemLevel; j++) {
+							html.append("<img align='absmiddle' src='"
+									+ request.getContextPath()
+									+ "/static/tree/image/empty.gif' />");
+						}
+						
+						html.append("<img align='absmiddle' border='0' src='"
+								+ request.getContextPath()
+								+ "/static/tree/image/folder.gif' />&nbsp;");
+						html.append(list.get(i).getName());
+						html.append("</td></tr>");
+						if (hasChildren) {
+							// 处理子级
+							createTreeSon(request, list, list.get(i).getId(),
+									roleid, html, treeItemLevel + 1, pidpath
+											+ "_" + list.get(i).getId());
+						}
+					}
+				}
+			}
+		}
+		return html.toString();
+	}
+
+	@Override
+	public void delByRoleApp(String roleid, String appid) {
+		
+	}
+
+}

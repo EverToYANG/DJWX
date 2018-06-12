@@ -1,0 +1,171 @@
+package com.gsccs.cms.controller.member;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.member.model.Memberauth;
+import com.gsccs.cms.member.service.MemberauthService;
+
+/**
+ * 会员权限管理相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/member")
+public class MemberauthController extends CmsBaseController {
+
+	@Resource
+	private MemberauthService memberauthService;
+
+	/**
+	 * 会员权限管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/auth.do")
+	public String memberauth(Memberauth memberauth,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = "") String order, ModelMap map,
+			HttpServletResponse response){
+		List<Memberauth> memberauthList = null;
+		if (memberauth == null) {
+			memberauth = new Memberauth();
+		}
+		if (order.trim().length() == 0) {
+			order = " ordernum ";
+		}
+		memberauthList = memberauthService.find(memberauth, order, currPage,
+				pageSize);
+		int totalCount = memberauthService.count(memberauth);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("code");
+		pager.appendParam("order" + order);
+		pager.appendParam("pageSize" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+
+		pager.setOutStrBootstrap("member/auth.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", memberauthList);
+		map.put("order", order);
+		return "member/auth";
+	}
+
+	/**
+	 * 会员权限编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/authEdit.do")
+	public String memberauthEdit(Memberauth memberauth, ModelMap map,
+			HttpServletResponse response){
+		if (memberauth != null && memberauth.getId() != null
+				&& memberauth.getId().trim().length() > 0) {
+			memberauth = memberauthService.findById(memberauth.getId());
+			map.put("memberauth", memberauth);
+		}
+		return "member/authEdit";
+	}
+
+	/**
+	 * 会员权限编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/authEditDo.do")
+	public String memberauthEditDo(Memberauth memberauth, ModelMap map,
+			HttpServletResponse response){
+
+		String oper = "添加";
+		try {
+			if (memberauth != null && memberauth.getId() != null) {
+				Memberauth oldMemberauth = memberauthService
+						.findById(memberauth.getId());
+				if (oldMemberauth != null) {
+					oldMemberauth.setName(memberauth.getName());
+					oldMemberauth.setCode(memberauth.getCode());
+					oldMemberauth.setOrdernum(memberauth.getOrdernum());
+					oper = "修改";
+					memberauthService.update(oldMemberauth);
+				} else {
+					// 添加
+					memberauthService.add(memberauth);
+				}
+			} else {
+				// 添加
+				memberauthService.add(memberauth);
+			}
+			oper += "会员权限(" + memberauth.getName() + ")成功!";
+		} catch (Exception e) {
+			oper += "会员权限(" + memberauth.getName() + ") 失败:" + e.toString()
+					+ "!";
+		}
+		operlogService.log(getLoginName(), oper, request);
+		map.put("msg", oper);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 会员权限删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/authDel.do")
+	public String memberauthDel(String pageFuncId, String ids, ModelMap map,
+			HttpServletResponse response){
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Memberauth memberauth = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							memberauth = memberauthService.findById(idArr[i]);
+							if (memberauth != null) {
+								memberauthService.del(memberauth.getId());
+								sb.append(idArr[i] + ";");
+								operlogService.log(getLoginName(), "删除会员权限成功:"
+										+ memberauth.getName(), request);
+							}
+						} catch (Exception e) {
+							operlogService.log(getLoginName(),
+									"删除会员权限失败:" + memberauth.getName() + " "
+											+ e.getMessage(), request);
+						}
+
+					}
+				}
+			}
+
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "member/auth.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+
+	}
+
+}

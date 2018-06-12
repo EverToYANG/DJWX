@@ -1,0 +1,19 @@
+jdbcUrl = jdbc:mysql://117.156.25.129:3306/pcdj_wx_db?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+user = root
+password =gsccs@2016
+devMode = true
+
+
+#本项目中微信公众号信息均从数据库中加载
+# 微信服务器回调所用的 token
+token=__my__token__
+
+# 测试用的账号
+appId=wx5378bb816fde866b
+appSecret=19cf6586c2807778fed85a8ce50edfe9
+
+#是否对消息进行加密，是否对消息进行加密，对应于微信平台的消息加解密方式，false支持明文模式及兼容模式，true支持安全模式及兼容模式
+#encryptMessage=false
+#encodingAesKey=yourEncodingAesKey
+
+

@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.gsccs.cms</groupId>
+		<artifactId>cms-wx-master</artifactId>
+		<version>4.0-wx-SNAPSHOT</version>
+	</parent>
+	<artifactId>cms-auth</artifactId>
+	<name>cms-auth</name>
+	<properties>
+	</properties>
+	<dependencies>
+
+		<dependency>
+			<groupId>com.gsccs.cms</groupId>
+			<artifactId>cms-bass</artifactId>
+			<version>${project.parent.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>${mybatis.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>${mybatis-spring.version}</version>
+		</dependency>
+
+
+		<!-- shiro -->
+		<dependency>
+			<groupId>org.apache.shiro</groupId>
+			<artifactId>shiro-all</artifactId>
+			<version>${shiro.version}</version>
+		</dependency>
+
+		<!-- 加入ehcache -->
+		<dependency>
+			<groupId>net.sf.ehcache</groupId>
+			<artifactId>ehcache-core</artifactId>
+			<version>${ehcache.core.version}</version>
+		</dependency>
+		
+		
+		<!-- 加入spring web依赖包 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		
+		<!-- 加入spring mvc依赖包 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.google.code.kaptcha</groupId>
+			<artifactId>kaptcha</artifactId>
+			<version>2.3.2</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/kaptcha-2.3.2.jar</systemPath>
+		</dependency>
+		
+		
+	</dependencies>
+
+	<build>
+		<finalName>cms-auth</finalName>
+		<plugins>
+			<!-- 编译的时候使用JDK6和UTF8编码 -->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+
+</project>

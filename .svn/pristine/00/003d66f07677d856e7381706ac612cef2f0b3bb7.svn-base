@@ -1,0 +1,73 @@
+package com.gsccs.cms.controller.weixin;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.Site;
+
+/**
+ * 手机访问channel，info的控制类
+ * 
+ * @author 刘杰
+ *
+ * @date 2016年9月25日
+ */
+
+@Controller
+@RequestMapping("/phoneWeb")
+public class WxPhoneWebController extends CmsBaseController {
+	
+	@Resource
+	private com.gsccs.cms.core.service.SiteService siteService;
+	@Resource
+	private com.gsccs.cms.core.service.ChannelService channelService;
+	@Resource
+	private com.gsccs.cms.core.service.ContentService contentService;
+	
+	@RequestMapping("/channel.do")
+	public String getChannel(String id,ModelMap model){
+		if(StringUtils.isNotEmpty(id)){
+			Channel channel=channelService.findById(id);
+			Site site=siteService.findById(channel.getSite());
+			model.put("channel", channel);
+			model.put("site", site);
+		}
+		return "phoneWeb/channel";
+	}
+	
+	@RequestMapping("/info.do")
+	public String getInfo(String id,ModelMap model){
+		if(StringUtils.isNotEmpty(id)){
+			Content info=contentService.findById(id);
+			Site site=siteService.findById(info.getSite());
+			model.put("info", info);
+			model.put("site", site);
+		}
+		return "phoneWeb/info";
+	}
+	
+	
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

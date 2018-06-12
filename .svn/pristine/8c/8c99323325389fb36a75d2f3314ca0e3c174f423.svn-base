@@ -1,0 +1,248 @@
+package com.gsccs.cms.controller.core;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.module.model.Report;
+import com.gsccs.cms.module.service.ReportService;
+
+/**
+ * 在线申报
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+public class ReportController extends CmsBaseController {
+
+	@Resource
+	private ReportService reportService;
+	@Resource
+	private UserService userService;
+
+	/**
+	 * 列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/report.do")
+	public String report(@CurrentUser Users user, Report report,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize, ModelMap map,
+			HttpServletResponse response){
+		if (report == null) {
+			report = new Report();
+		}
+		List<Report> reportList = reportService.find(report, order, currPage,
+				pageSize, false);
+		int totalCount = reportService.count(report, false);
+
+		Pager pager = new Pager(request);
+		pager.appendParam("querycode");
+		pager.appendParam("name");
+		pager.appendParam("issuer");
+		pager.appendParam("linkman");
+		pager.appendParam("state");
+		pager.appendParam("userid");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("report.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", reportList);
+		map.put("order", order);
+		map.put("report", report);
+
+		return "cms/report";
+	}
+
+	/**
+	 * 转交 页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/reportForward.do")
+	public String reportForward(Report report, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		Users user = new Users();
+		List<Users> userList = userService.find(user, false);
+		map.put("userList", userList);
+		map.put("report", report);
+		return "cms/reportForward";
+	}
+
+	/**
+	 * 转交
+	 * 
+	 * @return
+	 */
+
+	@RequestMapping("/reportForwardDo.do")
+	public String reportForwardDo(Report report, String forwardtype,
+			ModelMap map, HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (report != null && report.getId() != null
+				&& report.getId().trim().length() > 0) {
+			Report updateReport = new Report();
+			updateReport.setId(report.getId());
+			// 设置流转流程
+			Report oldreport = reportService.findById(report.getId());
+			String proflow = "";
+			if (oldreport.getProflow() == null
+					|| oldreport.getProflow().trim().length() == 0) {
+				if (oldreport.getUserid() != null
+						&& oldreport.getUserid().trim().length() > 0) {
+					Users user = userService.findById(oldreport.getUserid());
+					if (user != null) {
+						proflow = user.getName();
+					}
+				} else {
+					proflow = "其他";
+				}
+			} else {
+				proflow = oldreport.getProflow();
+			}
+			proflow += " --> ";
+			String toname = "";
+			updateReport.setUserid(report.getUserid());
+			if (report.getUserid() != null
+					&& report.getUserid().trim().length() > 0) {
+				Users user = userService.findById(report.getUserid());
+				if (user != null) {
+					proflow += user.getName();
+					toname = user.getName();
+				}
+			} else {
+				proflow += "其他";
+			}
+			updateReport.setProflow(proflow);
+			try {
+				reportService.update(updateReport);
+				msg = "申报项目 " + oldreport.getName() + " 转交给 " + toname;
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "申报项目 " + oldreport.getName() + " 转交给 " + toname
+						+ " 时失败:" + e.getMessage();
+			} finally {
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 办理 页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/reportPro.do")
+	public String reportPro(Report report, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (report != null && report.getId() != null
+				&& report.getId().trim().length() > 0) {
+			report = reportService.findById(report.getId());
+		}
+		map.put("report", report);
+		return "cms/reportPro";
+	}
+
+	/**
+	 * 办理
+	 * 
+	 * @return
+	 */
+
+	@RequestMapping("/reportProDo.do")
+	public String reportProDo(Report report, String pageFuncId, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (report != null && report.getId() != null
+				&& report.getId().trim().length() > 0) {
+			Report updatereport = new Report();
+			updatereport.setId(report.getId());
+			updatereport.setRecontent(report.getRecontent());
+			updatereport.setRetime(new Date());
+			updatereport.setState("1");
+			Report oldreport = reportService.findById(report.getId());
+			try {
+				reportService.update(updatereport);
+				msg = oldreport.getName() + " 申报项目办结成功 ";
+				map.put("forwardSeconds", 3);
+			} catch (Exception e) {
+				map.put("forwardSeconds", 0);
+				e.printStackTrace();
+				msg = oldreport.getName() + " 申报项目办结时失败:" + e.getMessage();
+			} finally {
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "report.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @return
+	 */
+
+	@RequestMapping("/reportDel.do")
+	public String reportDel(String ids, String pageFuncId, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Report report = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							report = reportService.findById(idArr[i]);
+							if (report != null) {
+								reportService.del(report.getId());
+								sb.append(idArr[i] + ";");
+								msg = "删除申报项目(" + report.getName() + ")成功!";
+								map.put("forwardSeconds", 3);
+							}
+						} catch (Exception e) {
+							map.put("forwardSeconds", 0);
+							e.printStackTrace();
+							msg = "删除申报项目(" + report.getName() + ")失败:"
+									+ e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "report.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+}

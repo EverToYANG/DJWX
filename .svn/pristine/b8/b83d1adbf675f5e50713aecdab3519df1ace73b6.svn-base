@@ -1,0 +1,17 @@
+package com.gsccs.cms.course.service;
+
+import com.gsccs.cms.course.model.CourseUser;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月22日
+ */
+
+public interface CourseUserService {
+	
+	public int add(CourseUser courseUser);
+	
+	public int delById(String id);
+}
+

@@ -1,0 +1,258 @@
+package com.gsccs.cms.member.model;
+
+import java.util.Date;
+import java.util.List;
+
+import com.gsccs.cms.bass.utils.DateUtil;
+
+public class Member {
+
+	// 会员ID
+	private String id;
+	// 微信ID
+	private String wxopenid;
+	// 分组类型
+	private Integer grouptype;
+	// 分组名称
+	private String groupname;
+	private String groupcolor;
+	// 分组ID
+	private String groupid;
+	private List<String> groupids;
+	private String name;
+	// 入党时间
+	private Date addtime;
+	private String wxappid;
+	private String sex;
+	private Date birthday;
+
+	// 党员ID
+	private String partyid;
+	private String phone;
+	private String email;
+	private String isok;
+	private String isokStr;
+	private Date lastlogintime;
+
+	private String intro;
+	private Integer credit;
+	private Integer experience;
+	private String img;
+	private String idcode;
+
+	private String birthdayStr;
+	private String lastlogintimeStr;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id == null ? null : id.trim();
+	}
+
+	public Integer getGrouptype() {
+		return grouptype;
+	}
+
+	public void setGrouptype(Integer grouptype) {
+		this.grouptype = grouptype;
+	}
+
+	public String getGroupid() {
+		return groupid;
+	}
+
+	public void setGroupid(String groupid) {
+		this.groupid = groupid == null ? null : groupid.trim();
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name == null ? null : name.trim();
+	}
+
+	public String getWxappid() {
+		return wxappid;
+	}
+
+	public void setWxappid(String wxappid) {
+		this.wxappid = wxappid;
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex == null ? null : sex.trim();
+	}
+
+	public Date getBirthday() {
+		return birthday;
+	}
+
+	public void setBirthday(Date birthday) {
+		this.birthday = birthday;
+	}
+
+	public String getPartyid() {
+		return partyid;
+	}
+
+	public void setPartyid(String partyid) {
+		this.partyid = partyid;
+	}
+
+	public Date getAddtime() {
+		return addtime;
+	}
+
+	public void setAddtime(Date addtime) {
+		this.addtime = addtime;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email == null ? null : email.trim();
+	}
+
+	public String getIsok() {
+		return isok;
+	}
+
+	public void setIsok(String isok) {
+		this.isok = isok == null ? null : isok.trim();
+	}
+
+	public Date getLastlogintime() {
+		return lastlogintime;
+	}
+
+	public void setLastlogintime(Date lastlogintime) {
+		this.lastlogintime = lastlogintime;
+	}
+
+	public String getIntro() {
+		return intro;
+	}
+
+	public void setIntro(String intro) {
+		this.intro = intro == null ? null : intro.trim();
+	}
+
+	public Integer getCredit() {
+		return credit;
+	}
+
+	public void setCredit(Integer credit) {
+		this.credit = credit;
+	}
+
+	public Integer getExperience() {
+		return experience;
+	}
+
+	public void setExperience(Integer experience) {
+		this.experience = experience;
+	}
+
+	public String getImg() {
+		return img;
+	}
+
+	public void setImg(String img) {
+		this.img = img == null ? null : img.trim();
+	}
+
+	public String getBirthdayStr() {
+		if (birthday != null) {
+			birthdayStr = DateUtil.format(birthday, "yyyy-MM-dd");
+		}
+		return birthdayStr;
+	}
+
+	public void setBirthdayStr(String birthdayStr) {
+		this.birthdayStr = birthdayStr;
+	}
+
+	public String getGroupname() {
+		return groupname;
+	}
+
+	public void setGroupname(String groupname) {
+		this.groupname = groupname;
+	}
+
+	public String getIsokStr() {
+		if ("1".equals(isok)) {
+			isokStr = "是";
+		} else {
+			isokStr = "否";
+		}
+		return isokStr;
+	}
+
+	public void setIsokStr(String isokStr) {
+		this.isokStr = isokStr;
+	}
+
+	public String getLastlogintimeStr() {
+		if (lastlogintime != null) {
+			lastlogintimeStr = DateUtil.format(lastlogintime,
+					"yyyy-MM-dd HH:mm");
+		}
+		return lastlogintimeStr;
+	}
+
+	public void setLastlogintimeStr(String lastlogintimeStr) {
+		this.lastlogintimeStr = lastlogintimeStr;
+	}
+
+	public String getGroupcolor() {
+		return groupcolor;
+	}
+
+	public void setGroupcolor(String groupcolor) {
+		this.groupcolor = groupcolor;
+	}
+
+	public List<String> getGroupids() {
+		return groupids;
+	}
+
+	public void setGroupids(List<String> groupids) {
+		this.groupids = groupids;
+	}
+
+	public String getWxopenid() {
+		return wxopenid;
+	}
+
+	public void setWxopenid(String wxopenid) {
+		this.wxopenid = wxopenid;
+	}
+
+	public String getIdcode() {
+		return idcode;
+	}
+
+	public void setIdcode(String idcode) {
+		this.idcode = idcode;
+	}
+
+}

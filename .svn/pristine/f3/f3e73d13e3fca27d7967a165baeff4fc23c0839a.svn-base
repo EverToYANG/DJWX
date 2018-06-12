@@ -1,0 +1,63 @@
+package com.gsccs.cms.core.service.impl;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.bass.utils.FreeMarkerUtil;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.NginxConfService;
+import com.gsccs.cms.core.util.CmsConst;
+
+import freemarker.template.TemplateException;
+/**
+ * 
+ * web服务器nginx 配置服务
+ * @author niu x j
+ *
+ */
+@Service("nginxConfService")
+public class NginxConfServiceImpl implements NginxConfService {
+
+	@Resource
+	private ConfigService configService;
+	
+	public void nginxConf(Site site)
+			throws IOException, TemplateException {
+		
+		//&& site.getSitedomain().trim().length() > 0
+		if(site !=null  && site.getSourcepath().trim().length() > 0){
+			
+			Config sitePathConfig = configService
+					.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+			String rootPath = sitePathConfig.getCodeval();
+			
+			Config nginxPathConfig = configService
+					.findByCode(CmsConst.NGINX_PATH_CODE);
+			String nginxPath = nginxPathConfig.getCodeval();
+			
+			Map<String, Object> data = new HashMap<String, Object>();
+			// 传递site参数
+			data.put("site", site);
+			data.put("rootPath", rootPath);
+	
+			//生成host.conf
+			String nginxTempPath = rootPath + File.separator + "templet" + 
+			File.separator + "nginxtemp" +File.separator;
+			File dir = new File(nginxTempPath);
+			String templetPath = "host.conf";
+			String htmlfile =nginxPath + File.separator + site.getSourcepath()+"_host.conf";
+			FreeMarkerUtil.createHTML(dir, data, templetPath, htmlfile);
+			//判断 执行  shell 脚本
+			
+		}
+		
+	}
+}

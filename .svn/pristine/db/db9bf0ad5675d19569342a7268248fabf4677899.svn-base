@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="cms-web">
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
+        <wb-resource deploy-path="/" source-path="/target/m2e-wtp/web-resources"/>
+        <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
+        <dependent-module archiveName="cms-bass-4.0-wx-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cms-bass/cms-bass">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cms-auth-4.0-wx-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cms-auth/cms-auth">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cms-core-4.0-wx-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cms-core/cms-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cms-gis-4.0-wx-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cms-gis/cms-gis">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cms-weixin-4.0-wx-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cms-weixin/cms-weixin">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <property name="java-output-path" value="/cms-web Maven Webapp/src/main/webapp/src/main/java"/>
+        <property name="context-root" value="cms-web"/>
+    </wb-module>
+</project-modules>

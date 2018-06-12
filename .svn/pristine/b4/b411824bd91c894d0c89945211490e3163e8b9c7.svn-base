@@ -1,0 +1,1128 @@
+package com.gsccs.cms.controller.core;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.bass.utils.FreeMarkerUtil;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.bass.utils.ShellScript;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Htmlquartz;
+import com.gsccs.cms.core.model.RoleSite;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Templet;
+import com.gsccs.cms.core.model.TempletSite;
+import com.gsccs.cms.core.service.HtmlquartzService;
+import com.gsccs.cms.core.service.NginxConfService;
+import com.gsccs.cms.core.service.RoleSiteService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.TempletChannelService;
+import com.gsccs.cms.core.service.TempletLinkService;
+import com.gsccs.cms.core.service.TempletService;
+import com.gsccs.cms.core.service.TempletSiteService;
+import com.gsccs.cms.core.util.CmsConst;
+
+/**
+ * 站点相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/cms")
+public class SiteController extends CmsBaseController {
+
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private TempletService templetService;
+	@Resource
+	private TempletChannelService templetChannelService;
+	@Resource
+	private RoleSiteService roleSiteService;
+	@Resource
+	private TempletSiteService templetSiteService;
+
+	/**
+	 * 未选择管理站点提示
+	 * 
+	 * @param type
+	 * @param map
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping("/siteNoSelect.do")
+	public String siteNoSelect(ModelMap map, HttpServletResponse response) {
+		return "cms/siteNoSelect";
+	}
+
+	/**
+	 * 添加分页 未完成
+	 */
+	@RequestMapping("/site.do")
+	public String site(@CurrentUser Users user, String type, Site site1,
+			@RequestParam(defaultValue = " orderNum ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize, ModelMap map,
+			HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		List<Site> siteList = null;
+		Config sitePathConfig = configService
+				.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+		String siteRoot = sitePathConfig.getCode();
+		SimpleDateFormat df = new SimpleDateFormat("0.00");
+
+		if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+			// 提取一级站点
+			// siteList = siteService.selectByParId("");
+			siteList = siteService.selectByParId("", site1, order, currPage,
+					pageSize);
+			// 判断是否有下级站点
+			if (siteList != null && siteList.size() > 0) {
+				for (Site site : siteList) {
+					siteRoot = siteRoot + File.separator + site.getSourcepath();
+					File siteFolder = new File(siteRoot);
+					Long siteSize = FileUtil.getDirSize(siteFolder);
+					float siteSize_ = (float) ((siteSize + 0.0) / (1024 * 1024));
+
+					site.setSiteSizeStr(df.format(siteSize_) + " M");
+					if (siteService.hasChildren(site.getId())) {
+						site.setHasChildren("true");
+					}
+				}
+			}
+		} else {
+			// 普通用户只提取有自己有权限的站点
+			siteList = siteService.selectByRoles(site1, getLoginRoleIdsSql());
+			for (Site site : siteList) {
+				siteRoot = siteRoot + File.separator + site.getSourcepath();
+				File siteFolder = new File(siteRoot);
+				Long siteSize = FileUtil.getDirSize(siteFolder);
+				float siteSize_ = (float) ((siteSize + 0.0) / (1024 * 1024));
+				site.setSiteSizeStr(df.format(siteSize_) + " M");
+			}
+		}
+		// Site site = new Site();
+		int totalCount = siteService.count(site1);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("site.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+
+		map.put("siteList", siteList);
+		map.put("isSysAdmin", subject.hasRole(AuthConst.SYS_ADMIN));
+
+		if ("siteSelectPage".equals(type)) {
+			return "cms/siteSelectPage";
+		}
+		return "cms/site";
+	}
+
+	/**
+	 * 站点选择页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteSelect.do")
+	public String siteSelect(String type,
+			ModelMap map, HttpServletResponse response) {
+		List<Site> siteList = null;
+		Subject subject = SecurityUtils.getSubject();
+		if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+			// 提取一级站点
+			siteList = siteService.selectByParId("");
+			// 判断是否有下级站点
+			if (siteList != null && siteList.size() > 0) {
+				for (Site site : siteList) {
+					if (siteService.hasChildren(site.getId())) {
+						site.setHasChildren("true");
+					}
+				}
+			}
+		} else {
+			// 普通用户只提取有自己有权限的站点
+			siteList = siteService.selectByRoles(getLoginRoleIdsSql());
+		}
+		map.put("siteList", siteList);
+		map.put("isSysAdmin", subject.hasRole(AuthConst.SYS_ADMIN));
+		return "cms/siteSelectPage";
+	}
+
+	/**
+	 * 站点选择页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteQuery.json")
+	@ResponseBody
+	public List<Site> siteQuery(@CurrentUser Users user, String title,
+			ModelMap map,
+			@RequestParam(defaultValue = " orderNum ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize) {
+		Subject subject = SecurityUtils.getSubject();
+		List<Site> siteList = null;
+
+		if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+			// 提取一级站点
+			Site site = new Site();
+			site.setName(title);
+			siteList = siteService.find(site, order, currPage, pageSize);
+		} else {
+			// 普通用户只提取有自己有权限的站点
+			siteList = siteService.selectByRoles(getLoginRoleIdsSql());
+		}
+		return siteList;
+	}
+
+	/**
+	 * 选择站点，多选
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteCheck.do")
+	public String siteCheck(String selectSiteIds, ModelMap map,
+			HttpServletResponse response) {
+		map.put("treeHtml", siteService.createTree(request, selectSiteIds));
+		return "cms/siteCheck";
+	}
+
+	/**
+	 * 提取下级站点
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteSelectSon.do")
+	public String siteSelectSon(String pid, String plevel, String type,
+			ModelMap map, HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(pid) && StringUtils.isNotEmpty(plevel)) {
+			// 提取子菜单
+			List<Site> list = siteService.selectByParId(pid);
+			if (list != null && list.size() > 0) {
+				for (int i = 0; i < list.size(); i++) {
+					if (siteService.hasChildren(list.get(i).getId())) {
+						list.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("sites", list);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/siteSelectPageSon";
+	}
+
+	/**
+	 * 站点切换
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteSwitch.do")
+	public String siteSwitch(@CurrentUser Users user, String id, ModelMap map,
+			HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		// 先清除session变量
+		Site manageSite = null;
+		if (id != null && id.trim().length() > 0) {
+			// 指定管理站点
+			manageSite = siteService.findById(id);
+		}
+
+		// 站点路径
+		Config sitePathConfig = configService
+				.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+		String siteRoot = sitePathConfig.getCode();
+		request.getSession().setAttribute(AuthConst.CURRENT_SITE, siteRoot);
+		session.setAttribute(AuthConst.CURRENT_SITE, manageSite);
+		if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+			session.setAttribute("siteAdmin", true);
+		} else {
+			if (manageSite != null) {
+				// 判断是否是站点管理员
+				RoleSite roleSite = roleSiteService.findBySiteRoles(
+						manageSite.getId(), getLoginRoleIdsSql());
+				if (roleSite != null) {
+					session.setAttribute("siteAdmin", true);
+				}
+			}
+		}
+		map.put("autoCloseWindow", true);
+		map.put("autoRefresh", true);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 同步资源
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteSyncRes.do")
+	public String siteSyncRes(String siteId, String templetId, ModelMap map,
+			HttpServletResponse response) {
+
+		// if ( StringUtils.isNotEmpty(templetId)) {
+		if (StringUtils.isNotEmpty(siteId) && StringUtils.isNotEmpty(templetId)) {
+
+			Templet templet = templetService.findById(templetId);
+			Site site = siteService.findById(siteId);
+			if (site != null && templet != null) {
+				// 复制模板文件夹下resources文件夹到此站点
+				Config sitePathConfig = configService
+						.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+				String rootPath = sitePathConfig.getCode();
+				String sitePath = rootPath + File.separator
+						+ site.getSourcepath();
+
+				try {
+					FileUtil.copyDirectiory(sitePath + File.separator
+							+ "templet" + File.separator + templet.getId()
+							+ File.separator + "resources", sitePath
+							+ File.separator + "resources");
+
+					List<TempletSite> tsList = templetSiteService
+							.findBySiteAndTemplet(siteId, templetId);
+
+					site.setTemplet(templetId);
+					siteService.update(site);
+					/*
+					 * rootPath + "/" + site.getSourcepath() + "/templet/" +
+					 * templet.getId() + "/resources",
+					 * FileUtil.copyDirectiory(request.getRealPath("/") +
+					 * "/templet/" + templet.getId() + "/resources", sitePath +
+					 * "/resources");
+					 */
+					ResponseUtil.writeUTF(response, "同步资源成功");
+				} catch (IOException e) {
+					e.printStackTrace();
+					ResponseUtil.writeUTF(response, "同步资源失败:" + e.getMessage());
+				}
+			} else {
+				ResponseUtil.writeUTF(response, "同步资源失败:没有传递正确的参数");
+			}
+		} else {
+			ResponseUtil.writeUTF(response, "同步资源失败:没有传递正确的参数");
+		}
+		return null;
+	}
+
+	/**
+	 * 同步资源
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteCopyRes.do")
+	public String siteCopyRes(String siteId, String templetId, ModelMap map,
+			HttpServletResponse response){
+
+		// if ( StringUtils.isNotEmpty(templetId)) {
+		if (StringUtils.isNotEmpty(siteId) && StringUtils.isNotEmpty(templetId)) {
+
+			Templet templet = templetService.findById(templetId);
+			Site site = siteService.findById(siteId);
+			if (site != null && templet != null) {
+				// 复制模板文件夹下resources文件夹到此站点
+				Config sitePathConfig = configService
+						.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+				String rootPath = sitePathConfig.getCode();
+				String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+
+				try {
+
+					FileUtil.copyDirectiory(sitePath + File.separator
+							+ "templet" + File.separator + templet.getId()
+							+ File.separator + "resources", sitePath
+							+ File.separator + "resources");
+					ResponseUtil.writeUTF(response, "资源拷贝成功");
+				} catch (IOException e) {
+					e.printStackTrace();
+					ResponseUtil.writeUTF(response, "资源拷贝失败:" + e.getMessage());
+				}
+			} else {
+				ResponseUtil.writeUTF(response, "资源拷贝失败:没有传递正确的参数");
+			}
+		} else {
+			ResponseUtil.writeUTF(response, "资源拷贝失败:没有传递正确的参数");
+		}
+		return null;
+	}
+
+	/**
+	 * 配置页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteConfig.do")
+	public String siteConfig(ModelMap map, HttpServletResponse response){
+		map.put("site", siteService.findById(getWxApp().getAppId()));
+		return "cms/siteConfig";
+	}
+
+	/**
+	 * 配置
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteConfigDo.do")
+	public String siteConfigDo(
+			HttpServletRequest request,
+			Site site,
+			String pageFuncId,
+			@RequestParam(value = "logofile", required = false) MultipartFile logofile,
+			String htmlquartz_type, String htmlquartz_intervaltype,
+			String htmlquartz_exetimehour, String htmlquartz_exetimemin,
+			String htmlquartz_intervalmin, String htmlquartz_intervalhour,
+			String oldLogo, ModelMap map, HttpServletResponse response){
+		try {
+
+			if (ServletFileUpload.isMultipartContent(request)) {// 判断表单是否存在enctype="multipart/form-data"
+				Long fileSize = Long.valueOf(request
+						.getHeader("Content-Length"));
+				String id = request.getParameter("id");
+			}
+
+			if (site.getName() != null) {
+				site.setName(site.getName().replace("'", "‘")
+						.replace("\"", "“"));
+			}
+			if (site.getId() != null && site.getId().trim().length() > 0) {
+				Config sitePathConfig = configService
+						.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+				String rootPath = sitePathConfig.getCode();
+				String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+
+				// 更新
+				Site oldSite = siteService.findById(site.getId());
+				// 如果原来有和现在的logo不同则删除原来的logo文件
+				if (!oldLogo.equals(oldSite.getLogo())) {
+					if (oldSite.getLogo() != null
+							&& oldSite.getLogo().trim().length() > 0) {
+						FileUtil.del(request.getRealPath("/")
+								.replace("\\", "/") + oldSite.getLogo().trim());
+					}
+				} else {
+					site.setLogo(oldLogo);
+				}
+				if (logofile != null && logofile.getSize() > 0) {
+					// 生成目标文件
+					// String root = request.getRealPath("/").replace("\\",
+					// "/");
+
+					String ext = FileUtil
+							.getExt(logofile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "LOGO只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(sitePath + "/upload/"
+							+ site.getId() + "/" + id + ext);
+					File folder = new File(sitePath + "/upload/" + site.getId()
+							+ "/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(logofile, targetFile);
+					// 生成访问地址
+					site.setLogo("/upload/" + site.getId() + "/" + id + ext);
+				}
+
+				if (site.getTemplet() != null
+						&& site.getTemplet().trim().length() > 0
+						&& !site.getTemplet().equals(oldSite.getTemplet())) {
+					Templet templet = templetService
+							.findById(site.getTemplet());
+					if (templet != null) {
+						// 复制模板文件夹下resources文件夹到此站点
+						try {
+							FileUtil.copyDirectiory(sitePath + "/templet/"
+									+ templet.getId() + "/resources", sitePath
+									+ "/resources");
+
+							/*
+							 * FileUtil.copyDirectiory(request.getRealPath("/")
+							 * + "/templet/" + templet.getId() + "/resources",
+							 * sitePath + "/resources");
+							 */
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				siteService.update(site);
+				session.setAttribute(AuthConst.CURRENT_SITE, site);
+			}
+			msg = "站点设置 " + site.getName() + " 成功";
+			map.put("forwardSeconds", 3);
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = "站点设置 " + site.getName() + " 失败:" + e.getMessage();
+			map.put("forwardSeconds", 0);
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("forwardUrl", "siteConfig.do?pageFuncId=" + pageFuncId);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteEdit.do")
+	public String siteEdit(String pid, String id, ModelMap map,
+			HttpServletResponse response){
+		if (StringUtils.isNotEmpty(id)) {
+			Site site = siteService.findById(id);
+
+			// 设置模板名称
+			if (site.getTemplet() != null
+					&& site.getTemplet().trim().length() > 0) {
+				Templet templet = templetService.findById(site.getTemplet());
+				if (templet != null) {
+					site.setTempletName(templet.getName());
+				}
+			}
+			
+			// 编辑页面
+			map.put("site", site);
+		} else {
+			// 添加页面
+			Site site = new Site();
+			site.setParid(pid);
+			map.put("site", site);
+		}
+		return "cms/siteEdit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteEditDo.do")
+	public String siteEditDo(
+			HttpServletRequest request,
+			Site site,
+			@RequestParam(value = "logofile", required = false) MultipartFile logofile,
+			String htmlquartz_type, String htmlquartz_intervaltype,
+			String htmlquartz_exetimehour, String htmlquartz_exetimemin,
+			String htmlquartz_intervalmin, String htmlquartz_intervalhour,
+			String oldLogo, ModelMap map, HttpServletResponse response)
+			{
+		String oper = "添加";
+		try {
+			if (site.getName() != null) {
+				site.setName(site.getName().replace("'", "‘")
+						.replace("\"", "“"));
+			}
+			if (site.getOrdernum() == null) {
+				site.setOrdernum(siteService.maxNum(site.getParid()));
+			}
+
+			if (site.getSourcepath().trim().length() < 1) {
+				site.setSourcepath("site_"
+						+ siteService.maxNum(site.getParid()));
+			}
+
+			Config sitePathConfig = configService
+					.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+			String rootPath = sitePathConfig.getCode();
+
+			Config tmplRootConfig = configService
+					.findByCode(CmsConst.TEMPL_ROOT_PATH_CODE);
+			String tmplRoot = tmplRootConfig.getCode();
+
+			if (site.getId() != null && site.getId().trim().length() > 0) {
+				String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+				oper = "更新";
+				// 更新
+				Site oldSite = siteService.findById(site.getId());
+				// 如果原来有和现在的logo不同则删除原来的logo文件
+				if (!oldLogo.equals(oldSite.getLogo())) {
+					if (oldSite.getLogo() != null
+							&& oldSite.getLogo().trim().length() > 0) {
+						FileUtil.del(request.getRealPath("/")
+								.replace("\\", "/") + oldSite.getLogo().trim());
+					}
+				} else {
+					site.setLogo(oldLogo);
+				}
+				if (logofile != null && logofile.getSize() > 0) {
+					// 生成目标文件
+					// String root = request.getRealPath("/").replace("\\",
+					// "/");
+					String ext = FileUtil
+							.getExt(logofile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "LOGO只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(rootPath + "/upload/"
+							+ site.getId() + "/" + id + ext);
+					File folder = new File(rootPath + "/upload/" + site.getId()
+							+ "/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(logofile, targetFile);
+					// 生成访问地址
+					site.setLogo("/upload/" + site.getId() + "/" + id + ext);
+				}
+				if (site.getTemplet() != null
+						&& site.getTemplet().trim().length() > 0
+						&& !site.getTemplet().equals(oldSite.getTemplet())) {
+					Templet templet = templetService
+							.findById(site.getTemplet());
+					if (templet != null) {
+						// 复制模板文件夹下resources文件夹到此站点
+						try {
+							FileUtil.copyDirectiory(sitePath + "/templet/"
+									+ templet.getId() + "/resources", sitePath
+									+ "/resources");
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				// site.getSitedomain().startsWith("http://") ?
+				// site.getSitedomain():"http://"+site.getSitedomain();
+				String siteDomain = site.getSitedomain().startsWith("http://") ? site
+						.getSitedomain() : "http://" + site.getSitedomain();
+				site.setSitedomain(siteDomain);
+				siteService.update(site);
+				
+				operlogService.log(getLoginName(), "更新站点 " + site.getName(),
+						request);
+			} else {
+				// 添加
+
+				if (siteService.haveSourcePath(site.getSourcepath())) {
+					map.put("msg", "此源文件目录已存在!");
+					map.put("isBack", true);
+					return "admin/msg";
+				}
+				String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+
+				if (logofile != null && logofile.getSize() > 0) {
+					// 生成目标文件
+					// String root = request.getRealPath("/").replace("\\",
+					// "/");
+					String ext = FileUtil
+							.getExt(logofile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "LOGO只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(sitePath + "/upload/"
+							+ site.getId() + "/" + id + ext);
+					File folder = new File(sitePath + "/upload/" + site.getId()
+							+ "/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(logofile, targetFile);
+					// 生成访问地址
+					site.setLogo("/upload/" + site.getId() + "/" + id + ext);
+				}
+				// 创建源文件目录
+				FileUtil.mkdir(sitePath);
+				boolean isinit = false;
+				if (site.getTemplet() != null
+						&& site.getTemplet().trim().length() > 0) {
+					Templet templet = templetService
+							.findById(site.getTemplet());
+					if (templet != null) {
+						// 复制模板文件夹下resources文件夹到此站点
+						try {
+							FileUtil.copyDirectiory(sitePath + "/templet/"
+									+ templet.getId() + "/resources", sitePath
+									+ "/resources");
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				} else {
+					// 指定初始摸板
+					site.setTemplet("default");
+					site.setTempletName("默认摸板");
+				}
+				String siteId = UUID.randomUUID().toString();
+				site.setId(siteId);
+				String siteDomain = site.getSitedomain().startsWith("http://") ? site
+						.getSitedomain() : "http://" + site.getSitedomain();
+				site.setSitedomain(siteDomain);
+				//
+				siteService.insert(site);
+
+				// 复制默认模板，静态化
+				String defaultTmplDir = tmplRoot + File.separator + "default"
+						+ File.separator;
+				FileUtil.copyDirectiory(defaultTmplDir, sitePath
+						+ File.separator + "templet" + File.separator
+						+ "default" + File.separator);
+				// 复制资源文件
+				FileUtil.copyDirectiory(
+						sitePath + "/templet/default/resources", sitePath
+								+ "/resources");
+
+				// 添加配置关系
+				TempletSite ts = new TempletSite();
+				ts.setId(UUID.randomUUID().toString());
+				ts.setSiteid(siteId);
+				ts.setTempletid("default");
+				templetSiteService.insert(ts);
+
+				// 静态化
+				File dir = new File(sitePath + File.separator + "templet"
+						+ File.separator + "default" + File.separator);
+				if (!dir.exists()) {
+					dir.mkdir();
+				}
+				Map<String, Object> data = new HashMap<String, Object>();
+				data.put("site", site);
+				FreeMarkerUtil.createHTML(dir, data, "index.html", sitePath
+						+ "/index.html");
+
+				operlogService.log(getLoginName(), "添加站点 " + site.getName(),
+						request);
+				if (isinit) {
+					map.put("site", site);
+					return "cms/siteInit";
+				}
+			}
+			msg = oper + "站点 " + site.getName() + " 成功";
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = oper + "站点 " + site.getName() + " 失败:" + e.getMessage();
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 初始化站点
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteInit.do")
+	public String siteInit(Site site, ModelMap map, HttpServletResponse response) {
+		try {
+			if (site != null && site.getId() != null
+					&& site.getId().trim().length() > 0
+					&& site.getTemplet() != null
+					&& site.getTemplet().trim().length() > 0) {
+				site = siteService.findById(site.getId());
+				Templet templet = templetService.findById(site.getTemplet());
+				if (site != null && templet != null) {
+					templetChannelService.importSiteChannels(templet, site);
+				}
+			}
+			msg = "站点初始化成功";
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = "站点初始化失败:" + e.getMessage();
+		} finally {
+			map.put("isCloseWindow", true);
+			map.put("isRefresh", true);
+			map.put("msg", msg);
+			return "admin/msg";
+		}
+	}
+
+	/**
+	 * 转移页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteTree.do")
+	public String siteTree(ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		// 查询一级
+		List<Site> siteList = siteService.selectByParId("");
+		// 判断是否有下级站点
+		if (siteList != null && siteList.size() > 0) {
+			for (Site site : siteList) {
+				if (siteService.hasChildren(site.getId())) {
+					site.setHasChildren("true");
+				}
+			}
+		}
+		map.put("sites", siteList);
+		return "cms/siteTree";
+	}
+
+	/**
+	 * 子站点
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="site")
+	@RequestMapping("/siteSonTree.do")
+	public String siteSonTree(String pid, String plevel, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (StringUtils.isNotEmpty(pid) && StringUtils.isNotEmpty(plevel)) {
+			// 提取子菜单
+			List<Site> list = siteService.selectByParId(pid);
+			if (list != null && list.size() > 0) {
+				for (int i = 0; i < list.size(); i++) {
+					if (siteService.hasChildren(list.get(i).getId())) {
+						list.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("sites", list);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/siteSonTree";
+	}
+
+	/**
+	 * 站点转移处理
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/sitePar.do")
+	public String sitePar(String id, String pid, HttpServletRequest request,
+			ModelMap map, HttpServletResponse response){
+		String msg = "";
+		if (StringUtils.isNotEmpty(id)) {
+			Site site = siteService.findById(id);
+			if (StringUtils.isNotEmpty(pid)) {
+				Site parsite = siteService.findById(pid);
+				if (parsite != null) {
+					msg = "改变站点 " + site.getName() + " 的所属站点为 "
+							+ parsite.getName() + " ";
+				}
+			} else {
+				msg = "改变站点 " + site.getName() + " 的所属站点为 根站点 ";
+			}
+			if (site != null) {
+				try {
+					site.setParid(pid);
+					siteService.update(site);
+					msg += "成功!";
+				} catch (Exception e) {
+					msg += "失败:" + e.toString();
+				}
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 站点删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteDel.do")
+	public String siteDel(String pageFuncId, String ids, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Site site;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						site = siteService.findById(idArr[i]);
+						if (site != null) {
+							try {
+								siteService.del(idArr[i], request);
+								operlogService.log(getLoginName(), "删除站点成功:"
+										+ site.getName(), request);
+							} catch (Exception e) {
+								operlogService.log(
+										getLoginName(),
+										"删除站点失败:" + site.getName() + " "
+												+ e.getMessage(), request);
+							}
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "site.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 排序
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteOrder.do")
+	public String siteOrder(@CurrentUser Users user, String id, Site s,
+			String type, ModelMap map, HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			Site site = siteService.findById(id);
+			if (site != null) {
+				String msg = "";
+				try {
+					if ("up".equals(type)) {
+						msg += "上升";
+						siteService.up(site);
+					} else if ("down".equals(type)) {
+						msg += "下降";
+						siteService.down(site);
+					}
+				} catch (Exception e) {
+					msg += "站点 " + site.getName() + " 失败:" + e.toString();
+				}
+				msg += "站点 " + site.getName() + " 成功";
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		return site(user, "", s, " orderNum ", 1, 10, map, response);
+		// return site("", map, response);
+	}
+
+	/**
+	 * 建站向导页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteGuide.do")
+	public String siteGuide(ModelMap map, HttpServletResponse response){
+		return "cms/siteGuide";
+	}
+
+	/**
+	 * 建站向导 创建站点
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteGuideSite.do")
+	public String siteGuideSite(Site site, ModelMap map,
+			HttpServletResponse response){
+		// 添加
+		if (siteService.haveSourcePath(site.getSourcepath())) {
+			map.put("msg", "此源文件目录已存在!");
+			map.put("isBack", true);
+			return "admin/msg";
+		}
+		Config sitePathConfig = configService
+				.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+		String rootPath = sitePathConfig.getCode();
+		String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+
+		// 创建源文件目录
+		FileUtil.mkdir(sitePath);
+		site.setId(UUID.randomUUID().toString());
+		siteService.insert(site);
+		operlogService.log(getLoginName(), "添加站点 " + site.getName(), request);
+		return "cms/siteGuideTemplet";
+	}
+
+	/**
+	 * 建站向导 选择模板
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteGuideTemplet.do")
+	public String siteGuideTemplet(@CurrentUser Users user, Templet templet,
+			String siteid, String type, ModelMap map,
+			HttpServletResponse response){
+		if (StringUtils.isNotEmpty(siteid)) {
+			Site site = siteService.findById(siteid);
+			if (site != null) {
+				Config sitePathConfig = configService
+						.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+				String rootPath = sitePathConfig.getCode();
+				String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+
+				map.put("site", site);
+				if ("0".equals(type)) {
+					// 选择模板
+					site.setTemplet(templet.getId());
+				} else {
+					// 创建新模板
+					templet.setState("1");
+					templet.setAdduser(user.getId());
+					site.setTemplet(templetService.add(templet));
+					String realPath = request.getRealPath("/");
+					try {
+						FileUtil.copyDirectiory(realPath + "/templet/default",
+								realPath + "/templet/" + templet.getId());
+					} catch (IOException e) {
+						e.printStackTrace();
+						map.put("msg", "操作失败:" + e.getMessage());
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+				}
+				// 创建源文件目录
+				FileUtil.mkdir(sitePath);
+				boolean isinit = false;
+				if (site.getTemplet() != null
+						&& site.getTemplet().trim().length() > 0) {
+					templet = templetService.findById(site.getTemplet());
+					if (templet != null) {
+						// 复制模板文件夹下resources文件夹到此站点
+						try {
+							FileUtil.copyDirectiory(request.getRealPath("/")
+									+ "/templet/" + templet.getId()
+									+ "/resources", sitePath + "/resources");
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				siteService.update(site);
+				if (isinit) {
+					return "cms/siteGuideInit";
+				}
+				return siteGuideCompleted(siteid, map, response);
+			} else {
+				msg = "没有找到此站点";
+			}
+		} else {
+			msg = "没有传递站点id参数";
+		}
+		map.put("isBack", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 建站向导 初始化站点
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="siteGuide")
+	@RequestMapping("/siteGuideInit.do")
+	public String siteGuideInit(Site site, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		try {
+			if (site.getId() != null && site.getId().trim().length() > 0
+					&& site.getTemplet() != null
+					&& site.getTemplet().trim().length() > 0) {
+				site = siteService.findById(site.getId());
+				Templet templet = templetService.findById(site.getTemplet());
+				if (site != null && templet != null) {
+					templetChannelService.importSiteChannels(templet, site);
+				}
+			}
+			return siteGuideCompleted(site.getId(), map, response);
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = "站点初始化失败:" + e.getMessage();
+			map.put("msg", msg);
+			map.put("isBack", true);
+			return "admin/msg";
+		}
+	}
+
+	/**
+	 * 建站向导完成
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/siteGuideCompleted.do")
+	public String siteGuideCompleted(String siteid, ModelMap map,
+			HttpServletResponse response){
+		if (StringUtils.isNotEmpty(siteid)) {
+			Site site = siteService.findById(siteid);
+			map.put("site", site);
+			session.setAttribute(AuthConst.CURRENT_SITE, site);
+		}
+		return "cms/siteGuideCompleted";
+	}
+
+}

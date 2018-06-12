@@ -1,0 +1,109 @@
+package com.gsccs.cms.controller.core;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.search.service.IndexService;
+import com.gsccs.cms.search.service.QueryService;
+
+/**
+ * 全文检索相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller
+@RequestMapping("/solr")
+public class SolrController extends CmsBaseController {
+
+	@Resource
+	private IndexService indexService;
+	@Resource
+	private QueryService queryService;
+
+	/**
+	 * 索引优化管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/optimize.do")
+	public String info(ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		String msg = "优化索引";
+		try {
+			indexService.optimize();
+			msg = msg + "成功";
+		} catch (Exception e) {
+			msg = msg + "失败！";
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("isBack", true);
+		return "admin/msg";
+	}
+	
+	/**
+	 * 索引优化管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/index.do")
+	public String index(ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+
+		String msg = "索引创建";
+		try {
+			indexService.writeAllDoc();
+			
+			msg = msg + "成功";
+		} catch (Exception e) {
+			msg = msg + "失败！";
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("isBack", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 索引优化管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/search.do")
+	public String search(String key,String site,String channel, String startDate,String endDate,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+
+		String msg = "优化索引";
+		try {
+			List<Content> contentList = queryService.searchContent(key, site,
+					channel, startDate, endDate, currPage, pageSize);
+			
+			map.put("list", contentList);
+		} catch (Exception e) {
+			msg = msg + "失败！";
+		}
+		return "cms/searchInfoList";
+	}
+
+}

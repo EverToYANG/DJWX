@@ -1,0 +1,40 @@
+package com.gsccs.cms.member.service;
+
+import java.util.List;
+
+import com.gsccs.cms.member.model.MembergroupAuth;
+/**
+ * 会员组权限服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public interface MembergroupAuthService{
+
+	/**
+	 * 查询会员组下授权
+	 * @param groupid
+	 * @return
+	 */
+	public List<MembergroupAuth> findByGroup(String groupid);
+	/**
+	 * 删除会员组下授权
+	 * @param groupid
+	 * @return
+	 */
+	public void delByGroup(String groupid);
+	/**
+	 * 添加
+	 * @param question
+	 * @return
+	 */
+	public String add(MembergroupAuth membergroupAuth);
+	/**
+	 * 判断会员组是否有权限
+	 * @param groupid
+	 * @param authcode
+	 * @return
+	 */
+	public boolean hasAuth(String groupid,String authcode);
+}

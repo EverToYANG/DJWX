@@ -1,0 +1,130 @@
+package com.gsccs.cms.module.service;
+
+import java.util.List;
+
+import com.gsccs.cms.module.model.VoteItem;
+import com.gsccs.cms.module.model.VoteTopic;
+import com.gsccs.cms.module.model.VoteTopicExample.Criteria;
+
+/**
+ * 
+ * 网上调查服务类
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public interface VoteService {
+
+	/**
+	 * 分页查询
+	 */
+	public List<VoteTopic> find(VoteTopic vote, String order, int currPage,
+			int pageSize, boolean cache);
+
+	/**
+	 * 统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int count(VoteTopic vote, boolean cache);
+
+	/**
+	 * 处理查询条件
+	 * 
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(VoteTopic vote, Criteria criteria);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public VoteTopic findById(String id, boolean cache);
+
+	/**
+	 * 更新
+	 * 
+	 * @param vote
+	 */
+	public void update(VoteTopic vote);
+
+	/**
+	 * 添加
+	 * 
+	 * @param vote
+	 * @return
+	 */
+	public String add(VoteTopic vote);
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void delTopic(String id);
+	
+	
+	/**
+	 * 查询批定网上调查下选项
+	 * 
+	 * @param questidid
+	 * @return
+	 */
+	public List<VoteItem> findByTopicId(String questidid, String isok,
+			boolean cache);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public VoteItem findItemById(String id, boolean cache);
+
+	/**
+	 * 更新
+	 * 
+	 * @param answer
+	 */
+	public void update(VoteItem voteItem);
+
+	/**
+	 * 选择
+	 * 
+	 * @param id
+	 */
+	public void selectnum(String id);
+
+	/**
+	 * 添加
+	 * 
+	 * @param voteItem
+	 * @return
+	 */
+	public String addItem(VoteItem voteItem);
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void delItem(String id);
+
+	/**
+	 * 统计选择次数
+	 * 
+	 * @param topicid
+	 * @param isok
+	 * @param cache
+	 * @return
+	 */
+	public int countSelectnum(String topicid, String isok, boolean cache);
+
+}

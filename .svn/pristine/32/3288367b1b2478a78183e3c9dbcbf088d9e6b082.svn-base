@@ -1,0 +1,102 @@
+package com.gsccs.cms.controller.web;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.FreeMarkerUtil;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.util.CmsConst;
+
+import freemarker.template.TemplateModelException;
+
+/**
+ * 模版相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller("WebTempletController")
+@RequestMapping("/web")
+public class WebTempletController extends CmsBaseController {
+
+	@Resource
+	private SiteService siteService;
+
+	/**
+	 * 获取数据处理模板并装处理结果以页面形式显示给用户
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws TemplateModelException
+	 */
+	@RequestMapping("/templetPro.htm")
+	public String templetPro(String siteid, String templetPath, ModelMap map,
+			HttpServletResponse response) throws TemplateModelException,
+			IOException {
+		if (siteid != null && siteid.trim().length() > 0 && templetPath != null
+				&& templetPath.trim().length() > 0) {
+			// 查询站点
+			Site site = siteService.findById(siteid);
+			if (site != null && site.getTemplet() != null
+					&& site.getTemplet().trim().length() > 0) {
+				// 生成静态页面
+				Map<String, Object> data = new HashMap<String, Object>();
+				setData(data, site);
+				templetPath = "templet/" + site.getTemplet().trim() + "/"
+						+ templetPath;
+				response.setContentType("text/html");
+				response.setCharacterEncoding("UTF-8");
+				FreeMarkerUtil.createWriter(getApplication(), data,
+						templetPath, response.getWriter());
+			}
+		}
+		return null;
+	}
+	
+	
+	
+	@RequestMapping("/archiveQuery.htm")
+	public String archiveQuery(String siteid, String key, String templetPath, ModelMap map,
+			HttpServletResponse response) throws TemplateModelException,
+			IOException {
+		if (siteid != null && siteid.trim().length() > 0 && templetPath != null
+				&& templetPath.trim().length() > 0) {
+			// 查询站点
+			
+			Site site = siteService.findById(siteid);
+			if (site != null && site.getTemplet() != null
+					&& site.getTemplet().trim().length() > 0) {
+				// 生成静态页面
+				Map<String, Object> data = new HashMap<String, Object>();
+				data.put("key", key);
+				setData(data, site);
+				
+				response.setContentType("text/html");
+				response.setCharacterEncoding("UTF-8");
+				
+				Config sitePathConfig = configService.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+				String rootPath = sitePathConfig.getCodeval();
+				String dirPath = rootPath + File.separator + site.getSourcepath() + 
+						File.separator + "templet" + File.separator + site.getTemplet().trim() + File.separator;
+				
+				File dir = new File(dirPath);
+				
+				FreeMarkerUtil.createWriter(dir, data, templetPath, response.getWriter());
+				
+			}
+		}
+		return null;
+	}
+}

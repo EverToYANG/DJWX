@@ -1,0 +1,13 @@
+
+function createHtml(){
+	if($.trim($("#endtime").val())!="" && $.trim($("#starttime").val())!="" 
+		&& $.trim($("#endtime").val())<$.trim($("#starttime").val())){
+		$("#endtime").focus();
+		$("#errorDiv").html("结束时间必须大于开始时间"); 
+		$("#errorDiv").fadeIn("slow"); 
+		return false;
+	}
+	$("#errorDiv").html("正在处理中,请稍候..."); 
+	$("#errorDiv").fadeIn("slow"); 
+	document.getElementById("form1").submit();
+}

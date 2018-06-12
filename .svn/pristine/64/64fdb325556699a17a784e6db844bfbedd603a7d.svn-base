@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html class="hb-loaded" style="font-size: 40px;">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="yes">
+    <script src="static/weui/js/jquery-1.9.1.min.js" type="text/javascript"></script>
+    <!--link( rel="stylesheet" href="http://c.csdnimg.cn/public/common/toolbar/css/index.css" )-->
+    <link rel="stylesheet" href="static/weui/css/bootstrap.css">
+    <link rel="stylesheet" href="static/weui/css/avatar.css">
+    <link rel="stylesheet" href="static/weui/css/common.css">
+    <!-- [if IE 7]-->
+    <!--link( rel="stylesheet" href="assets/css/font-awesome-ie7.min.css" )-->
+    <!-- [endif]-->
+    <link rel="stylesheet" href="static/weui/css/main.css">
+    <!-- [if lt IE 9]-->
+    <script src="static/weui/js/html5shiv.min.js"></script>
+    <!-- [endif]-->
+    <title>折叠布局 原理及实现</title>
+    <script type="text/javascript" src="static/weui/js/blog_mobile.js"></script>
+</head>
+<body huaban_collector_injected="true">
+<link href="static/weui/css/jiathis_share.css" rel="stylesheet" type="text/css"><iframe frameborder="0" style="position: absolute; display: none; opacity: 0;" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/saved_resource.html"></iframe><div class="jiathis_style" style="position: absolute; z-index: 1000000000; display: none; top: 50%; left: 50%; overflow: auto;"></div><div class="jiathis_style" style="position: absolute; z-index: 1000000000; display: none; overflow: auto;"></div><iframe frameborder="0" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/jiathis_utility.html" style="display: none;"></iframe>
+<script language="javascript" type="text/javascript" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/async_new.js"></script>
+<script language="JavaScript" type="text/javascript" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/jquery.cookie.js"></script>
+<script type="text/javascript" src="static/weui/js/main.js"></script>
+<script type="text/javascript">
+    var fileName = '44278417';
+    var commentscount = 62;
+    var islock = false;
+    var currentUserName='';
+</script>
+
+<script type="text/javascript" src="static/weui/js/digg.js"></script>
+
+
+<div class="blog_main">
+      <div class="blog_top_wrap">
+        <div class="blog_top"><i id="menu_J" class="iconfont icon_l"></i>
+            <form method="get" action="http://m.blog.csdn.net/search/index" id="searchform">
+			    <i id="search_J" class="iconfont icon_r"></i>
+			    <div id="search_c_J" class="search">
+			         <input type="text" placeholder="请输入" id="search" name="keyword" page="1" value=""><i class="iconfont icon_search"></i><i class="iconfont icon_close"></i>
+			    </div>
+			</form>
+			<script type="text/javascript" src="static/weui/js/search.js"></script>
+          	<h2 class="blog_top_t">CSDN博客</h2>
+        </div>
+      </div>
+      <div class="main_list">
+        <div class="blog_article">
+          <div class="blog_article_t">
+            <div class="article_l"><a href="http://m.blog.csdn.net/blog/index?username=lmj623565791"><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/1_lmj623565791.jpg" alt="img"></a>
+                <a href="http://m.blog.csdn.net/blog/index?username=lmj623565791" class="article_user">lmj623565791</a></div>
+            <div class="article_r">
+                    <i class="iconfont expert"></i><span>博客专家</span>
+            </div>
+          </div>
+          <div class="blog_article_c clearfix">
+            <h3 class="article_t">Android FoldingLayout 折叠布局 原理及实现（一）</h3>
+            <p class="date"><i>发表于</i><em>2015/3/16 9:26:18  &nbsp;</em><i>24408</i><span>人阅读</span></p>
+            <p class="category_p">
+                    分类：
+                        <span>【Android 自定义控件实战】</span>
+                        <span>【Android 精彩案例】</span>
+            </p>
+             
+<div class="article_c">
+<p>转载请标明出处：<a target="_blank" href="http://blog.csdn.net/lmj623565791/article/details/44278417">http://blog.csdn.net/lmj623565791/article/details/44278417</a>，本文出自：<a target="_blank" href="http://blog.csdn.net/lmj623565791">【张鸿洋的博客】</a></p><h1>1、概述</h1><p>无意中翻到的FoldingLayout的介绍的<a target="_blank" href="http://blog.csdn.net/wangjinyu501/article/details/24289861">博客</a>，以及<a target="_blank" href="https://github.com/tibi1712/Folding-Android">github地址</a>。感觉很nice呀，于是花了点时间研究以及编写，本篇博客将带大家从最基本的原理分析，一步一步的实现我们的FoldingLayout，当然了，如果你能力过硬，可以直接下载github上的代码进行学习。</p><p>博客基本分为以下几个部分：</p><p><strong>1、Matrix的setPolyToPoly使用</strong></p><p><strong>2、在图片上使用渐变和阴影</strong></p><p><strong>3、初步的FoldingLayout的实现，完成图片的折叠显示（可控制折叠次数、包含阴影的绘制）</strong></p><p><strong>4、引入手势，手指可以可以FoldingLayout的折叠</strong></p><p><strong>5、结合DrawerLayout实现折叠式侧滑</strong></p><p><strong>6、结合SlidingPaneLayout实现折叠式侧滑</strong></p><p>ok，贴下部分的效果图：</p><p><img src="http://img.blog.csdn.net/20150315170856044?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbG1qNjIzNTY1Nzkx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" width="400" alt=""><br></p><p>改图对应上述3，妹子不错吧~<br><img src="http://img.blog.csdn.net/20150315171244461" alt=""><br></p><p>ok，对应上述4.</p><p><img src="http://img.blog.csdn.net/20150315171220912" alt=""><br></p><p>对应上述5。</p><p>ok，挑选了部分图，不然太占篇幅了。</p><p>那么接下来，我们就按照顺序往下学习了~~~</p><h1>2、Matrix的setPolyToPoly使用</h1><p>想要实现折叠，最重要的就是其核心的原理了，那么第一步我们要了解的就是，如何能把一张正常显示的图片，让它能够进行偏移显示。</p><p>其实精髓就在于Matrix的setPolyToPoly的方法。</p><p></p><pre code_snippet_id="620390" snippet_file_name="blog_20150316_1_1591329" name="code" class="java" style="width: 100%; overflow: hidden;">public boolean setPolyToPoly(float[] src, int srcIndex,  float[] dst, int dstIndex,int pointCount) </pre>简单看一下该方法的参数，src代表变换前的坐标；dst代表变换后的坐标；从src到dst的变换，可以通过srcIndex和dstIndex来制定第一个变换的点，一般可能都设置位0。pointCount代表支持的转换坐标的点数，最多支持4个。<p></p><p>如果不明白没事，下面通过一个简单的例子，带大家了解：</p><p></p><pre code_snippet_id="620390" snippet_file_name="blog_20150316_2_4717103" name="code" class="java" style="width: 100%; overflow: hidden;">package com.zhy.sample.folderlayout;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.os.Bundle;
+import android.view.View;
+
+public class MatrixPolyToPolyActivity extends Activity
+{
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(new PolyToPolyView(this));
+	}
+
+	class PolyToPolyView extends View
+	{
+
+		private Bitmap mBitmap;
+		private Matrix mMatrix;
+
+		public PolyToPolyView(Context context)
+		{
+			super(context);
+			mBitmap = BitmapFactory.decodeResource(getResources(),
+					R.drawable.tanyan);
+			mMatrix = new Matrix();
+			float[] src = { 0, 0,//
+					mBitmap.getWidth(), 0,//
+					mBitmap.getWidth(), mBitmap.getHeight(),//
+					0, mBitmap.getHeight() };
+			float[] dst = { 0, 0,//
+					mBitmap.getWidth(), 100,//
+					mBitmap.getWidth(), mBitmap.getHeight() - 100,//
+					0, mBitmap.getHeight() };
+			mMatrix.setPolyToPoly(src, 0, dst, 0, src.length &gt;&gt; 1);
+		}
+
+		@Override
+		protected void onDraw(Canvas canvas)
+		{
+			super.onDraw(canvas);
+			canvas.drawBitmap(mBitmap, mMatrix, null);
+		}
+
+	}
+
+}</pre><p></p><p>我们编写了一个PolyToPolyView作为我们的Activity的主视图。</p><p>在PolyToPolyView中，我们加载了一张图片，初始化我们的Matrix，注意src和dst两个数组，src就是正常情况下图片的4个顶点。dst将图片右侧两个点的y坐标做了些许的修改。</p><p>大家可以在纸上稍微标一下src和dst的四个点的位置。</p><p>最后我们在onDraw的时候进行图像的绘制，效果为：</p><p><img src="http://img.blog.csdn.net/20150315172818216?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbG1qNjIzNTY1Nzkx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" width="320" alt=""><br></p><p>如果你已经在纸上稍微的画了dst的四个点，那么这个结果你一定不陌生。</p><p>可以看到我们通过matrix.setPolyToPoly实现了图片的倾斜，那么引入到折叠的情况，假设折叠两次，大家有思路么，考虑一下，没有的话，继续往下看。</p><h1>3、引入阴影</h1><p>其实阴影应该在实现初步的折叠以后来说，这样演示其实比较方便，但是为了降低其理解的简单性，我们先把阴影抽取出来说。</p><p>假设我们现在要给上图加上阴影，希望的效果图是这样的：</p><p><img src="http://img.blog.csdn.net/20150315173625405?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbG1qNjIzNTY1Nzkx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" width="320" alt=""><br></p><p>可以看到我们左侧加入了一点阴影，怎么实现呢？</p><p>主要还是利用LinearGradient，我们从左到右添加一层从黑色到透明的渐变即可。</p><p></p><pre code_snippet_id="620390" snippet_file_name="blog_20150316_3_8847008" name="code" class="java" style="width: 100%; overflow: hidden;">public class MatrixPolyToPolyWithShadowActivity extends Activity
+{
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(new PolyToPolyView(this));
+
+	}
+
+	class PolyToPolyView extends View
+	{
+
+		private Bitmap mBitmap;
+		private Matrix mMatrix;
+		
+		private Paint mShadowPaint;
+		private Matrix mShadowGradientMatrix;
+		private LinearGradient mShadowGradientShader;
+
+		public PolyToPolyView(Context context)
+		{
+			super(context);
+			mBitmap = BitmapFactory.decodeResource(getResources(),
+					R.drawable.tanyan);
+			mMatrix = new Matrix();
+
+			mShadowPaint = new Paint();
+			mShadowPaint.setStyle(Style.FILL);
+			mShadowGradientShader = new LinearGradient(0, 0, 0.5f, 0,
+					Color.BLACK, Color.TRANSPARENT, TileMode.CLAMP);
+			mShadowPaint.setShader(mShadowGradientShader);
+
+			mShadowGradientMatrix = new Matrix();
+			mShadowGradientMatrix.setScale(mBitmap.getWidth(), 1);
+			mShadowGradientShader.setLocalMatrix(mShadowGradientMatrix);
+			mShadowPaint.setAlpha((int) (0.9*255));
+
+		}
+
+		@Override
+		protected void onDraw(Canvas canvas)
+		{
+			super.onDraw(canvas);
+			canvas.save();
+			float[] src = //...;
+			float[] dst = //...;
+			mMatrix.setPolyToPoly(src, 0, dst, 0, src.length &gt;&gt; 1);
+
+			canvas.concat(mMatrix);
+			canvas.drawBitmap(mBitmap, 0, 0, null);
+			//绘制阴影                                                                                                                        canvas.drawRect(0, 0, mBitmap.getWidth(), mBitmap.getHeight(),
+					mShadowPaint);
+			canvas.restore();
+
+		}
+
+	}
+
+}
+</pre><br>重点看mShadowPaint，mShadowGradientShader，mShadowGradientMatrix一个是画笔，我们为画笔设置了一个渐变的Shader，这个Shader的参数为<p></p><p class="p1"><span class="s1">new</span> LinearGradient(0, 0, 0.5f, 0,Color.<span class="s2">BLACK</span>, Color.<span class="s2">TRANSPARENT</span>, TileMode.<span class="s2">CLAMP</span>);</p><p class="p1">起点（0，0）、终点（0.5f，0）；颜色从和BLACK到透明；模式为CLAMP，也就是拉伸最后一个像素。</p><p class="p1">这里你可能会问，这才为0.5个像素的区域设置了渐变，不对呀，恩，是的，继续看接下来我们使用了<span class="s1">setLocalMatrix(</span>mShadowGradientMatrix<span class="s1">);，而这个</span></p><p class="p1">mShadowGradientMatrix将和坐标扩大了<span class="s1">mBitmap</span>.getWidth()倍，也就是说现在设置渐变的区域为（0.5f*<span class="s1">mBitmap</span>.getWidth()，0）半张图的大小，那么后半张图呢？</p><p class="p1">后半张应用CLAMP模式，拉伸的透明。</p><p class="p1">关于Shader、setLocalMatrix等用法也可以参考：<a target="_blank" href="http://blog.csdn.net/lmj623565791/article/details/41967509" style="list-style: none; text-decoration: none; word-break: break-all; word-wrap: break-word; color: rgb(59, 89, 152); font-family: Verdana, &#39;Lucida Grande&#39;, Arial, Helvetica, sans-serif;">Android BitmapShader 实战 实现圆形、圆角图片</a></p><h1>4、初步实现折叠</h1><p class="p1">了解了原理以及阴影的绘制以后，接下来要开始学习真正的去折叠了，我们的目标效果为：</p><p class="p1"><img src="http://img.blog.csdn.net/20150315170856044?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbG1qNjIzNTY1Nzkx/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" width="320" alt=""><br></p><p class="p1">妹子折叠成了8份，且阴影的范围为：每个沉下去夹缝的左右两侧，左侧黑色半透明遮盖，右侧短距离的黑色到透明阴影（大家可以仔细看）。</p><p class="p1">现在其实大家以及会将图片简单倾斜和添加阴影了，那么唯一的难点就是怎么将一张图分成很多快，我相信每块的折叠大家都会。</p><p class="p1">其实我们可以通过绘制该图多次，比如第一次绘制往下倾斜；第二次绘制网上倾斜；这样就和我们标题2的实现类似了，只需要利用setPolyToPoly。</p><p class="p1">那么绘制多次，每次显示肯定不是一整张图，比如第一次，我只想显示第一块，所以我们还需要clipRect的配合，说到这，应该以及揭秘了~~~</p><p class="p1"></p><pre code_snippet_id="620390" snippet_file_name="blog_20150316_4_4928760" name="code" class="java" style="width: 100%; overflow: hidden;">package com.zhy.sample.folderlayout;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Paint.Style;
+import android.graphics.Shader.TileMode;
+import android.os.Bundle;
+import android.view.View;
+
+public class SimpleUseActivity extends Activity
+{
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(new PolyToPolyView(this));
+
+	}
+
+	class PolyToPolyView extends View
+	{
+
+		private static final int NUM_OF_POINT = 8;
+		/**
+		 * 图片的折叠后的总宽度
+		 */
+		private int mTranslateDis;
+
+		/**
+		 * 折叠后的总宽度与原图宽度的比例
+		 */
+		private float mFactor = 0.8f;
+		/**
+		 * 折叠块的个数
+		 */
+		private int mNumOfFolds = 8;
+
+		private Matrix[] mMatrices = new Matrix[mNumOfFolds];
+		
+		private Bitmap mBitmap;
+
+		/**
+		 * 绘制黑色透明区域
+		 */
+		private Paint mSolidPaint;
+
+		/**
+		 * 绘制阴影
+		 */
+		private Paint mShadowPaint;
+		private Matrix mShadowGradientMatrix;
+		private LinearGradient mShadowGradientShader;
+
+		/***
+		 * 原图每块的宽度
+		 */
+		private int mFlodWidth;
+		/**
+		 * 折叠时，每块的宽度
+		 */
+		private int mTranslateDisPerFlod;
+
+		public PolyToPolyView(Context context)
+		{
+			super(context);
+			mBitmap = BitmapFactory.decodeResource(getResources(),
+					R.drawable.tanyan);
+			
+			//折叠后的总宽度
+			mTranslateDis = (int) (mBitmap.getWidth() * mFactor);
+			//原图每块的宽度
+			mFlodWidth = mBitmap.getWidth() / mNumOfFolds;
+			//折叠时，每块的宽度
+			mTranslateDisPerFlod = mTranslateDis / mNumOfFolds;
+			
+			//初始化matrix
+			for (int i = 0; i &lt; mNumOfFolds; i++)
+			{
+				mMatrices[i] = new Matrix();
+			}
+
+			mSolidPaint = new Paint();
+			int alpha = (int) (255 * mFactor * 0.8f) ;
+			mSolidPaint
+					.setColor(Color.argb((int) (alpha*0.8F), 0, 0, 0));
+
+			mShadowPaint = new Paint();
+			mShadowPaint.setStyle(Style.FILL);
+			mShadowGradientShader = new LinearGradient(0, 0, 0.5f, 0,
+					Color.BLACK, Color.TRANSPARENT, TileMode.CLAMP);
+			mShadowPaint.setShader(mShadowGradientShader);
+			mShadowGradientMatrix = new Matrix();
+			mShadowGradientMatrix.setScale(mFlodWidth, 1);
+			mShadowGradientShader.setLocalMatrix(mShadowGradientMatrix);
+			mShadowPaint.setAlpha(alpha);
+
+			//纵轴减小的那个高度，用勾股定理计算下
+			int depth = (int) Math.sqrt(mFlodWidth * mFlodWidth
+					- mTranslateDisPerFlod * mTranslateDisPerFlod)/2;
+
+			//转换点
+			float[] src = new float[NUM_OF_POINT];
+			float[] dst = new float[NUM_OF_POINT];
+
+			/**
+			 * 原图的每一块，对应折叠后的每一块，方向为左上、右上、右下、左下，大家在纸上自己画下
+			 */
+			for (int i = 0; i &lt; mNumOfFolds; i++)
+			{
+				src[0] = i * mFlodWidth;
+				src[1] = 0;
+				src[2] = src[0] + mFlodWidth;
+				src[3] = 0;
+				src[4] = src[2];
+				src[5] = mBitmap.getHeight();
+				src[6] = src[0];
+				src[7] = src[5];
+
+				boolean isEven = i % 2 == 0;
+
+				dst[0] = i * mTranslateDisPerFlod;
+				dst[1] = isEven ? 0 : depth;
+				dst[2] = dst[0] + mTranslateDisPerFlod;
+				dst[3] = isEven ? depth : 0;
+				dst[4] = dst[2];
+				dst[5] = isEven ? mBitmap.getHeight() - depth : mBitmap
+						.getHeight();
+				dst[6] = dst[0];
+				dst[7] = isEven ? mBitmap.getHeight() : mBitmap.getHeight()
+						- depth;
+
+				//setPolyToPoly
+				mMatrices[i].setPolyToPoly(src, 0, dst, 0, src.length &gt;&gt; 1);
+			}
+
+		}
+
+		@Override
+		protected void onDraw(Canvas canvas)
+		{
+			super.onDraw(canvas);
+			//绘制mNumOfFolds次
+			for (int i = 0; i &lt; mNumOfFolds; i++)
+			{
+				
+				canvas.save();
+				//将matrix应用到canvas
+				canvas.concat(mMatrices[i]);
+				//控制显示的大小
+				canvas.clipRect(mFlodWidth * i, 0, mFlodWidth * i + mFlodWidth,
+						mBitmap.getHeight());
+				//绘制图片
+				canvas.drawBitmap(mBitmap, 0, 0, null);
+				//移动绘制阴影
+				canvas.translate(mFlodWidth * i, 0);
+				if (i % 2 == 0)
+				{
+					//绘制黑色遮盖
+					canvas.drawRect(0, 0, mFlodWidth, mBitmap.getHeight(),
+							mSolidPaint);
+				}else
+				{
+					//绘制阴影
+					canvas.drawRect(0, 0, mFlodWidth, mBitmap.getHeight(),
+							mShadowPaint);
+				}
+				canvas.restore();
+			}
+
+		}
+
+	}
+
+}
+</pre><br>简单讲解下，不去管绘制阴影的部分，其实折叠就是：<p></p><p class="p1">1、初始化转换点，这里注释说的很清楚，大家最好在纸上绘制下，标一下每个变量。</p><p class="p1">2、为matrix.setPolyToPoly</p><p class="p1">3、绘制时使用该matrix，且clipRect控制显示区域（这个区域也很简单，原图的第一块到最后一块），最好就是绘制bitmap了。</p><p class="p1">阴影这里大家可以换个明亮点的图片去看看~~</p><p class="p1"><br></p><p class="p1">好了，由于篇幅原因，剩下的内容将在下一篇继续完成，下一篇将展示如何将简单的图片的折叠，转化为对一个布局内所有控件的折叠效果，以及引入手势、</p><p class="p1">和DrawerLayout等结合应用到侧滑中去。</p><p class="p1">对于类似这种效果的，一定要拿出稿纸笔去画一画，否则很难弄明白。</p><p class="p1"><br></p><p class="p1"></p><p style="color: rgb(51, 51, 51); font-family: Arial; font-size: 14px; line-height: 26px;"></p><div name="zhy_footer" style="font-family: Arial; font-size: 14px; line-height: 26px; border: 3px dashed rgb(238, 238, 238); border-radius: 20px; padding: 10px; display: inline-block; margin: 0px auto;"><p><span style="font-family: Arial, Console, Verdana, &#39;Courier New&#39;; line-height: 14.3999996185303px;"><span style="color:#333333;">源码：</span><a target="_blank" href="http://download.csdn.net/detail/lmj623565791/8505245"><span style="color:#009900;">下载</span></a></span></p><p style="color: rgb(51, 51, 51);">微信公众号请扫描（第一时间通知博客、视频等通知）：</p><p style="color: rgb(51, 51, 51);"><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/1422600516_2905.jpg" width="200" height="200" alt="" style="border: none; max-width: 100%;"></p></div><br><p></p><p></p><p><br></p> </div>
+
+          </div>
+
+              <div class="prev_next">
+                        <a href="http://m.blog.csdn.net/article/details?id=44098729" class="prev" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_shangyipian&#39;]);">上一篇</a>                                                                       
+                        <a href="http://m.blog.csdn.net/article/details?id=44283093" class="next" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_shangyipian&#39;])">下一篇</a>
+              </div>         
+        </div>
+        
+       <!-- 广告位开始 -->
+        <div class="J_adv" data-view="true" data-mod="ad_popu_174" data-mtp="49" data-order="112" data-con="ad_content_651"><!-- 广告占位容器 --><div id="cpro_u2634430"></div><!-- 投放代码 --><script type="text/javascript">       (window['cproStyleApi'] = window['cproStyleApi'] || {})['u2634430']={at:'3',hn:'0',wn:'0',imgRatio:'1.7',scale:'20.20',pat:'6',tn:'template_inlay_all_mobile_lu_native',rss1:'#FFFFFF',adp:'1',ptt:'0',titFF:'%E5%BE%AE%E8%BD%AF%E9%9B%85%E9%BB%91',titFS:'14',rss2:'#000000',titSU:'0',ptbg:'70',ptp:'1'};(window.cproArray = window.cproArray || []).push({id:'u2634430'});  </script>  <script src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/cm.js" type="text/javascript"></script> </div>
+        <!-- 广告位结束 -->   
+
+       
+<script type="text/javascript" src="static/weui/js/highcode.js"></script>
+<script type="text/javascript">
+    var fileName = '44278417';
+    var commentscount = 62;
+    var islock = false;
+    var currentUserName='';
+    var topSize=3;
+    var listId = ".blog_comment_list";
+</script>
+
+<div class="no_comment" style="display:none"><i class="iconfont"></i><span>暂无评论，</span><a href="http://m.blog.csdn.net/comment/post?id=44278417">我去发表</a><em>~</em></div>
+
+ <div class="blog_comment" style="display:none">
+       <h3 class="isComment">评论<span>（62）</span></h3>
+       <dl class="blog_comment_list"></dl>
+       <div class="checkAll"></div>
+ </div>
+
+<script type="text/javascript" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/comment.js"></script>
+
+
+
+               <div style="display:none" id="tags">android,github,java,dst,布局,博客,图片,boolean,位图,博客,pre</div>
+
+       <div class="my_hot_article">
+          <h3 class="isArticle">我的热门文章</h3>
+          <ul class="hot_article">
+                <li><a href="http://m.blog.csdn.net/article/details?id=48129405">Android Https相关完全解析 当OkHttp遇到Https</a></li>
+                <li><a href="http://m.blog.csdn.net/article/details?id=37970961">Android Fragment 真正的完全解析（上）</a></li>
+                <li><a href="http://m.blog.csdn.net/article/details?id=45059587">Android RecyclerView 使用完全解析 体验艺术般的控件</a></li>
+                <li><a href="http://m.blog.csdn.net/article/details?id=47911083">Android OkHttp完全解析 是时候来了解OkHttp了</a></li>
+                <li><a href="http://m.blog.csdn.net/article/details?id=24252901">Android 自定义View (一)</a></li>
+          </ul>
+        </div>
+
+        <div class="my_hot_article">
+          <h3 class="isArticle">相关博文</h3>
+          <ul class="hot_article" id="res" data-mod="popu_36"><li><a href="http://blog.csdn.net/shikh/article/details/44922081" title="Android FoldingLayout 折叠布局 原理及实现一" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现一</a></li><li><a href="http://blog.csdn.net/u011546806/article/details/44339753" title="Android FoldingLayout 折叠布局 原理及实现一" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现一</a></li><li><a href="http://blog.csdn.net/qq_25804863/article/details/50229417" title="Android FoldingLayout 折叠布局 原理及实现一转" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现一转</a></li><li><a href="http://blog.csdn.net/dzc372787439/article/details/44776279" title="Android FoldingLayout 折叠布局 原理及实现一" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现一</a></li><li><a href="http://blog.csdn.net/shikh/article/details/44936651" title="Android FoldingLayout 折叠布局 原理及实现二" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现二</a></li><li><a href="http://blog.csdn.net/lmj623565791/article/details/44283093" title="Android FoldingLayout 折叠布局 原理及实现二" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现二</a></li><li><a href="http://blog.csdn.net/lmj623565791/article/details/44278417" title="Android FoldingLayout 折叠布局 原理及实现一" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现一</a></li><li><a href="http://blog.csdn.net/aiguoguo000/article/details/51583391" title="Android FoldingLayout 折叠布局 原理及实现二" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现二</a></li><li><a href="http://blog.csdn.net/sd19871122/article/details/44338461" title="Android FoldingLayout 折叠布局 原理及实现一" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现一</a></li><li><a href="http://blog.csdn.net/abcd_3344_abcd/article/details/50679707" title="Android FoldingLayout 折叠布局 原理及实现二" strategy="SearchAlgorithm">Android FoldingLayout 折叠布局 原理及实现二</a></li></ul>
+        </div>
+
+<script type="text/javascript">
+    $(function () {
+        setTimeout(function () {
+            var searchtitletags = 'Android FoldingLayout 折叠布局 原理及实现（一）' + ',' + $("#tags").html();
+            searchService({
+                index: 'blog',
+                query: searchtitletags,
+                from: 0,
+                size: 5,
+                appendTo: '#res',
+                url: 'recommend',
+                his: 2,
+                client: "blog_cf_enhance",
+                tmpl: '<li><a href="#{ url }" title="#{ title }" strategy="#{ strategy }">#{ title }</a></li>'
+            });
+        }, 500);
+    });    
+
+ </script>  
+
+
+
+
+       
+      </div>
+
+           <div class="leftNav">
+      
+<div class="left_top">
+        <a href="https://passport.csdn.net/account/login?from=http%3a%2f%2fm.blog.csdn.net%2farticle%2fdetails%3fid%3d44278417"><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/1_csdn.jpg"></a>
+        <a href="https://passport.csdn.net/account/login?from=http%3a%2f%2fm.blog.csdn.net%2farticle%2fdetails%3fid%3d44278417" class="sign">未登录</a> 
+</div>
+        
+        <ul class="nav_list">
+            <li><a href="http://m.blog.csdn.net/home/index"><i>•</i><span>首页</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=mobile&amp;Type=New"><i>•</i><span>移动开发</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=web&amp;Type=New"><i>•</i><span>Web前端</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=enterprise&amp;Type=New"><i>•</i><span>架构设计</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=code&amp;Type=New"><i>•</i><span>编程语言</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=www&amp;Type=New"><i>•</i><span>互联网</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=database&amp;Type=New"><i>•</i><span>数据库</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=system&amp;Type=New"><i>•</i><span>系统运维</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=cloud&amp;Type=New"><i>•</i><span>云计算</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=software&amp;Type=New"><i>•</i><span>研发管理</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+                <li><a href="http://m.blog.csdn.net/Column/Index?Channel=other&amp;Type=New"><i>•</i><span>综合</span><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-youjiantou.png" alt="img" class="arrow_r"></a></li>
+        </ul>
+   </div>
+   
+
+      <div id="mask"></div>
+    </div>
+
+
+    <div class="blog_handle">
+        <span id="digg" style="cursor:pointer"><i class="iconfont"></i><em>43</em></span>
+        <span id="bury" style="cursor:pointer"><i class="iconfont"></i><em>2</em></span>
+        <span style="cursor:pointer"><a href="http://m.blog.csdn.net/comment/alllist?id=44278417"><i class="iconfont"></i></a><em>62</em></span>
+        <span id="share_btn" style="cursor:pointer"><a href="javascript:;"><i class="iconfont"></i></a><em>分享</em></span>
+    </div>
+
+    <div class="backToTop" style="display: none;"><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-fudongxiangshang.png" alt="img"></div>
+    <!--分享弹窗：-->
+    <div class="popup_cover"></div>
+    <div class="sharePopup_box">
+      <div class="sharePopup">
+        <!--JiaThis Button BEGIN-->
+        <div class="jiathis_style_32x32"><a class="jiathis_button_weixin" title="分享到微信"><span class="jiathis_txt jiathis_separator jtico jtico_weixin"><b><i class="iconfont"></i></b><em>微信分享</em></span></a><a class="jiathis_button_tsina" title="分享到微博"><span class="jiathis_txt jiathis_separator jtico jtico_tsina"><b><i class="iconfont"></i></b><em>新浪微博</em></span></a><a class="jiathis_button_cqq" title="分享到QQ好友"><span class="jiathis_txt jiathis_separator jtico jtico_cqq"><b><i class="iconfont"></i></b><em>QQ好友</em></span></a><a class="jiathis_button_qzone" title="分享到QQ空间"><span class="jiathis_txt jiathis_separator jtico jtico_qzone"><b><i class="iconfont"></i></b><em>QQ空间</em></span></a></div>
+        <script type="text/javascript" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/jia.js" charset="utf-8"></script><script type="text/javascript" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/plugin.client.js" charset="utf-8"></script>
+        <!--JiaThis Button END-->
+      </div>
+      <div class="sharePopup_cancel">取 消</div>
+    </div>
+    <script>
+      $(function(){
+        $('#share_btn').click(function(){
+          $('.popup_cover').stop().show();
+          $('.sharePopup_box').stop().slideDown();
+        });
+        $('.sharePopup_cancel').click(function(){
+          $('.popup_cover').stop().hide();
+          $('.sharePopup_box').stop().slideUp();
+        });
+      })
+	</script>
+
+ 	<div class="ad_box">
+      <div class="ad_l"><a href="http://ms.csdn.net/download.html"><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/index_AD.jpg" alt="img"></a><span>即使是一小步<br>也想与你分享</span></div>
+      <div class="ad_r"><a href="http://ms.csdn.net/download.html" class="open_btn">打开</a><i class="ad_close iconfont"></i></div>
+	</div>
+
+   	<div class="backToTop" style="display: none;"><img src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/iconfont-fudongxiangshang.png" alt="img"></div>
+    <div class="blog_footer">©1999-2012, csdn.net, All Rights Reserved</div>
+    <script type="text/javascript" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/fontSize.js"></script>
+	<script type="text/javascript" charset="utf-8" src="./Android FoldingLayout 折叠布局 原理及实现（一）_files/tracking.js"></script>
+
+
+</body>
+</html>

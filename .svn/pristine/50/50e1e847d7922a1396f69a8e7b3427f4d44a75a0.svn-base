@@ -1,0 +1,140 @@
+package com.gsccs.cms.search.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.util.CmsConst;
+import com.gsccs.cms.search.SolrServer;
+import com.gsccs.cms.search.service.QueryService;
+
+/**
+ * 
+ * @author x.d zhang
+ * 
+ */
+@Service
+public class QueryServiceImpl implements QueryService {
+
+	private static Logger logger = Logger.getLogger(QueryServiceImpl.class);
+	
+	@Resource
+	private ConfigService configService;
+	
+	@Override
+	public List<Content> searchContent(String key, String site, String channel,
+			String startDate, String endDate,int start,int rows) {
+		
+		// 获取连接服务
+		HttpSolrServer solrServer = null;
+		List<Content> list = new ArrayList<Content>();
+		Content content = null;
+		try {
+			Config solrUrlConf = configService.findByCode(CmsConst.SOLR_SERVER_PATH);
+			if (null != solrUrlConf){
+				String solrUrl = solrUrlConf.getCodeval();
+				solrServer = SolrServer.getInstance().getServer(solrUrl);
+			}else{
+				return list;
+			}
+			SolrQuery sQuery = new SolrQuery();
+			String para = "";
+			if (StringUtils.isNotEmpty(key)) {
+				para = para + "(title:" + key + " OR description:" + key
+						+ " OR content:" + key + " )";
+				// 空格 等同于 OR
+				// para=para+"(title:"+content+"  content:"+content+")";
+			}
+			if (StringUtils.isNotEmpty(site)) {
+				if (StringUtils.isNotEmpty(para)) {
+					para = para + " AND site:" + site;
+				} else {
+					para = para + " site:" + site;
+				}
+			}
+
+			if (StringUtils.isNotEmpty(channel)) {
+				if (StringUtils.isNotEmpty(para)) {
+					para = para + " AND channel:" + channel;
+				} else {
+					para = para + " channel:" + channel;
+				}
+			}
+
+			if (StringUtils.isNotEmpty(startDate)
+					&& StringUtils.isNotEmpty(endDate)) {
+				if (StringUtils.isNotEmpty(para)) {
+					para = para + " AND addtimeStr:[" + startDate + " TO "
+							+ endDate + "]";
+				} else {
+					para = para + " addtimeStr:[" + startDate + " TO "
+							+ endDate + "]";
+				}
+			}
+			// *:* 查询所有index
+			if (!StringUtils.isNotEmpty(para)) {
+				para = "*:*";
+			}
+			logger.info("para:" + para);
+			// 执行 solr模糊查询方法
+			sQuery.setQuery(para);
+			//默认下标是0开始
+			sQuery.setStart(start); 
+			//每页记录数
+			sQuery.setRows(rows); 
+			
+			QueryResponse response = solrServer.query(sQuery); 
+			// 查询的结果由doc文档对象返回给Content对象。
+			SolrDocumentList sdoclist = response.getResults();
+			for (SolrDocument solrDocument : sdoclist) {
+				content = new Content();
+				content.setId(solrDocument.getFirstValue("title").toString());
+				content.setSite(solrDocument.getFirstValue("site").toString());
+				content.setChannel(solrDocument.getFirstValue("channel").toString());
+				content.setTitle(solrDocument.getFirstValue("title").toString());
+				content.setUrl(solrDocument.getFirstValue("url").toString());
+				content.setChannelPagemark(solrDocument.getFirstValue("channelPagemark").toString());
+				try{
+					int htmlIndexnum = (Integer)solrDocument.getFirstValue("htmlnum");
+					content.setHtmlIndexnum(htmlIndexnum);
+				}catch(Exception e){
+					logger.info("htmlIndexnum 转换失败");
+				}
+				SimpleDateFormat sdf =  new  SimpleDateFormat("yyyyMMdd"); 
+                try {
+                	content.setAddtime(sdf.parse(solrDocument.getFieldValue("addtimeStr").toString()));
+                } catch (java.text.ParseException e) {
+                	logger.info("addtimeStr 转换失败");
+                }
+                
+				list.add(content); // 把筛选中的值放到实体类列表里面
+			}
+
+		} catch (SolrServerException e) {
+			logger.info("连接全文检索服务器出错." + e.getMessage());
+		} finally {
+			try {
+				solrServer.commit();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return list;
+	}
+
+}

@@ -1,0 +1,27 @@
+package com.gsccs.weixin.service;
+
+import com.gsccs.cms.weixin.model.WxApp;
+
+import io.github.elkan1788.mpsdk4j.api.WechatAPIImpl;
+import io.github.elkan1788.mpsdk4j.vo.MPAccount;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月18日
+ */
+
+public class WXAppConfig {
+
+	public WechatAPIImpl api;
+
+	public WechatAPIImpl getAPI(WxApp wxApp) {
+		MPAccount account = new MPAccount();
+		account.setMpId(wxApp.getAppId());
+		account.setAppId(wxApp.getAppId());
+		account.setAppSecret(wxApp.getSecret());
+		account.setToken(wxApp.getToken());
+		api = new WechatAPIImpl(account);
+		return api;
+	}
+}

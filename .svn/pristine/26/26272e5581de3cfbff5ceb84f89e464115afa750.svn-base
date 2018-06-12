@@ -1,0 +1,575 @@
+package com.gsccs.cms.core.service.impl;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.auth.service.OperlogService;
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.bass.utils.FreeMarkerUtil;
+import com.gsccs.cms.core.dao.ChannelMapper;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.ChannelExample;
+import com.gsccs.cms.core.model.ChannelExample.Criteria;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.core.service.HtmlquartzService;
+import com.gsccs.cms.core.service.RoleChannelService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.util.CmsConst;
+
+import freemarker.template.TemplateException;
+
+/**
+ * 栏目相关服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Service("channelService")
+public class ChannelServiceImpl implements ChannelService {
+
+	@Resource
+	private ChannelMapper channelMapper;
+	@Resource
+	private RoleChannelService roleChannelService;
+	@Resource
+	private HtmlquartzService htmlquartzService;
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private OperlogService operlogService;
+	@Resource
+	private ConfigService configService;
+
+	/**
+	 * 下降
+	 */
+	public void down(Channel channel) {
+		if (channel != null) {
+			// 查询同级别下面第一个的排序
+			Channel channel2 = new Channel();
+			channel2.setSite(channel.getSite());
+			channel2.setParid(channel.getParid());
+			if (StringUtils.isEmpty(channel.getParid())) {
+				channel2.setParid("root");
+			}
+			channel2.setSql(" id<>'" + channel.getId() + "' and ordernum>="
+					+ channel.getOrdernum());
+			List<Channel> channelList = find(channel2, " ordernum ", 1, 1);
+			if (channelList != null && channelList.size() > 0) {
+				Channel nextchannel = channelList.get(0);
+				if (nextchannel != null) {
+					if (nextchannel.getOrdernum().equals(channel.getOrdernum())) {
+						channel.setOrdernum(nextchannel.getOrdernum() + 1);
+					} else {
+						int nextNum = nextchannel.getOrdernum();
+						nextchannel.setOrdernum(channel.getOrdernum());
+						channel.setOrdernum(nextNum);
+					}
+					update(channel);
+					update(nextchannel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 上升
+	 */
+	public void up(Channel channel) {
+		if (channel != null) {
+			// 查询同级别上面第一个菜单的排序
+			Channel channel2 = new Channel();
+			channel2.setSite(channel.getSite());
+			channel2.setParid(channel.getParid());
+			if (StringUtils.isEmpty(channel.getParid())) {
+				channel2.setParid("root");
+			}
+			channel2.setSql(" id<>'" + channel.getId() + "' and ordernum<="
+					+ channel.getOrdernum());
+			List<Channel> channelList = find(channel2, " ordernum desc ", 1, 1);
+			if (channelList != null && channelList.size() > 0) {
+				Channel nextchannel = channelList.get(0);
+				if (nextchannel != null) {
+					if (nextchannel.getOrdernum().equals(channel.getOrdernum())) {
+						channel.setOrdernum(nextchannel.getOrdernum() - 1);
+					} else {
+						int nextNum = nextchannel.getOrdernum();
+						nextchannel.setOrdernum(channel.getOrdernum());
+						channel.setOrdernum(nextNum);
+					}
+					update(channel);
+					update(nextchannel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 获取同级最大排序号
+	 * 
+	 * @param parid
+	 * @return
+	 */
+	public int maxNum(String siteid, String parid) {
+		Channel channel = new Channel();
+		channel.setParid(parid);
+		channel.setSite(siteid);
+		if (StringUtils.isEmpty(parid)) {
+			channel.setParid("root");
+		}
+		List<Channel> channelList = find(channel, "ordernum desc", 1, 1);
+		if (channelList != null && channelList.size() > 0) {
+			channel = channelList.get(0);
+			return channel.getOrdernum() + 1;
+		}
+		return 0;
+	}
+
+	/**
+	 * 分页查询
+	 */
+	public List<Channel> find(Channel channel, String order, int currPage,
+			int pageSize) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		proSearchParam(channel, criteria);
+		if (order != null && order.trim().length() > 0) {
+			example.setOrderByClause(order);
+		}
+		example.setCurrPage(currPage);
+		example.setPageSize(pageSize);
+		return channelMapper.selectPageByExample(example);
+	}
+
+	/**
+	 * 处理查询条件
+	 * 
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(Channel channel, Criteria criteria) {
+		if (channel != null) {
+			if (StringUtils.isNotEmpty(channel.getParid())) {
+				if ("root".equals(channel.getParid())) {
+					criteria.andSql(" (parid is null or parid='') ");
+				} else {
+					criteria.andParidEqualTo(channel.getParid());
+				}
+			}
+			if (StringUtils.isNotEmpty(channel.getSql())) {
+				criteria.andSql(channel.getSql());
+			}
+			if (StringUtils.isNotEmpty(channel.getSite())) {
+				criteria.andSiteEqualTo(channel.getSite());
+			}
+		}
+	}
+
+	/**
+	 * 查询是否有子数据
+	 * 
+	 * @param parId
+	 * @return
+	 */
+	public boolean hasChildren(String parId) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andParidEqualTo(parId);
+		return channelMapper.countByExample(example) > 0;
+	}
+
+	/**
+	 * 判断是否已存在此页面标识
+	 * 
+	 * @param pagemark
+	 * @return
+	 */
+	public boolean hasPagemark(String siteid, String pagemark) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andSiteEqualTo(siteid);
+		criteria.andSql(" pagemark='" + pagemark + "' ");
+		return channelMapper.countByExample(example) > 0;
+	}
+
+	/**
+	 * 根据站点id,页面标识查询
+	 * 
+	 * @param siteid
+	 * @param pagemark
+	 * @return
+	 */
+	public Channel findBySitePagemark(String siteid, String pagemark) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andSiteEqualTo(siteid);
+		criteria.andSql(" pagemark='" + pagemark + "' ");
+		List<Channel> channelList = channelMapper
+				.selectByExampleWithBLOBs(example);
+		if (channelList != null && channelList.size() > 0) {
+			return channelList.get(0);
+		}
+		return null;
+	}
+
+	/**
+	 * 根据站点id,索引号查询
+	 * 
+	 * @param siteid
+	 * @param pagemark
+	 * @return
+	 */
+	public Channel findBySiteIndexnum(String siteid, Integer indexnum) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andSiteEqualTo(siteid);
+		criteria.andSql(" index=" + indexnum + " ");
+		List<Channel> channelList = channelMapper
+				.selectByExampleWithBLOBs(example);
+		if (channelList != null && channelList.size() > 0) {
+			return channelList.get(0);
+		}
+		return null;
+	}
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findByParWithBLOBs(String siteid, String parid) {
+		return findByParWithBLOBs(siteid, parid, null, null);
+	}
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findByPar(String siteid, String parid) {
+		return findByPar(siteid, parid, null, null);
+	}
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findByPar(String siteid, String parid, String state,
+			String navigation) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		if (siteid != null && siteid.trim().length() > 0) {
+			criteria.andSiteEqualTo(siteid.trim());
+		}
+		if (parid != null && parid.trim().length() > 0 && !"par".equals(parid)) {
+			criteria.andParidEqualTo(parid.trim());
+		}
+		if ("par".equals(parid)) {
+			criteria.andSql(" (parid is null or parid = '') ");
+		}
+		if (state != null && state.trim().length() > 0) {
+			criteria.andStateEqualTo(state.trim());
+		}
+		if (navigation != null && navigation.trim().length() > 0) {
+			criteria.andNavigationEqualTo(navigation.trim());
+		}
+		example.setOrderByClause(" orderNum ");
+		return channelMapper.selectByExample(example);
+	}
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findByParWithBLOBs(String siteid, String parid,
+			String state, String navigation) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		if (siteid != null && siteid.trim().length() > 0) {
+			criteria.andSiteEqualTo(siteid.trim());
+		}
+		if (parid != null && parid.trim().length() > 0 && !"par".equals(parid)) {
+			criteria.andParidEqualTo(parid.trim());
+		}
+		if ("par".equals(parid)) {
+			criteria.andSql(" (parid is null or parid = '') ");
+		}
+		if (state != null && state.trim().length() > 0) {
+			criteria.andStateEqualTo(state.trim());
+		}
+		if (navigation != null && navigation.trim().length() > 0) {
+			criteria.andNavigationEqualTo(navigation.trim());
+		}
+		example.setOrderByClause(" orderNum ");
+		return channelMapper.selectByExampleWithBLOBs(example);
+	}
+
+	/**
+	 * 根据站点查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findBySite(String siteid, String state,
+			String navigation) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		if (siteid != null && siteid.trim().length() > 0) {
+			criteria.andSiteEqualTo(siteid.trim());
+		}
+		if (state != null && state.trim().length() > 0) {
+			criteria.andStateEqualTo(state.trim());
+		}
+		if (navigation != null && navigation.trim().length() > 0) {
+			criteria.andNavigationEqualTo(navigation.trim());
+		}
+		example.setOrderByClause(" orderNum ");
+		return channelMapper.selectByExample(example);
+	}
+
+	/**
+	 * 根据站点和角色查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findByRoles(String siteid, String roles) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		if (siteid != null && siteid.trim().length() > 0) {
+			criteria.andSiteEqualTo(siteid);
+		}
+		criteria.andSql(" id in (select channelid from cms_role_channel where roleid in ("
+				+ roles + " ))");
+		return channelMapper.selectByExample(example);
+	}
+
+	/**
+	 * 根据站点和角色查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<Channel> findByRolesWithBLOBs(String siteid, String roles) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		if (siteid != null && siteid.trim().length() > 0) {
+			criteria.andSiteEqualTo(siteid);
+		}
+		criteria.andSql(" id in (select channelid from cms_role_channel where roleid in ("
+				+ roles + " ))");
+		return channelMapper.selectByExampleWithBLOBs(example);
+	}
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public Channel findById(String id) {
+		return channelMapper.selectByPrimaryKey(id);
+	}
+
+	/**
+	 * 更新
+	 * 
+	 * @param channel
+	 */
+	public void update(Channel channel) {
+		channelMapper.updateByPrimaryKeyWithBLOBs(channel);
+	}
+
+	
+	/**
+	 * 添加
+	 * 
+	 * @param channel
+	 */
+	public String insert(Channel channel) {
+		String id = UUID.randomUUID().toString();
+		channel.setId(id);
+		channelMapper.insert(channel);
+		return id;
+	}
+
+	
+	/**
+	 * 删除
+	 * 
+	 * @param siteId
+	 * @throws TemplateException
+	 * @throws IOException
+	 */
+	public void del(String id, HttpServletRequest request) {
+		Channel channel = findById(id);
+		if (channel != null) {
+			delPar(id, request);
+			channelMapper.deleteByPrimaryKey(id);
+		}
+	}
+
+	/**
+	 * 递归删除
+	 * 
+	 * @param parId
+	 * @throws TemplateException
+	 * @throws IOException
+	 */
+	public void delPar(String parId, HttpServletRequest request) {
+		ChannelExample example = new ChannelExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andParidEqualTo(parId);
+		List<Channel> channelList = channelMapper.selectByExample(example);
+		if (channelList != null && channelList.size() > 0) {
+			for (int i = 0; i < channelList.size(); i++) {
+				delPar(channelList.get(i).getId(), request);
+			}
+		}
+		channelMapper.deleteByPrimaryKey(parId);
+	}
+
+	
+	
+	
+	
+	/**
+	 * 查询栏目路径
+	 * 
+	 * @return
+	 */
+	public List<Channel> findPath(String id) {
+		List<Channel> channelList = new ArrayList<Channel>();
+		channelList = findParPath(id, channelList);
+		if (channelList != null && channelList.size() > 0) {
+			// 把对象倒序，实现栏目级别从父到子
+			List<Channel> channelListTemp = new ArrayList<Channel>();
+			for (int i = channelList.size() - 1; i >= 0; i--) {
+				channelListTemp.add(channelList.get(i));
+			}
+			channelList = channelListTemp;
+		}
+		return channelList;
+	}
+
+	/**
+	 * 查询栏目路径(递归方法)
+	 * 
+	 * @return
+	 */
+	public List<Channel> findParPath(String id, List<Channel> channelList) {
+		Channel channel = findById(id);
+		if (channel != null) {
+			channelList.add(channel);
+			// 如果有父栏目则递归提取
+			if (channel.getParid() != null
+					&& channel.getParid().trim().length() > 0) {
+				findParPath(channel.getParid(), channelList);
+			}
+		}
+		return channelList;
+	}
+
+	/**
+	 * 查询所有子栏目(pagemark)
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @param state
+	 * @param navigation
+	 * @return
+	 */
+	public List<Channel> findSonByPagemark(String siteid, String pagemark,
+			String state, String navigation) {
+		List<Channel> list = new ArrayList<Channel>();
+		Channel channel = findBySitePagemark(siteid, pagemark);
+		if (channel != null) {
+			return findSonPro(list, siteid, channel.getId(), state, navigation);
+		}
+		return list;
+	}
+
+	/**
+	 * 查询所有子栏目
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @param state
+	 * @param navigation
+	 * @return
+	 */
+	public List<Channel> findSon(String siteid, String parid, String state,
+			String navigation) {
+		List<Channel> list = new ArrayList<Channel>();
+		return findSonPro(list, siteid, parid, state, navigation);
+	}
+
+	/**
+	 * 查询所有子栏目（递归）
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @param state
+	 * @param navigation
+	 * @return
+	 */
+	public List<Channel> findSonPro(List<Channel> list, String siteid,
+			String parid, String state, String navigation) {
+		List<Channel> sonlist = findByPar(siteid, parid, state, navigation);
+		if (sonlist != null && sonlist.size() > 0) {
+			for (int i = 0; i < sonlist.size(); i++) {
+				list.add(sonlist.get(i));// 添加到总集合中
+				// 处理子栏目
+				findSonPro(list, siteid, sonlist.get(i).getId(), state,
+						navigation);
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * 获取indexnum
+	 * 
+	 * @param parid
+	 * @return
+	 */
+	public int maxIndexNum() {
+		Channel channel = new Channel();
+		List<Channel> channelList = find(channel, "indexnum desc", 1, 1);
+		if (channelList != null && channelList.size() > 0) {
+			channel = channelList.get(0);
+			return channel.getIndexnum() + 1;
+		}
+		return 0;
+	}
+	
+}

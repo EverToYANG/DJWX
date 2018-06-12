@@ -1,0 +1,323 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>党建服务平台</title>
+<%@include file="/include/bsie_head.jsp"%>
+<%@include file="/include/bsie_foot.jsp"%>
+<%@include file="/include/openWindow.jsp"%>
+<script src="${pageContext.request.contextPath}/static/admin/cms/js/selectSite.js"></script>
+
+<link href="${pageContext.request.contextPath}/static/skin/style/main_css.css" rel="stylesheet" type="text/css" />
+<link href="${pageContext.request.contextPath}/static/skin/style/zTreeStyle.css" rel="stylesheet" type="text/css">
+
+<script src="${pageContext.request.contextPath}/static/skin/scripts/zTree/jquery.ztree.core-3.2.js" type="text/javascript"></script>
+<script type="text/javascript">
+	var ctx = "${pageContext.request.contextPath}";
+	/**退出系统**/
+	function logout() {
+		if (confirm("您确定要退出本系统吗？")) {
+			window.location.href = "${pageContext.request.contextPath}/logout.do";
+		}
+	}
+	/* zTree插件加载目录的处理  */
+	var zTree;
+	var setting = {
+		view : {
+			dblClickExpand : false,
+			showLine : false,
+			expandSpeed : ($.browser.msie && parseInt($.browser.version) <= 6) ? ""
+					: "fast"
+		},
+		data : {
+			key : {
+				name : "name"
+			},
+			simpleData : {
+				enable : true,
+				idKey : "id",
+				pIdKey : "parid",
+				rootPId : ""
+			}
+		},
+		callback : {
+			// 				beforeExpand: beforeExpand,
+			// 				onExpand: onExpand,
+			onClick : zTreeOnClick
+		}
+	};
+
+	/** 用于捕获节点被点击的事件回调函数  **/
+	function zTreeOnClick(event, treeId, treeNode) {
+		var zTree = $.fn.zTree.getZTreeObj("dleft_tab1");
+		zTree.expandNode(treeNode, null, null, null, true);
+		// 		zTree.expandNode(treeNode);
+		// 规定：如果是父类节点，不允许单击操作
+		if (treeNode.isParent) {
+			return false;
+		}
+		// 如果节点路径为空或者为"#"，不允许单击操作
+		if (treeNode.menuUrl == "" || treeNode.menuUrl == "#") {
+			return false;
+		}
+		// 跳到该节点下对应的路径, 把当前资源ID(id)传到后台，写进Session
+		//$('#rightMain').attr('src', treeNode.menuUrl);
+		rightMain(treeNode.menuUrl);
+
+		if (treeNode.isParent) {
+			$('#here_area').html(
+					'当前位置：' + treeNode.getParentNode().name
+							+ '&nbsp;>&nbsp;<span style="color:#1A5CC6">'
+							+ treeNode.name + '</span>');
+		} else {
+			$('#here_area').html(
+					'当前位置：系统&nbsp;>&nbsp;<span style="color:#1A5CC6">'
+							+ treeNode.name + '</span>');
+		}
+	};
+	
+	function rightMain(url){
+		if(url.startWith("/")){
+			url = "${pageContext.request.contextPath}"+url;
+		}
+		$('#rightMain').attr('src', url);
+	}
+	
+	String.prototype.startWith = function(compareStr){
+	    return this.indexOf(compareStr) == 0;
+	}
+	
+	/* 切换主菜单 */
+	function switchTab(tabpage, tabid) {
+		var oItem = document.getElementById(tabpage).getElementsByTagName("li");
+		for (var i = 0; i < oItem.length; i++) {
+			var x = oItem[i];
+			x.className = "";
+		}
+		//$(document).ajaxStart(onStart).ajaxSuccess(onStop);
+		// 异步加载页签子菜单
+		loadMenu(tabid, 'dleft_tab1');
+	}
+
+	$(document).ready(function() {
+		//$(document).ajaxStart(onStart).ajaxSuccess(onStop);
+		/** 默认异步加载首菜单目录  **/
+		loadMenu(defaultMenu, "dleft_tab1");
+		// 默认展开所有节点
+		if (zTree) {
+			// 默认展开所有节点
+			//zTree.expandAll(true);
+			zTree.expandAll(false);
+			
+		}
+	});
+
+	function loadMenu(tabid, treeObj) {
+		$.ajax({
+			type:"POST",
+			url:ctx+"/func_json.do?funcid="+tabid,
+			dataType : "json",
+			success:function(data){
+				if(data != null){
+					var str = JSON.stringify(data);
+					$.fn.zTree.init($("#"+treeObj), setting, data);
+					zTree = $.fn.zTree.getZTreeObj(treeObj);
+					if( zTree ){
+						zTree.expandAll(false);
+					}
+				}
+			}
+		}); 
+	}
+	//选择站点
+	function selectSite(contextPath){
+		openWindow('切换站点',contextPath+'/cms/siteSelect.do',500,0,'false');
+	}
+	
+	/* //ajax start function
+	function onStart(){
+		$("#ajaxDialog").show();
+	}
+	
+	//ajax stop function
+	function onStop(){
+		$("#ajaxDialog").hide();
+	} */
+</script>
+</head>
+
+<body>
+	<div id="top">
+		<div id="top_logo">
+		<a href="${pageContext.request.contextPath}/index">党建服务平台</a></div>
+		<div id="top_links">
+			<div id="top_op">
+				<ul class="nav pull-right">
+					<li class="dropdown">
+						<a href="#" class="btn dropdown-toggle" data-toggle="dropdown">
+						<i class="icon-white icon-user"></i> ${current_user.name } <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+								<li><a href="#" onclick="rightMain('sysmg/userProfile.do')">个人资料</a></li>
+								<li><a href="#" onclick="rightMain('sysmg/userPwd.do')">密码设置</a></li>
+								<li class="divider"></li>
+						</ul>
+					</li>
+				</ul>
+
+				<ul class="nav pull-right">
+					<li class="dropdown"><a href="#" class="btn dropdown-toggle" data-toggle="dropdown"> <i class="icon-white icon-globe"></i> 
+						<c:if test="${current_site != null}">
+							${current_site.name }
+						</c:if> 
+						<c:if test="${current_site  == null}">
+							请选择管理站点
+						</c:if> <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="${pageContext.request.contextPath}/sitePreview.htm?id=${current_site.id }" target="_blank">预览站点</a></li>
+							<li><a href="#" onclick="selectSite('${pageContext.request.contextPath}')">切换站点</a></li>
+						</ul></li>
+				</ul>
+			</div>
+			<div id="top_close">
+				<a href="javascript:void(0);" onclick="logout();" target="_parent"> 
+				<img alt="退出系统" title="退出系统" src="${pageContext.request.contextPath}/static/skin/images/common/close.jpg" style="position: relative; top: 10px; left: 25px;">
+				</a>
+			</div>
+		</div>
+	</div>
+	<!-- side menu start -->
+	<div id="side">
+		<div id="left_menu">
+			<ul id="left_menu_tab" style="height: 200px;">
+				<c:forEach items="${funcList }" var="func" varStatus="status">
+					<c:if test="${status.index==0 }">
+						<script>
+							var defaultMenu="${func.id }";
+						</script>
+						<li id="${func.id }" class="selected" onClick="switchTab('left_menu_tab','${func.id}');" title="${func.name }"><img alt="${func.name }" title="${func.name }" src="${pageContext.request.contextPath}/static/skin/images/common/1_hover.jpg" width="33" height="31"></li>
+					</c:if>
+					<c:if test="${status.index!=0 }">
+						<c:if test="${status.index>4}">
+						<li id="${func.id }" onClick="switchTab('left_menu_tab','${func.id}');" title="${func.name }"><img alt="${func.name }" title="${func.name }" src="${pageContext.request.contextPath}/static/skin/images/common/6.jpg" width="33" height="31"></li>
+						</c:if>
+						<c:if test="${status.index<=4}">
+						<li id="${func.id }" onClick="switchTab('left_menu_tab','${func.id}');" title="${func.name }"><img alt="${func.name }" title="${func.name }" src="${pageContext.request.contextPath}/static/skin/images/common/${status.index+1 }.jpg" width="33" height="31"></li>
+						</c:if>
+					</c:if>
+				</c:forEach>
+			</ul>
+
+			<div id="nav_show" style="position: absolute; bottom: 0px; padding: 10px;">
+				<a href="javascript:;" id="show_hide_btn"> <img alt="显示/隐藏" title="显示/隐藏" src="${pageContext.request.contextPath}/static/skin/images/common/nav_hide.png" width="35" height="35">
+				</a>
+			</div>
+		</div>
+		<div id="left_menu_cnt">
+			<div id="nav_module">
+				<img src="${pageContext.request.contextPath}/static/skin/images/common/module_1.png" width="210" height="58" />
+			</div>
+			<div id="nav_resource">
+				<ul id="dleft_tab1" class="ztree"></ul>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		//var ctx = "${pageContext.request.contextPath}";
+		$(function() {
+			$('#left_menu_tab li').click(function() {
+				var index = $(this).index();
+				if (index>2){
+					$(this).find('img').attr('src',
+							ctx + '/static/skin/images/common/3_hover.jpg');
+					$(this).css({background : '#fff'});
+				}else{
+					$(this).find('img').attr('src',
+							ctx + '/static/skin/images/common/'
+												+ (index + 1) + '_hover.jpg');
+					$(this).css({background : '#fff'});
+				}
+					
+				$('#left_menu_tab li')
+							.each(function(i, ele) {
+								if (i != index) {
+									if(i>4){
+										$(ele).find('img').attr('src',ctx + '/static/skin/images/common/6.jpg');
+										$(ele).css({background : '#044599'});
+									}else{
+										$(ele).find('img').attr('src',ctx + '/static/skin/images/common/'
+																					+ (i + 1)+ '.jpg');
+										$(ele).css({background : '#044599'});
+									}
+								}
+							});
+					// 显示侧边栏
+					switchSysBar(true);
+			});
+
+			// 显示隐藏侧边栏
+			$("#show_hide_btn").click(function() {
+				switchSysBar();
+			});
+		});
+
+		/**隐藏或者显示侧边栏**/
+		function switchSysBar(flag) {
+			var side = $('#side');
+			var left_menu_cnt = $('#left_menu_cnt');
+			if (flag == true) { // flag==true
+				left_menu_cnt.show(500, 'linear');
+				side.css({
+					width : '280px'
+				});
+				$('#top_nav').css({
+					width : '77%',
+					left : '304px'
+				});
+				$('#main').css({
+					left : '280px'
+				});
+			} else {
+				if (left_menu_cnt.is(":visible")) {
+					left_menu_cnt.hide(10, 'linear');
+					side.css({
+						width : '60px'
+					});
+					$('#top_nav').css({
+						width : '100%',
+						left : '60px',
+						'padding-left' : '28px'
+					});
+					$('#main').css({
+						left : '60px'
+					});
+					$("#show_hide_btn").find('img').attr('src',ctx + '/static/skin/images/common/nav_show.png');
+				} else {
+					left_menu_cnt.show(500, 'linear');
+					side.css({
+						width : '280px'
+					});
+					$('#top_nav').css({
+						width : '77%',
+						left : '304px',
+						'padding-left' : '0px'
+					});
+					$('#main').css({
+						left : '280px'
+					});
+					$("#show_hide_btn").find('img').attr('src',
+							ctx + '/static/skin/images/common/nav_hide.png');
+				}
+			}
+		}
+	</script>
+	
+	<div id="main">
+		<iframe name="right" id="rightMain" src="${pageContext.request.contextPath}/main.do" frameborder="no" scrolling="auto" width="100%" height="100%" allowtransparency="true" />
+	</div>
+	
+</body>
+</html>

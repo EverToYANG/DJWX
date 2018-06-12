@@ -1,0 +1,183 @@
+package com.gsccs.cms.controller.member;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gsccs.cms.auth.model.Unit;
+import com.gsccs.cms.auth.service.UnitService;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.Membergroup;
+import com.gsccs.cms.member.model.PartyMember;
+import com.gsccs.cms.member.service.MembergroupService;
+import com.gsccs.cms.member.service.PartyUserService;
+
+/**
+ * 党员管理
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/partym")
+public class PartyUserController extends CmsBaseController {
+
+	@Resource
+	private PartyUserService partyUserService;
+	@Resource
+	private MembergroupService membergroupService;
+
+	/**
+	 * 列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String list(PartyMember param,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = " ") String order, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		
+		param.setCorpid(getWxApp()==null?null:getWxApp().getId());
+		List<PartyMember> memberList = partyUserService.find(param,
+				order, currPage, pageSize);
+		int totalCount = partyUserService.count(param);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("isok");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", memberList);
+		map.put("order", order);
+		return "member/partym_list";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/edit.do")
+	public String edit(String id, ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		PartyMember partyMember = null;
+		if (StringUtils.isNotEmpty(id)){
+			partyMember = partyUserService.findById(id);
+		}
+		
+		List<Unit> unitList = unitService.findByCorpid(getWxApp().getId());
+		List<Membergroup> groupList = membergroupService.find(null, null);
+		map.put("partyMember", partyMember);
+		map.put("groupList", groupList);
+		map.put("unitList", unitList);
+		return "member/partym_edit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/editDo.do")
+	public String editDo(PartyMember partyMember, String pageFuncId,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (null == partyMember) {
+			map.put("msg", "保存失败");
+			map.put("forwardUrl", "list.do?pageFuncId=" + pageFuncId);
+			map.put("forwardSeconds", 3);
+			return "admin/msg";
+		}
+		
+		if (StringUtils.isNotEmpty(partyMember.getId())) {
+			partyUserService.update(partyMember);
+		} else {
+			PartyMember partyMemberDb = partyUserService.findByIdcode(partyMember.getIdcode());
+			if (null != partyMemberDb){
+				map.put("msg", "保存失败,身份证号码已存在");
+				map.put("forwardUrl", "list.do?pageFuncId=" + pageFuncId);
+				map.put("forwardSeconds", 3);
+				return "admin/msg";
+			}
+			partyUserService.add(partyMember);
+		}
+		map.put("msg", "保存成功");
+		map.put("forwardUrl", "list.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/del.do")
+	public String del(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				PartyMember partyMember;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						partyMember = partyUserService.findById(idArr[i]);
+						if (partyMember != null) {
+							try {
+								partyUserService.del(idArr[i]);
+								operlogService.log(getLoginName(), "删除会员成功:"
+										+ partyMember.getId(), request);
+							} catch (Exception e) {
+								operlogService.log(getLoginName(),
+										"删除会员失败:" + partyMember.getId() + " "
+												+ e.getMessage(), request);
+							}
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "partym/list.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 日期型数据转换，将页面上的表示日期限的字符串，转换为Date型
+	 * **/
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		dateFormat.setLenient(true);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, true));
+	}
+}

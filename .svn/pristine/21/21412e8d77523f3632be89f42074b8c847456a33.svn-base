@@ -1,0 +1,523 @@
+package com.gsccs.cms.controller.core;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Templet;
+import com.gsccs.cms.core.model.TempletChannel;
+import com.gsccs.cms.core.service.SensitiveService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.TempletChannelService;
+import com.gsccs.cms.core.service.TempletService;
+
+/**
+ * 模板栏目相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+
+@Controller
+@RequestMapping("/cms")
+public class TempletChannelController extends CmsBaseController {
+	@Resource
+	private TempletChannelService templetChannelService;
+	@Resource
+	private SensitiveService sensitiveService;
+	@Resource
+	private TempletService templetService;
+	@Resource
+	private SiteService siteService;
+
+	private List<Integer> hours;
+	private List<Integer> mins;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	@RequestMapping("/templetChannel.do")
+	public String templetChannel(String id, String pageFuncId, String type,
+			ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		if (StringUtils.isNotEmpty(id)) {
+			Templet templet = templetService.findById(id);
+			if (templet != null) {
+				// 栏目管理页面
+				// 获取一级栏目
+				List<TempletChannel> channelList = templetChannelService
+						.findByPar(id, "par");
+				// 设置是否有子栏目
+				if (channelList != null && channelList.size() > 0) {
+					for (int i = 0; i < channelList.size(); i++) {
+						if (templetChannelService.hasChildren(channelList
+								.get(i).getId())) {
+							channelList.get(i).setHasChildren("true");
+						}
+					}
+				}
+				map.put("channelList", channelList);
+			}
+		}
+		if ("select".equals(type)) {
+			return "cms/templetChannelSelect";
+		}
+		return "cms/templetChannel";
+	}
+
+	/**
+	 * 下级数据
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetChannelSon.do")
+	public String templetChannelSon(String pid, String plevel, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(pid) && StringUtils.isNotEmpty(plevel)) {
+			// 提取子
+			List<TempletChannel> channelList = templetChannelService.findByPar(
+					"", pid);
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (templetChannelService.hasChildren(channelList.get(i)
+							.getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("channelList", channelList);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/templetChannelSon";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	@RequestMapping("/templetChannelEdit.do")
+	public String channelEdit(String pid, String id, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (StringUtils.isNotEmpty(id)) {
+			// 编辑页面
+			TempletChannel channel = templetChannelService.findById(id);
+			// 编辑页面
+			map.put("channel", channel);
+		} else {
+			// 添加页面
+			Channel channel = new Channel();
+			channel.setParid(pid);
+			map.put("channel", channel);
+		}
+		map.put("hours", getHours());
+		map.put("mins", getMins());
+		return "cms/templetChannelEdit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	
+	@RequestMapping("/templetChannelEditDo.do")
+	public String templetChannelEditDo(
+			TempletChannel channel,
+			@RequestParam(value = "imgfile", required = false) MultipartFile imgfile,
+			String oldImg, String pageFuncId, String htmlquartz_type,
+			String htmlquartz_intervaltype, String htmlquartz_exetimehour,
+			String htmlquartz_exetimemin, String htmlquartz_intervalmin,
+			String htmlquartz_intervalhour, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		String oper = "添加";
+		try {
+			// 敏感词处理
+			channel.setName(sensitiveService.replace(channel.getName()));
+			channel.setDescription(sensitiveService.replace(channel
+					.getDescription()));
+			if (channel.getOrdernum() == null) {
+				channel.setOrdernum(templetChannelService.maxNum(
+						channel.getTempletid(), channel.getParid()));
+			}
+			if (channel.getId() != null && channel.getId().trim().length() > 0) {
+				// 更新
+				oper = "更新";
+				TempletChannel oldChannel = templetChannelService
+						.findById(channel.getId());
+				// 如果原来有和现在的pagemark不同则判断新的pagemark是否存在
+				if (channel.getPagemark() != null
+						&& channel.getPagemark().trim().length() > 0
+						&& !channel.getPagemark().equals(
+								oldChannel.getPagemark())) {
+					if (templetChannelService.hasPagemark(
+							channel.getTempletid(), channel.getPagemark())) {
+						map.put("msg", "此页面标识已存在!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+				}
+				// 如果原来有和现在的logo不同则删除原来的logo文件
+				if (!oldImg.equals(oldChannel.getImg())
+						&& oldChannel.getImg() != null
+						&& oldChannel.getImg().trim().length() > 0) {
+					FileUtil.del(request.getRealPath("/")
+							+ oldChannel.getImg().trim());
+				} else {
+					channel.setImg(oldImg);
+				}
+				if (imgfile != null && imgfile.getSize() > 0) {
+					// 生成目标文件
+					String root = request.getRealPath("/") + "/templet/"
+							+ channel.getTempletid();
+					String ext = FileUtil.getExt(imgfile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "栏目图片只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(root + "/resources/upload/" + id
+							+ ext);
+					File folder = new File(root + "/resources/upload/");
+					if (!folder.exists()) {
+						folder.mkdir();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(imgfile, targetFile);
+					// 生成访问地址
+					channel.setImg("/resources/upload/" + id + ext);
+				}
+				templetChannelService.update(channel);
+				operlogService.log(getLoginName(),
+						"更新模板栏目 " + channel.getName(), request);
+			} else {
+				// 添加
+				// 判断页面标识是否存在
+				if (channel.getPagemark() != null
+						&& channel.getPagemark().trim().length() > 0
+						&& templetChannelService.hasPagemark(
+								channel.getTempletid(), channel.getPagemark())) {
+					map.put("msg", "此页面标识已存在!");
+					map.put("isBack", true);
+					return "admin/msg";
+				}
+				if (imgfile != null && imgfile.getSize() > 0) {
+					// 生成目标文件
+					String root = request.getRealPath("/") + "/templet/"
+							+ channel.getTempletid();
+					String ext = FileUtil.getExt(imgfile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "栏目图片只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(root + "/resources/upload/" + id
+							+ ext);
+					File folder = new File(root + "/resources/upload/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(imgfile, targetFile);
+					// 生成访问地址
+					channel.setImg("/resources/upload/" + id + ext);
+				}
+				templetChannelService.insert(channel);
+				operlogService.log(getLoginName(),
+						"添加模板栏目 " + channel.getName(), request);
+			}
+			msg = oper + "模板栏目 " + channel.getName() + " 成功";
+			map.put("forwardUrl", "templetChannel.do?pageFuncId=" + pageFuncId
+					+ "&id=" + channel.getTempletid());
+			map.put("forwardSeconds", 3);
+		} catch (Exception e) {
+			e.printStackTrace();
+			map.put("isBack", true);
+			msg = oper + "模板栏目 " + channel.getName() + " 操作失败:" + e.toString();
+		}
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 转移页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	@RequestMapping("/templetChannelTree.do")
+	public String templetChannelTree(String templetid, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		Templet templet = null;
+		if (StringUtils.isNotEmpty(templetid)) {
+			templet = templetService.findById(templetid);
+		}
+		if (templet != null) {
+			// 查询一级
+			List<TempletChannel> channelList = templetChannelService.findByPar(
+					templetid, "par");
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (templetChannelService.hasChildren(channelList.get(i)
+							.getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("channelList", channelList);
+		}
+		return "cms/templetChannelTree";
+	}
+
+	/**
+	 * 子站点
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	@RequestMapping("/templetChannelSonTree.do")
+	public String templetChannelSonTree(String pid, String plevel,
+			ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		if (StringUtils.isNotEmpty(pid) && StringUtils.isNotEmpty(plevel)) {
+			// 提取子菜单
+			List<TempletChannel> channelList = templetChannelService.findByPar(
+					"", pid);
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (templetChannelService.hasChildren(channelList.get(i)
+							.getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("channelList", channelList);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/templetChannelSonTree";
+	}
+
+	/**
+	 * 转移处理
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	
+	@RequestMapping("/templetChannelPar.do")
+	public String templetChannelPar(String id, String pid,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		String msg = "";
+		if (StringUtils.isNotEmpty(id)) {
+			TempletChannel channel = templetChannelService.findById(id);
+			if (StringUtils.isNotEmpty(pid)) {
+				TempletChannel parChannel = templetChannelService.findById(pid);
+				if (parChannel != null) {
+					msg = "改变模板栏目 " + channel.getName() + " 的所属栏目为 "
+							+ parChannel.getName() + " ";
+				}
+			} else {
+				msg = "改变模板栏目 " + channel.getName() + " 的所属栏目为 根栏目 ";
+			}
+			if (channel != null) {
+				try {
+					channel.setParid(pid);
+					templetChannelService.update(channel);
+					msg += "成功!";
+				} catch (Exception e) {
+					msg += "失败:" + e.toString();
+				}
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	
+	@RequestMapping("/templetChannelDel.do")
+	public String templetChannelDel(String pageFuncId, String ids,
+			String templetid, ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				TempletChannel channel;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						channel = templetChannelService.findById(idArr[i]);
+						if (channel != null) {
+							try {
+								templetChannelService.del(idArr[i], request);
+								operlogService.log(getLoginName(), "删除模板栏目成功:"
+										+ channel.getName(), request);
+							} catch (Exception e) {
+								operlogService.log(getLoginName(),
+										"删除模板栏目失败:" + channel.getName() + " "
+												+ e.getMessage(), request);
+							}
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "templetChannel.do?pageFuncId=" + pageFuncId
+				+ "&id=" + templetid);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 排序
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	
+	@RequestMapping("/templetChannelOrder.do")
+	public String templetChannelOrder(String channelid, String id, String type,
+			ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		TempletChannel channel = new TempletChannel();
+		if (StringUtils.isNotEmpty(channelid)) {
+			channel = templetChannelService.findById(channelid);
+			if (channel != null) {
+				String msg = "";
+				try {
+					if ("up".equals(type)) {
+						msg += "上升";
+						templetChannelService.up(channel);
+					} else if ("down".equals(type)) {
+						msg += "下降";
+						templetChannelService.down(channel);
+					}
+				} catch (Exception e) {
+					msg += "栏目 " + channel.getName() + " 失败:" + e.toString();
+				}
+				msg += "栏目 " + channel.getName() + " 成功";
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		return templetChannel(id, "", "", map, response);
+	}
+
+	/**
+	 * 从站点导入
+	 * 
+	 * @param map
+	 * @return
+	 */
+	// @FuncAuth(codes="templet")
+	
+	@RequestMapping("/templetChannelImportSite.do")
+	public String templetChannelImportSite(String siteid, String templetid,
+			ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		if (StringUtils.isNotEmpty(siteid) && StringUtils.isNotEmpty(templetid)) {
+			try {
+				Site site = siteService.findById(siteid);
+				Templet templet = templetService.findById(templetid);
+				templetChannelService.importSite(templet, site, request);
+				msg = "导入成功";
+			} catch (Exception e) {
+				msg = "导入失败:" + e.getMessage();
+			}
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	public List<Integer> getHours() {
+		hours = new ArrayList<Integer>();
+		for (int i = 0; i < 24; i++) {
+			hours.add(i);
+		}
+		return hours;
+	}
+
+	public void setHours(List<Integer> hours) {
+		this.hours = hours;
+	}
+
+	public List<Integer> getMins() {
+		mins = new ArrayList<Integer>();
+		for (int i = 0; i < 60; i++) {
+			mins.add(i);
+		}
+		return mins;
+	}
+
+	public void setMins(List<Integer> mins) {
+		this.mins = mins;
+	}
+}

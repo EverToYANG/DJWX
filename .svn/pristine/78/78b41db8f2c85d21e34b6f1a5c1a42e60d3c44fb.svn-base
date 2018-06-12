@@ -1,0 +1,161 @@
+package com.gsccs.cms.wx.service;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import me.chanjar.weixin.common.exception.WxErrorException;
+import me.chanjar.weixin.mp.api.WxMpConfigStorage;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
+import me.chanjar.weixin.mp.bean.WxMpTemplateData;
+import me.chanjar.weixin.mp.bean.WxMpTemplateMessage;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.weixin.service.WxAppService;
+
+@Service
+public class MpMsgServiceImpl implements MpMsgService {
+
+	@Autowired
+	private WxAppService wxAppService;
+	@Autowired
+	WxMpConfigStorage wxMpConfigStorage;
+	// 消费者线程
+	private Thread thread;
+	private boolean quit;
+
+	private static List<WxMpTemplateMessage> messages = new CopyOnWriteArrayList<>();
+	
+	@Override
+	public void sendMsg(String appid,String openid,String tmlShortId, String url,
+			Map<String, String> msgMap) {
+		
+		wxMpConfigStorage.init(appid);
+		WxMpService wxMpService = new WxMpServiceImpl();
+		wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
+		
+		List<WxMpTemplateData> msgdatas = new ArrayList<>();
+		if (null != msgMap && !msgMap.isEmpty()) {
+			Iterator<String> its = msgMap.keySet().iterator();
+			while (its.hasNext()) {
+				String key = its.next();
+
+				WxMpTemplateData tempData = new WxMpTemplateData();
+				tempData.setName(key);
+				tempData.setValue(msgMap.get(key));
+				msgdatas.add(tempData);
+			}
+		}
+
+		try {
+			// 模板消息
+			WxMpTemplateMessage message = new WxMpTemplateMessage();
+			String templateid = wxMpService.getTemplateId(tmlShortId);
+			message.setTemplateId(templateid);
+			message.setUrl(url);
+			message.setToUser(openid);
+
+			message.setData(msgdatas);
+			wxMpService.templateSend(message);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void sendBatchMsg(String appid,String tmlShortId,
+			String url,Map<String, Map<String, String>> usermsgs) {
+		try {
+			List<WxMpTemplateData> msgdatas = new ArrayList<>();
+			if (null != usermsgs && !usermsgs.isEmpty()) {
+				Iterator<String> msgMaps = usermsgs.keySet().iterator();
+				while (msgMaps.hasNext()) {
+					String openid = msgMaps.next();
+					Map<String, String> msgMap = usermsgs.get(openid);
+					if (null != msgMap && !msgMap.isEmpty()) {
+						Iterator<String> its = msgMap.keySet().iterator();
+						while (its.hasNext()) {
+							String key = its.next();
+							WxMpTemplateData tempData = new WxMpTemplateData();
+							tempData.setName(key);
+							tempData.setValue(msgMap.get(key));
+							msgdatas.add(tempData);
+						}
+					}
+					
+					
+					wxMpConfigStorage.init(appid);
+					WxMpService wxMpService = new WxMpServiceImpl();
+					wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
+					
+					// 模板消息
+					WxMpTemplateMessage message = new WxMpTemplateMessage();
+					String templateid = wxMpService.getTemplateId(tmlShortId);
+					message.setTemplateId(templateid);
+					message.setUrl(url);
+					message.setToUser(openid);
+
+					// wxService.templateSend(message);
+
+					messages.add(message);
+				}
+			}
+			startSender(appid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 启动发送线程
+	 */
+	public void startSender(final String appid) {
+		// 防止重复启动
+		if (thread != null && thread.isAlive()) {
+			return;
+		}
+		System.out.println("模板消息发送线程启动");
+
+		thread = new Thread() {
+			@Override
+			public void run() {
+				WxMpService wxService = null;
+				while (!messages.isEmpty()) {
+					try {
+						if (null == wxService) {
+							wxMpConfigStorage.init(appid);
+							System.out.println("wxService init");
+							wxService = new WxMpServiceImpl();
+							wxService.setWxMpConfigStorage(wxMpConfigStorage);
+						}
+						// 当缓冲区没有数据的时候，此方法会阻塞
+						for (WxMpTemplateMessage message : messages) {
+							if (wxService == null) {
+								System.out.println("wxService is null");
+							}
+							wxService.templateSend(message);
+							messages.remove(message);
+						}
+					} catch (WxErrorException e) {
+						quit = true;
+					}
+				}
+				System.out.println("模板消息发送线程退出");
+			}
+		};
+		thread.setName("TemplateMessageSender");
+		thread.start();
+	}
+
+	public void stopSender() {
+		if (thread != null) {
+			thread.interrupt();
+		}
+	}
+
+}

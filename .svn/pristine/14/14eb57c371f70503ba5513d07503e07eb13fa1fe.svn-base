@@ -1,0 +1,692 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>管理中心</title>
+<!-- ECharts单文件引入 -->
+<script src="static/table/echarts.js"></script>
+<%@include file="/include/bsie_head.jsp"%>
+</head>
+
+<body>
+	<div>
+		<div class="row-fluid">
+			<div class="widget-box collapsible">
+				<div class="widget-title">
+					<span class="icon"> <i class="icon-search"></i>
+					</span>
+					<h5>
+					    ${current_user.name }!
+						&nbsp;&nbsp;欢迎使用党建管理平台
+					</h5>
+					<div class="buttons">
+						<a href="#collapseOne" data-toggle="collapse" class="btn btn-mini"><i class="icon-retweet"></i>展开/关闭</a>
+					</div>
+				</div>
+<!-- 				<div class="collapse in" id="collapseOne">
+					<div class="widget-content">
+						当前版本：v4.0
+					</div>
+				</div> -->
+			</div>
+		</div>
+		<!--/row-->
+
+		<div class="row-fluid clearfix">
+		<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<div style="width: 100%;">
+		<div id="table4" style="width:49%;height: 300px;float: left;    border:1px solid rgb(218, 218, 218);"></div>
+		<div id="table2" style="width:49%;height: 300px;float: left;    border:1px solid  rgb(218, 218, 218);"></div>
+		<div id="table3" style="width:49%;height: 300px;float: left;    border:1px solid  rgb(218, 218, 218);"></div>
+		<div id="table1" style="width:49%;height: 300px;float: left;    border:1px solid  rgb(218, 218, 218);"></div>
+	</div>
+	
+	<!-- ECharts单文件引入 -->
+	<!-- <script src="echarts.js"></script> -->
+	<script type="text/javascript">
+		// 路径配置
+		require.config({
+			paths : {
+				echarts : 'static/table/dist'
+			}
+		});
+		// 使用
+		require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+		], function(ec) {
+			// 基于准备好的dom，初始化echarts图表
+			var myChart = ec.init(document.getElementById('table1'));
+			var option = {
+				/* color:['#FF7F50'],
+				title:{
+					text:'各镇、乡、街道党员数量统计',
+					textStyle : {
+						fontSize : 18,
+						fontWeight : 'bolder',
+						color : 'red'
+					},
+					x:'center'
+				},
+				tooltip : {
+					show : true
+				},
+				legend : {
+					data : [ '党员数量' ],
+					y:'bottom'
+				},
+				toolbox : {
+					show : true,
+					feature : {
+						mark : {
+							show : false
+						},
+						dataView : {
+							show : true,
+							readOnly : true
+						},
+						magicType : {
+							show : false,
+							type : [ 'line', 'bar', 'stack', 'tiled' ]
+						},
+						restore : {
+							show : true
+						},
+						saveAsImage : {
+							show : true
+						}
+					}
+				},
+				xAxis : [ {
+					type : 'category',
+					data : [ "长征街道","电力路街道","兴平路街道","红会路街道","王家山镇","水泉镇","共和镇","宝积镇","黄峤乡","种田乡","复兴乡" ]
+				} ],
+				yAxis : [ {
+					type : 'value'
+				} ],
+				series : [ {
+					"name" : "党员数量",
+					"type" : "bar",
+					"data" : [ 53, 205, 406, 119, 102, 203,159,505,307,305,210 ]
+				} ]  */
+				title:{
+					text:'各镇、乡、街道党员数量统计',
+					x:'center'
+				},
+				tooltip : {
+			        trigger: 'axis',
+			        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+			            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+			        }
+			    },
+			    legend: {
+			    	data : [ '党员数量' ],
+					y:'bottom'
+			    },
+			    toolbox: {
+			        show : true,
+			        feature : {
+			        	mark : {
+							show : false
+						},
+						dataView : {
+							show : true,
+							readOnly : true
+						},
+						magicType : {
+							show : false,
+							type : [ 'line', 'bar', 'stack', 'tiled' ]
+						},
+						restore : {
+							show : true
+						},
+						saveAsImage : {
+							show : true
+						}
+			        }
+			    },
+			    calculable : true,
+			    xAxis : [
+			        {
+			        	type : 'value'
+			        }
+			    ],
+			    yAxis : [
+			        {
+			        	
+			        		type : 'category',
+							data : [ "长征街道","电力路街道","兴平路街道","红会路街道","王家山镇","水泉镇","共和镇","宝积镇" ]
+			        }
+			    ],
+			    series : [
+			        {
+			            name:'党员数量',
+			            type:'bar',
+			            stack: '总量',
+			            itemStyle : { normal: {label : {show: true, position: 'insideRight'}}},
+			            data:[53, 205, 406, 119, 102, 203,159,505]
+			        }
+			    ]
+			};
+			// 为echarts对象加载数据
+			myChart.setOption(option);
+		});
+		// 使用
+		require([ 'echarts', 'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+		], function(ec) {
+			// 基于准备好的dom，初始化echarts图表
+			var myChart = ec.init(document.getElementById('table2'));
+			var option = {
+				 	/* color : [ '#FF0000', '#D26666', '#D8361B', '#F16B4C' ],
+					title : {
+						text : '最近一周各类使用情况',
+						textStyle : {
+							fontSize : 18,
+							fontWeight : 'bolder',
+							color : 'red'
+						},
+						x:'center'
+					},
+					tooltip : {
+						trigger : 'axis'
+					},
+					legend : {
+						data : ['业务受理', '党建资讯下发', '党员认证', '当天办理完结' ],
+						y:'bottom'
+					},
+					toolbox : {
+								show : true,
+						feature : {
+								mark : {
+									show : false
+								},
+								dataView : {
+									show : true,
+									readOnly : true
+								},
+								magicType : {
+									show : false,
+									type : [ 'line', 'bar', 'stack', 'tiled' ]
+								},
+								restore : {
+									show : true
+								},
+								saveAsImage : {
+									show : true
+								}
+						}
+					},
+					calculable : true,
+					xAxis : [ {
+						type : 'category',
+						boundaryGap : false,
+						data : [ '周一', '周二', '周三', '周四', '周五', '周六', '周日' ]
+					} ],
+					yAxis : [ {
+						type : 'value'
+					} ],
+				series : [ 
+				           {
+					name : '业务受理',
+					type : 'line',
+					tiled : '总量',
+					data : [ 110, 91, 82, 117, 145, 163, 155 ]
+					}, 
+					{
+						name : '当天办理完结',
+						type : 'line',
+						tiled : '总量',
+						data : [ 90, 82, 61, 101, 90, 130, 110 ]
+					},
+					{
+						name : '党建资讯下发',
+						type : 'line',
+						tiled : '总量',
+						data : [ 20, 28, 25, 9, 24, 27, 26 ]
+					}, 
+					{
+						name : '党员认证',
+						type : 'line',
+						tiled : '总量',
+						data : [ 32, 33, 30, 33, 39, 33, 32 ]
+					} 
+					] */
+					title : {
+						text : '最近一周各类使用情况',
+						x:'center'
+					},
+					tooltip : {
+				        trigger: 'axis'
+				    },
+				    legend: {
+					    data : ['业务受理', '党建资讯下发', '党员认证', '当天办理完结' ],
+						y:'bottom'
+				    },
+				    toolbox: {
+				        show : true,
+				        feature : {
+							mark : {
+								show : false
+							},
+							dataView : {
+								show : true,
+								readOnly : true
+							},
+							magicType : {
+								show : false,
+								type : [ 'line', 'bar', 'stack', 'tiled' ]
+							},
+							restore : {
+								show : true
+							},
+							saveAsImage : {
+								show : true
+							}
+					}
+				    },
+				    calculable : true,
+				    xAxis : [
+				        {
+				        	type : 'category',
+							boundaryGap : false,
+							data : [ '周一', '周二', '周三', '周四', '周五', '周六', '周日' ]
+				        }
+				    ],
+				    yAxis : [
+				        {
+				            type : 'value'
+				        }
+				    ],
+				    series : [
+				        {
+				            name:'业务受理',
+				            type:'line',
+				            stack: '总量',
+				            itemStyle: {normal: {areaStyle: {type: 'default'}}},
+				            data:[110, 91, 82, 117, 145, 163, 155]
+				        },
+				        {
+				            name:'当天办理完结',
+				            type:'line',
+				            stack: '总量',
+				            itemStyle: {normal: {areaStyle: {type: 'default'}}},
+				            data:[90, 82, 61, 101, 90, 130, 110]
+				        },
+				        {
+				            name:'党建资讯下发',
+				            type:'line',
+				            stack: '总量',
+				            itemStyle: {normal: {areaStyle: {type: 'default'}}},
+				            data:[20, 28, 25, 9, 24, 27, 26]
+				        },
+				        {
+				            name:'党员认证',
+				            type:'line',
+				            stack: '总量',
+				            itemStyle: {normal: {areaStyle: {type: 'default'}}},
+				            data:[32, 33, 30, 33, 39, 33, 32]
+				        }
+				    ]
+				};
+			// 为echarts对象加载数据
+			myChart.setOption(option);
+		});
+	// 使用
+		require([ 'echarts', 'echarts/chart/eventRiver' // 使用柱状图就加载bar模块，按需加载
+		], function(ec) {
+			// 基于准备好的dom，初始化echarts图表
+			var myChart = ec.init(document.getElementById('table3'));
+			var option = {
+			 color : [ '#FF0000', '#D26666', '#D8361B', '#F16B4C' ],
+				title : {
+					text : '2016年各党支部开展活动计划',
+					textStyle : {
+						fontSize : 18,
+						fontWeight : 'bolder'
+					},
+					x:'center'
+				},
+				tooltip : {
+					trigger : 'item',
+					enterable : false
+				},
+				legend : {
+					data : [ '政治理论学习', '三会一课','党员活动','党员大会' ],
+					y:'bottom'
+				},
+				toolbox : {
+				show : true,
+					feature : {
+						mark : {
+							show : false
+						},
+						dataView : {
+							show : true,
+							readOnly : true
+						},
+						magicType : {
+							show : false,
+							type : [ 'line', 'bar', 'stack', 'tiled' ]
+						},
+						restore : {
+							show : true
+						},
+						saveAsImage : {
+							show : true
+						}
+					}
+				},
+				xAxis : [ {
+					type : 'time',
+					boundaryGap : [ 0.05, 0.1 ],
+					TextStyle:{
+						color:'#fff'
+					}
+				} ],
+				series : [ {
+					"name" : "政治理论学习",
+					"type" : "eventRiver",
+					"weight" : 123,
+					"data" : [ {
+						"name" : "学习心得体会",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-03",
+							"value" : 24
+						}, {
+							"time" : "2016-05-05",
+							"value" : 50
+						}, {
+							"time" : "2016-05-07",
+							"value" : 20
+						} ]
+					} ]
+				}, {
+					"name" : "三会一课",
+					"type" : "eventRiver",
+					"weight" : 123,
+					"data" : [ {
+						"name" : "支部例会",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-06",
+							"value" : 24
+						}, {
+							"time" : "2016-05-09",
+							"value" : 40
+						}, {
+							"time" : "2016-05-10",
+							"value" : 20
+						} ]
+					}, {
+						"name" : "党员大会",
+						"weight" : 123,
+						"evolution" : [  {
+							"time" : "2016-05-09",
+							"value" : 14
+						}, {
+							"time" : "2016-05-10",
+							"value" : 30
+						}, {
+							"time" : "2016-05-11",
+							"value" : 20
+						} ]
+					}, {
+						"name" : "党员轮流讲",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-12",
+							"value" : 38
+						}, {
+							"time" : "2016-05-13",
+							"value" : 40
+						}, {
+							"time" : "2016-05-14",
+							"value" : 35
+						} ]
+					} ]
+				}, {
+					"name" : "党员活动",
+					"type" : "eventRiver",
+					"weight" : 123,
+					"data" : [ {
+						"name" : "党员组织道德教育",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-02",
+							"value" : 20
+						}, {
+							"time" : "2016-05-03",
+							"value" : 34
+						}, {
+							"time" : "2016-05-04",
+							"value" : 40
+						}, {
+							"time" : "2016-05-05",
+							"value" : 30
+						}  ]
+					} , {
+						"name" : "党员“迎七一”系列活动",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-12",
+							"value" : 24
+						}, {
+							"time" : "2016-05-13",
+							"value" : 40
+						}, {
+							"time" : "2016-05-14",
+							"value" : 20
+						} ]
+					}, {
+						"name" : "组织健康讲座",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-12",
+							"value" : 24
+						}, {
+							"time" : "2016-05-13",
+							"value" : 40
+						}, {
+							"time" : "2016-05-14",
+							"value" : 20
+						} ]
+					}]
+				} , {
+					"name" : "党员大会",
+					"type" : "eventRiver",
+					"weight" : 123,
+					"data" : [ {
+						"name" : "道德教育",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-01",
+							"value" : 24
+						}, {
+							"time" : "2016-05-02",
+							"value" : 50
+						}, {
+							"time" : "2016-05-03",
+							"value" : 20
+						} ]
+					}, {
+						"name" : "党课教育",
+						"weight" : 123,
+						"evolution" : [  {
+							"time" : "2016-05-06",
+							"value" : 24
+						}, {
+							"time" : "2016-05-09",
+							"value" : 40
+						}, {
+							"time" : "2016-05-10",
+							"value" : 20
+						} ]
+					}, {
+						"name" : "民主生活会及组织活动",
+						"weight" : 123,
+						"evolution" : [ {
+							"time" : "2016-05-12",
+							"value" : 24
+						}, {
+							"time" : "2016-05-13",
+							"value" : 40
+						}, {
+							"time" : "2016-05-14",
+							"value" : 20
+						} ]
+					} , {
+						"name" : "先进代表微党课教育",
+						"weight" : 123,
+						"evolution" : [{
+							"time" : "2016-05-01",
+							"value" : 24
+						}, {
+							"time" : "2016-05-02",
+							"value" : 50
+						}, {
+							"time" : "2016-05-03",
+							"value" : 20
+						} ]
+					}, {
+						"name" : "党员发展",
+						"weight" : 123,
+						"evolution" : [  {
+							"time" : "2016-05-06",
+							"value" : 24
+						}, {
+							"time" : "2016-05-09",
+							"value" : 40
+						}, {
+							"time" : "2016-05-10",
+							"value" : 20
+						}  ]
+					}]
+				} ] 
+				
+			};
+			// 为echarts对象加载数据
+			myChart.setOption(option);
+		});
+		// 使用
+		require([ 'echarts', 'echarts/chart/pie' // 使用柱状图就加载bar模块，按需加载
+		], function(ec) {
+			// 基于准备好的dom，初始化echarts图表
+			var myChart = ec.init(document.getElementById('table4'));
+			var option = {
+			/* color : [ '#FF0000', '#D26666', '#D8361B', '#F16B4C' ], 
+			title : {
+				text: '党员群众关系比例',
+				x:'center',
+				textStyle : {
+									fontSize : 18,
+									fontWeight : 'bold',
+									color : 'red'
+								}
+				},
+				tooltip : {
+					trigger: 'item',
+					formatter: "{a} <br/>{b} : {c} ({d}%)"
+				},
+				legend: {
+					orient : 'vertical',
+					x : 'left',
+					data:['党员数量','群众数量']
+				},
+				toolbox: {
+					show : true,
+					feature : {
+						dataView : {show: true, readOnly: false},
+						restore : {show: true},
+						saveAsImage : {show: true}
+					}
+			    },
+			calculable : true,
+			series : [
+				{
+					name:'党群比例',
+					type:'pie',
+					radius : '70%',
+					center: ['50%', '50%'],
+					data:[
+						{value:13319, name:'党员数量'},
+						{value:192398, name:'群众数量'}
+					]
+				} 
+				
+			] */
+			title : {
+		        text: '党员群众关系比例',
+		        x:'center'
+		    },
+			tooltip : {
+		        trigger: 'item',
+		        formatter: "{a} <br/>{b} : {c} ({d}%)"
+		    },
+		    legend: {
+		        orient : 'vertical',
+		        x : 'left',
+		        data:['在职党员','流动党员','离退休党员','群众','其他']
+		    },
+		    toolbox: {
+		        show : true,
+		        feature : {
+					dataView : {show: true, readOnly: false},
+					restore : {show: true},
+					saveAsImage : {show: true}
+				}
+		    },
+		    calculable : true,
+		    series : [
+		        {
+		            name:'访问来源',
+		            type:'pie',
+		            radius : ['50%', '70%'],
+		            itemStyle : {
+		                normal : {
+		                    label : {
+		                        show : false
+		                    },
+		                    labelLine : {
+		                        show : false
+		                    }
+		                },
+		                emphasis : {
+		                    label : {
+		                        show : true,
+		                        position : 'center',
+		                        textStyle : {
+		                            fontSize : '30',
+		                            fontWeight : 'bold'
+		                        }
+		                    }
+		                }
+		            },
+		            data:[
+		                {value:335, name:'在职党员'},
+		                {value:310, name:'流动党员'},
+		                {value:234, name:'离退休党员'},
+		                {value:135, name:'群众'},
+		                {value:1548, name:'其他'}
+		            ]
+		        }
+		    ]
+		};
+			// 为echarts对象加载数据
+			myChart.setOption(option);
+		});
+	</script>
+		</div>
+	<!--/.fluid-container-->
+
+	<%@include file="/include/foot.jsp"%>
+	<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/common/js/jquery.jqChart.css" />
+	<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/common/js/jquery.jqRangeSlider.css" />
+	<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/smoothness/jquery-ui-1.8.21.css" />
+	<script src="${pageContext.request.contextPath}/static/common/js/jquery-1.7.2.min.js" type="text/javascript"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/jquery.jqChart.min.js" type="text/javascript"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/jquery.jqRangeSlider.min.js" type="text/javascript"></script>
+
+</body>
+</html>

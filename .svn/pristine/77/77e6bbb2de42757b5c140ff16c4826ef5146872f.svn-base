@@ -1,0 +1,21 @@
+package com.gsccs.cms.weixin.service;
+
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.jfinal.weixin.sdk.api.CustomServiceApi;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月12日
+ */
+
+public class CustomService {
+
+	// 发送客服消息(文本)
+	public ApiResult sendText(String appId, String openId, String text) {
+		// 绑定当前appid
+		ApiConfigKit.setThreadLocalAppId(appId);
+		return CustomServiceApi.sendText(openId, text);
+	}
+}

@@ -1,0 +1,68 @@
+package com.gsccs.weixin.service;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.weixin.model.WxApp;
+
+import io.github.elkan1788.mpsdk4j.vo.api.Template;
+
+/**
+ * 模板消息API
+ * 
+ * @author 刘杰
+ *
+ * @date 2016年9月18日
+ */
+@Service
+public class TemplateApi extends WXAppConfig{
+	
+	 /**
+     * 发送模板消息
+     * 
+     * @param openId
+     *            接收用户Id
+     * @param tmlId
+     *            模板Id
+     * @param topColor
+     *            顶部颜色
+     * @param url
+     *            跳转链接
+     * @param tmls
+     *            模板数据
+     * @return 消息Id
+     */
+    public long sendTemplateMsg(WxApp wxApp,String openId, String tmlId, String topColor, String url, Template... tmls){
+    	return getAPI(wxApp).sendTemplateMsg(openId, tmlId, topColor, url, tmls);
+    }
+    
+    /**
+     * 设置所属行业
+     * 
+     * @param id1
+     *            模板消息所属行业编号
+     * @param id2
+     *            模板消息所属行业编号
+     * @return true 或 false
+     */
+    public boolean setIndustry(WxApp wxApp,int id1, int id2){
+    	return getAPI(wxApp).setIndustry(id1, id2);
+    }
+
+    /**
+     * 获得模板ID
+     * 
+     * @param tmlShortId
+     *            模板库中模板的编号,有"TM**"和"OPENTMTM**"等形式
+     * @return 模板Id
+     */
+    public String getTemplateId(WxApp wxApp,String tmlShortId){
+    	return getAPI(wxApp).getTemplateId(tmlShortId);
+    }
+    
+    //删除已添加模板（25上限）
+    public boolean delTemplateI(WxApp wxApp, String tmlId ){
+    	return getAPI(wxApp).delTemplate(tmlId);
+    }
+    
+}
+

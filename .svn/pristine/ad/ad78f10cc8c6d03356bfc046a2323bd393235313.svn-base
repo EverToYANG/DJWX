@@ -1,0 +1,201 @@
+package com.gsccs.cms.core.service;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.dom4j.DocumentException;
+
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Templet;
+import com.gsccs.cms.core.model.TempletChannel;
+
+/**
+ * 模板栏目相关服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public interface TempletChannelService {
+
+	/**
+	 * 下降
+	 */
+	public void down(TempletChannel channel);
+
+	/**
+	 * 上升
+	 */
+	public void up(TempletChannel channel);
+
+	/**
+	 * 分页查询
+	 */
+	public List<TempletChannel> find(TempletChannel channel, String order,
+			int currPage, int pageSize);
+
+	/**
+	 * 获取同级最大排序号
+	 * 
+	 * @param parid
+	 * @return
+	 */
+	public int maxNum(String templetid, String parid);
+
+	/**
+	 * 统计
+	 * 
+	 * @param templetid
+	 * @return
+	 */
+	public int count(String templetid);
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<TempletChannel> findByPar(String templetid, String parid);
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<TempletChannel> findByPar(String templetid, String parid,
+			String state, String navigation);
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<TempletChannel> findByParWithBLOBs(String templetid,
+			String parid);
+
+	/**
+	 * 根据站点和父id查询
+	 * 
+	 * @param siteid
+	 * @param parid
+	 * @return
+	 */
+	public List<TempletChannel> findByParWithBLOBs(String templetid,
+			String parid, String state, String navigation);
+
+	/**
+	 * 查询是否有子数据
+	 * 
+	 * @param parId
+	 * @return
+	 */
+	public boolean hasChildren(String parId);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public TempletChannel findById(String id);
+
+	/**
+	 * 更新
+	 * 
+	 * @param TempletChannel
+	 */
+	public void update(TempletChannel templetChannel);
+
+	/**
+	 * 添加
+	 * 
+	 * @param TempletChannel
+	 */
+	public String insert(TempletChannel templetChannel);
+
+	/**
+	 * 删除
+	 * 
+	 * @param templetId
+	 * @throws TemplateException
+	 * @throws IOException
+	 */
+	public void del(String id, HttpServletRequest request);
+
+	/**
+	 * 递归删除
+	 * 
+	 * @param parId
+	 * @throws TemplateException
+	 * @throws IOException
+	 */
+	public void delPar(String parId, HttpServletRequest request);
+
+	/**
+	 * 判断是否已存在此页面标识
+	 * 
+	 * @param pagemark
+	 * @return
+	 */
+	public boolean hasPagemark(String templetid, String pagemark);
+
+	/**
+	 * 生成指定模板的栏目初始化数据xml文件
+	 * 
+	 * @param templetid
+	 */
+	public void createXML(Templet templet, HttpServletRequest request);
+
+	/**
+	 * 导入栏目数据
+	 * 
+	 * @throws DocumentException
+	 */
+	public void importChannels(Templet templet, HttpServletRequest request)
+			throws DocumentException;
+
+	/**
+	 * 递归方法导入栏目
+	 */
+	public void importChannel(Map<String, TempletChannel> channelMap,
+			Map<String, String> importedMap);
+
+	/**
+	 * 导入站点栏目数据
+	 * 
+	 * @throws DocumentException
+	 */
+	public void importSiteChannels(Templet templet, Site site);
+
+	/**
+	 * 递归方法导入站点栏目
+	 */
+	public void importSiteChannel(Map<String, TempletChannel> channelMap,
+			Map<String, String> importedMap, Site site);
+
+	/**
+	 * 从站点导入栏目数据
+	 * 
+	 * @throws DocumentException
+	 */
+	public void importSite(Templet templet, Site site,
+			HttpServletRequest request);
+
+	/**
+	 * 递归方法导入站点栏目
+	 */
+	public void importSite(Map<String, Channel> channelMap,
+			Map<String, String> importedMap, Templet templet,
+			HttpServletRequest request);
+
+}

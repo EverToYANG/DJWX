@@ -1,0 +1,67 @@
+package com.gsccs.cms.controller.web;
+
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.SiteService;
+
+
+/**
+ * 关于站点的相关操作 
+ *
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebSiteController")
+public class WebSiteController extends BaseController{
+
+	@Resource
+	private SiteService siteService;
+
+	/**
+	 * 站点预览
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/sitePreview.htm")
+	public String sitePreview(String id,ModelMap map,HttpServletResponse response){
+		try {
+			if (StringUtils.isNotEmpty(id)){
+				Site site=siteService.findById(id);
+				if (site!=null) {
+					
+					//生成首页
+					siteService.html(site.getId(), getApplication(), getContextPath(), request, getLoginName());
+					if(null != site.getSitedomain()
+							&& site.getSitedomain().trim().length()>0){
+						map.put("forwardSeconds", 1);
+						map.put("forwardUrl", site.getSitedomain().startsWith("http://")?site.getSitedomain():"http://"+site.getSitedomain());
+						msg="正在生成站点，请稍后!";
+						map.put("msg", msg);
+						return "admin/msg";
+						
+					}else{
+						response.sendRedirect("/"+site.getSourcepath()+"/index.html");
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg="预览站点失败:"+e.getMessage();
+			map.put("msg", msg);
+			return "admin/msg";
+		}
+		return null;
+	}
+}

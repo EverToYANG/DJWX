@@ -1,0 +1,745 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gsccs.cms.core.dao.ContentMapper">
+  <resultMap id="BaseResultMap" type="com.gsccs.cms.core.model.Content">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="site" jdbcType="VARCHAR" property="site" />
+    <result column="channel" jdbcType="VARCHAR" property="channel" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="shortTitle" jdbcType="VARCHAR" property="shorttitle" />
+    <result column="titleColor" jdbcType="VARCHAR" property="titlecolor" />
+    <result column="titleBlod" jdbcType="VARCHAR" property="titleblod" />
+    <result column="source" jdbcType="VARCHAR" property="source" />
+    <result column="author" jdbcType="VARCHAR" property="author" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="tags" jdbcType="VARCHAR" property="tags" />
+    <result column="img" jdbcType="VARCHAR" property="img" />
+    <result column="url" jdbcType="VARCHAR" property="url" />
+    <result column="attchs" jdbcType="VARCHAR" property="attchs" />
+    <result column="addtime" jdbcType="TIMESTAMP" property="addtime" />
+    <result column="templet" jdbcType="VARCHAR" property="templet" />
+    <result column="isTop" jdbcType="VARCHAR" property="istop" />
+    <result column="ishot" jdbcType="VARCHAR" property="ishot" />
+    <result column="isimgs" jdbcType="VARCHAR" property="isimgs" />
+    <result column="topEndTime" jdbcType="TIMESTAMP" property="topendtime" />
+    <result column="clickNum" jdbcType="INTEGER" property="clicknum" />
+    <result column="addUser" jdbcType="VARCHAR" property="adduser" />
+    <result column="state" jdbcType="VARCHAR" property="state" />
+    <result column="issign" jdbcType="VARCHAR" property="issign" />
+    <result column="iscomment" jdbcType="VARCHAR" property="iscomment" />
+    <result column="video" jdbcType="VARCHAR" property="video" />
+    <result column="indexnum" jdbcType="VARCHAR" property="indexnum" />
+    <result column="opentype" jdbcType="VARCHAR" property="opentype" />
+    <result column="opentimetype" jdbcType="VARCHAR" property="opentimetype" />
+    <result column="openendtime" jdbcType="VARCHAR" property="openendtime" />
+    <result column="htmlIndexnum" property="htmlIndexnum" jdbcType="INTEGER" />
+    
+    <!-- 审批信息 -->
+    <result column="auditState" jdbcType="VARCHAR" property="auditState" />
+    <result column="auditResult" jdbcType="VARCHAR" property="auditResult" />
+    
+    <!-- 存放查询结果的属性，不保存到数据库 -->
+    <result column="addUserName" jdbcType="VARCHAR" property="addUserName" />
+    <result column="addUserLoginName" jdbcType="VARCHAR" property="addUserLoginName" />
+    <result column="countnum" property="countnum" jdbcType="INTEGER" />
+    <result column="sitename" jdbcType="VARCHAR" property="sitename" />
+    <result column="channelname" jdbcType="VARCHAR" property="channelname" />
+    <result column="channelPagemark" jdbcType="VARCHAR" property="channelPagemark" />
+    <result column="channelIndexnum" jdbcType="INTEGER" property="channelIndexnum" />
+    <result column="datename" jdbcType="VARCHAR" property="datename" />
+  </resultMap>
+  
+  <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.gsccs.cms.core.model.Content">
+    <result column="content" jdbcType="CLOB" property="content" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, site, channel, title, shortTitle, titleColor, titleBlod, source, author, description,content,
+    tags, img, url, attchs, addtime, templet, isTop, ishot,isimgs,topEndTime, clickNum, addUser,state,issign,auditState,auditResult,
+    iscomment,video,indexnum,opentype,opentimetype,openendtime,htmlIndexnum
+  </sql>
+  <sql id="Base_Column_List_Pre">
+    i.id, i.site, i.channel, i.title, i.shortTitle, i.titleColor, i.titleBlod, i.source, i.author, i.description,i.content,
+    i.tags, i.img, i.url, i.attchs, i.addtime, i.templet, i.isTop,i.ishot,i.isimgs, i.topEndTime, i.clickNum, i.addUser,i.state,i.issign,i.auditState,i.auditResult,
+    i.iscomment,i.video,i.indexnum,i.opentype,i.opentimetype,i.openendtime,i.htmlIndexnum
+  </sql>
+  <sql id="Blob_Column_List">
+    content
+  </sql>
+  <select id="selectByExampleWithBLOBs" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="ResultMapWithBLOBs">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByExample" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List_Pre" />,c.pagemark channelPagemark,c.indexnum channelIndexnum
+    from cms_info i left join cms_channel c on i.channel=c.id
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  
+  <select id="selectPageByExample" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List_Pre" />,c.pagemark channelPagemark,c.indexnum channelIndexnum
+    from cms_info i left join cms_channel c 
+    on i.channel=c.id
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    limit ${skip},${pageSize}
+  </select>
+  
+  
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="ResultMapWithBLOBs">
+    
+    select 
+    <include refid="Base_Column_List_Pre" />
+    ,
+    <include refid="Blob_Column_List" />,c.pagemark channelPagemark,c.indexnum channelIndexnum 
+    FROM cms_info i left join cms_channel c on i.channel=c.id 
+    where i.id = #{id,jdbcType=VARCHAR}
+  </select>
+  <select id="selectClickByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    id, site, channel,clicknum
+    from cms_info
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from cms_info
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.gsccs.cms.core.model.ContentExample">
+    delete from cms_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.gsccs.cms.core.model.Content">
+    insert into cms_info (id, site, channel, 
+      title, shortTitle, titleColor, 
+      titleBlod, source, author, 
+      description, tags, img, 
+      url, attchs, addtime, 
+      templet, isTop, ishot,isimgs,topEndTime, 
+      clickNum, addUser,state,issign,iscomment,video,
+      indexnum,opentype,opentimetype,openendtime, content,auditState,auditResult
+      )
+    values (#{id,jdbcType=VARCHAR}, #{site,jdbcType=VARCHAR}, #{channel,jdbcType=VARCHAR}, 
+      #{title,jdbcType=VARCHAR}, #{shorttitle,jdbcType=VARCHAR}, #{titlecolor,jdbcType=VARCHAR}, 
+      #{titleblod,jdbcType=VARCHAR}, #{source,jdbcType=VARCHAR}, #{author,jdbcType=VARCHAR}, 
+      #{description,jdbcType=VARCHAR}, #{tags,jdbcType=VARCHAR}, #{img,jdbcType=VARCHAR}, 
+      #{url,jdbcType=VARCHAR}, #{attchs,jdbcType=VARCHAR}, #{addtime,jdbcType=TIMESTAMP}, 
+      #{templet,jdbcType=VARCHAR}, #{istop,jdbcType=VARCHAR},#{ishot,jdbcType=VARCHAR}, #{isimgs,jdbcType=VARCHAR}, #{topendtime,jdbcType=TIMESTAMP}, 
+      #{clicknum,jdbcType=INTEGER}, #{adduser,jdbcType=VARCHAR},#{state,jdbcType=VARCHAR},
+      #{issign,jdbcType=VARCHAR},#{iscomment,jdbcType=VARCHAR}, #{video,jdbcType=VARCHAR},
+      #{indexnum,jdbcType=VARCHAR},#{opentype,jdbcType=VARCHAR},#{opentimetype,jdbcType=VARCHAR},
+      #{openendtime,jdbcType=VARCHAR}, #{content,jdbcType=CLOB},
+      #{auditState,jdbcType=VARCHAR},#{auditResult,jdbcType=VARCHAR}
+      )
+  </insert>
+  
+  <select id="countByExample" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+    select count(*) from cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="workloadPage" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+   	SELECT COUNT(i.id) AS countnum ,adduser,u.loginname addUserLoginName,u.name addUserName 
+	FROM cms_info i 
+	LEFT JOIN sys_users u ON i.adduser=u.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+ 	GROUP BY adduser ORDER BY countnum desc
+    limit ${skip},${pageSize}
+  </select>
+  
+  <select id="workload" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+   	SELECT COUNT(i.id) AS countnum ,adduser,u.loginname addUserLoginName,u.name addUserName 
+	FROM cms_info i 
+	LEFT JOIN sys_users u ON i.adduser=u.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+ 	GROUP BY adduser ORDER BY countnum desc
+  </select>
+  <select id="siteStatPage" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+   	SELECT COUNT(i.id) countnum,site,s.name sitename 
+	FROM cms_info i 
+	LEFT JOIN cms_site s  ON i.site=s.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY site ORDER BY countnum desc
+    limit ${skip},${pageSize}
+  </select>
+  <select id="siteStat" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+   	SELECT COUNT(i.id) countnum,site,s.name sitename 
+	FROM cms_info i 
+	LEFT JOIN cms_site s  ON i.site=s.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+ 	GROUP BY site ORDER BY countnum desc
+  </select>
+  <select id="channelStat" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+  	SELECT COUNT(i.id) countnum,channel,c.name channelname
+	FROM cms_info i
+	LEFT JOIN cms_channel c ON i.channel=c.id 
+	<if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY i.channel ORDER BY countnum desc
+  </select>
+  <select id="workloadCount" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(distinct adduser)
+	FROM cms_info i
+	LEFT JOIN sys_users u ON i.adduser=u.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="workloadSum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id) 
+	FROM cms_info i
+	LEFT JOIN sys_users u ON i.adduser=u.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="siteStatCount" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(distinct site)
+	FROM cms_info i
+	LEFT JOIN cms_site s  ON i.site=s.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="siteStatSum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id)
+	FROM cms_info i
+	LEFT JOIN cms_site s  ON i.site=s.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="channelStatCount" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(distinct channel)
+	FROM cms_info i
+	LEFT JOIN cms_channel c ON i.channel=c.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="channelStatSum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id)
+	FROM cms_info i
+	LEFT JOIN cms_channel c ON i.channel=c.id 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  
+  
+  <select id="infoUpdateYearPage" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+  	SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y') AS datename FROM cms_info i 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY DATE_FORMAT(ADDTIME, '%Y')
+    limit ${skip},${pageSize}
+  </select>
+  <select id="infoUpdateYear" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+  	SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y') AS datename FROM cms_info i 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY DATE_FORMAT(ADDTIME, '%Y')
+  </select>
+  <select id="infoUpdateYearCount" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(distinct DATE_FORMAT(ADDTIME, '%Y'))
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="infoUpdateYearSum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id)
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  
+  <select id="infoUpdateMonthPage" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+	SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m') AS datename FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m')
+	order by ADDTIME desc
+    limit ${skip},${pageSize}
+  </select>
+  <select id="infoUpdateMonth" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+	SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m') AS datename FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m')
+  </select>
+  <select id="infoUpdateMonthCount" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(distinct DATE_FORMAT(ADDTIME, '%Y-%m'))
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="infoUpdateMonthSum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id)
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  
+  <select id="infoUpdateDayPage" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+	SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m-%d') AS datename FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m-%d')
+	order by ADDTIME desc
+    limit ${skip},${pageSize}
+  </select>
+  <select id="infoUpdateDay" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+	SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m-%d') AS datename FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+	GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m-%d')
+  </select>
+  <select id="infoUpdateDayCount" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(distinct DATE_FORMAT(ADDTIME, '%Y-%m-%d'))
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="infoUpdateDaySum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id)
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="infoUpdateWeekSum" parameterType="com.gsccs.cms.core.model.ContentExample" resultType="java.lang.Integer">
+   	SELECT COUNT(i.id)
+	FROM cms_info i
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  
+  
+  <select id="infoUpdateWeek" parameterType="com.gsccs.cms.core.model.ContentExample" resultMap="BaseResultMap">
+	SELECT COUNT(id) countnum,
+	(CASE 
+	WHEN WEEKDAY(ADDTIME)=0 THEN '星期一' 
+	WHEN WEEKDAY(ADDTIME)=1 THEN '星期二' 
+	WHEN WEEKDAY(ADDTIME)=2 THEN '星期三' 
+	WHEN WEEKDAY(ADDTIME)=3 THEN '星期四' 
+	WHEN WEEKDAY(ADDTIME)=4 THEN '星期五' 
+	WHEN WEEKDAY(ADDTIME)=5 THEN '星期六' 
+	WHEN WEEKDAY(ADDTIME)=6 THEN '星期七' 
+	END
+	) AS datename FROM cms_info i 
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+ 	GROUP BY WEEKDAY(ADDTIME)
+  </select>
+  
+  <update id="updateByExampleSelective" parameterType="map">
+    update cms_info
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=VARCHAR},
+      </if>
+      <if test="record.site != null">
+        site = #{record.site,jdbcType=VARCHAR},
+      </if>
+      <if test="record.channel != null">
+        channel = #{record.channel,jdbcType=VARCHAR},
+      </if>
+      <if test="record.title != null">
+        title = #{record.title,jdbcType=VARCHAR},
+      </if>
+      <if test="record.shorttitle != null">
+        shortTitle = #{record.shorttitle,jdbcType=VARCHAR},
+      </if>
+      <if test="record.titlecolor != null">
+        titleColor = #{record.titlecolor,jdbcType=VARCHAR},
+      </if>
+      <if test="record.titleblod != null">
+        titleBlod = #{record.titleblod,jdbcType=VARCHAR},
+      </if>
+      <if test="record.source != null">
+        source = #{record.source,jdbcType=VARCHAR},
+      </if>
+      <if test="record.author != null">
+        author = #{record.author,jdbcType=VARCHAR},
+      </if>
+      <if test="record.description != null">
+        description = #{record.description,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tags != null">
+        tags = #{record.tags,jdbcType=VARCHAR},
+      </if>
+      <if test="record.img != null">
+        img = #{record.img,jdbcType=VARCHAR},
+      </if>
+      <if test="record.url != null">
+        url = #{record.url,jdbcType=VARCHAR},
+      </if>
+      <if test="record.attchs != null">
+        attchs = #{record.attchs,jdbcType=VARCHAR},
+      </if>
+      <if test="record.addtime != null">
+        addtime = #{record.addtime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.templet != null">
+        templet = #{record.templet,jdbcType=VARCHAR},
+      </if>
+      <if test="record.istop != null">
+        isTop = #{record.istop,jdbcType=VARCHAR},
+      </if>
+      <if test="record.ishot != null">
+        ishot = #{record.ishot,jdbcType=VARCHAR},
+      </if>
+      <if test="record.isimgs != null">
+        isimgs = #{record.isimgs,jdbcType=VARCHAR},
+      </if>
+      <if test="record.topendtime != null">
+        topEndTime = #{record.topendtime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.clicknum != null">
+        clickNum = #{record.clicknum,jdbcType=INTEGER},
+      </if>
+      <if test="record.adduser != null">
+        addUser = #{record.adduser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.state != null">
+        state = #{record.state,jdbcType=VARCHAR},
+      </if>
+      <if test="record.issign != null">
+        issign = #{record.issign,jdbcType=VARCHAR},
+      </if>
+      <if test="record.iscomment != null">
+        iscomment = #{record.iscomment,jdbcType=VARCHAR},
+      </if>
+      <if test="record.video != null">
+        video = #{record.video,jdbcType=VARCHAR},
+      </if>
+      <if test="record.indexnum != null">
+        indexnum = #{record.indexnum,jdbcType=VARCHAR},
+      </if>
+      <if test="record.opentype != null">
+        opentype = #{record.opentype,jdbcType=VARCHAR},
+      </if>
+      <if test="record.opentimetype != null">
+        opentimetype = #{record.opentimetype,jdbcType=VARCHAR},
+      </if>
+      <if test="record.openendtime != null">
+        openendtime = #{record.openendtime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.content != null">
+        content = #{record.content,jdbcType=CLOB},
+      </if>
+      <if test="record.auditState != null">
+        auditState = #{record.auditState,jdbcType=VARCHAR},
+      </if>
+      <if test="record.auditResult != null">
+        auditState = #{record.auditResult,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExampleWithBLOBs" parameterType="map">
+    update cms_info
+    set id = #{record.id,jdbcType=VARCHAR},
+      site = #{record.site,jdbcType=VARCHAR},
+      channel = #{record.channel,jdbcType=VARCHAR},
+      title = #{record.title,jdbcType=VARCHAR},
+      shortTitle = #{record.shorttitle,jdbcType=VARCHAR},
+      titleColor = #{record.titlecolor,jdbcType=VARCHAR},
+      titleBlod = #{record.titleblod,jdbcType=VARCHAR},
+      source = #{record.source,jdbcType=VARCHAR},
+      author = #{record.author,jdbcType=VARCHAR},
+      description = #{record.description,jdbcType=VARCHAR},
+      tags = #{record.tags,jdbcType=VARCHAR},
+      img = #{record.img,jdbcType=VARCHAR},
+      url = #{record.url,jdbcType=VARCHAR},
+      attchs = #{record.attchs,jdbcType=VARCHAR},
+      addtime = #{record.addtime,jdbcType=TIMESTAMP},
+      templet = #{record.templet,jdbcType=VARCHAR},
+      isTop = #{record.istop,jdbcType=VARCHAR},
+      ishot = #{record.ishot,jdbcType=VARCHAR},
+      isimgs = #{record.isimgs,jdbcType=VARCHAR},
+      topEndTime = #{record.topendtime,jdbcType=TIMESTAMP},
+      clickNum = #{record.clicknum,jdbcType=INTEGER},
+      addUser = #{record.adduser,jdbcType=VARCHAR},
+      state = #{record.state,jdbcType=VARCHAR},
+      issign = #{record.issign,jdbcType=VARCHAR},
+      iscomment = #{record.iscomment,jdbcType=VARCHAR},
+      video = #{record.video,jdbcType=VARCHAR},
+      indexnum = #{record.indexnum,jdbcType=VARCHAR},
+      opentype = #{record.opentype,jdbcType=VARCHAR},
+      opentimetype = #{record.opentimetype,jdbcType=VARCHAR},
+      openendtime = #{record.openendtime,jdbcType=VARCHAR},
+      content = #{record.content,jdbcType=CLOB},
+      auditState = #{record.auditState,jdbcType=VARCHAR},
+      auditResult = #{record.auditResult,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update cms_info
+    set id = #{record.id,jdbcType=VARCHAR},
+      site = #{record.site,jdbcType=VARCHAR},
+      channel = #{record.channel,jdbcType=VARCHAR},
+      title = #{record.title,jdbcType=VARCHAR},
+      shortTitle = #{record.shorttitle,jdbcType=VARCHAR},
+      titleColor = #{record.titlecolor,jdbcType=VARCHAR},
+      titleBlod = #{record.titleblod,jdbcType=VARCHAR},
+      source = #{record.source,jdbcType=VARCHAR},
+      author = #{record.author,jdbcType=VARCHAR},
+      description = #{record.description,jdbcType=VARCHAR},
+      tags = #{record.tags,jdbcType=VARCHAR},
+      img = #{record.img,jdbcType=VARCHAR},
+      url = #{record.url,jdbcType=VARCHAR},
+      attchs = #{record.attchs,jdbcType=VARCHAR},
+      addtime = #{record.addtime,jdbcType=TIMESTAMP},
+      templet = #{record.templet,jdbcType=VARCHAR},
+      isTop = #{record.istop,jdbcType=VARCHAR},
+      ishot = #{record.ishot,jdbcType=VARCHAR},
+      isimgs = #{record.isimgs,jdbcType=VARCHAR},
+      topEndTime = #{record.topendtime,jdbcType=TIMESTAMP},
+      clickNum = #{record.clicknum,jdbcType=INTEGER},
+      addUser = #{record.adduser,jdbcType=VARCHAR},
+      state = #{record.state,jdbcType=VARCHAR},
+      issign = #{record.issign,jdbcType=VARCHAR},
+      iscomment = #{record.iscomment,jdbcType=VARCHAR},
+      video = #{record.video,jdbcType=VARCHAR},
+      indexnum = #{record.indexnum,jdbcType=VARCHAR},
+      opentype = #{record.opentype,jdbcType=VARCHAR},
+      opentimetype = #{record.opentimetype,jdbcType=VARCHAR},
+      openendtime = #{record.openendtime,jdbcType=VARCHAR},
+      auditState = #{record.auditState,jdbcType=VARCHAR},
+      auditResult = #{record.auditResult,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="click" parameterType="com.gsccs.cms.core.model.Content">
+    update cms_info
+    <set>
+      <if test="clicknum != null">
+        clickNum = #{clicknum,jdbcType=INTEGER},
+      </if>
+      <if test="ishot != null">
+        ishot = #{ishot,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.gsccs.cms.core.model.Content">
+    update cms_info
+    set site = #{site,jdbcType=VARCHAR},
+      channel = #{channel,jdbcType=VARCHAR},
+      title = #{title,jdbcType=VARCHAR},
+      shortTitle = #{shorttitle,jdbcType=VARCHAR},
+      titleColor = #{titlecolor,jdbcType=VARCHAR},
+      titleBlod = #{titleblod,jdbcType=VARCHAR},
+      source = #{source,jdbcType=VARCHAR},
+      author = #{author,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      tags = #{tags,jdbcType=VARCHAR},
+      img = #{img,jdbcType=VARCHAR},
+      url = #{url,jdbcType=VARCHAR},
+      attchs = #{attchs,jdbcType=VARCHAR},
+      addtime = #{addtime,jdbcType=TIMESTAMP},
+      templet = #{templet,jdbcType=VARCHAR},
+      isTop = #{istop,jdbcType=VARCHAR},
+      ishot = #{ishot,jdbcType=VARCHAR},
+      isimgs = #{isimgs,jdbcType=VARCHAR},
+      topEndTime = #{topendtime,jdbcType=TIMESTAMP},
+      clickNum = #{clicknum,jdbcType=INTEGER},
+      addUser = #{adduser,jdbcType=VARCHAR},
+      state = #{state,jdbcType=VARCHAR},
+      issign = #{issign,jdbcType=VARCHAR},
+      iscomment = #{iscomment,jdbcType=VARCHAR},
+      video = #{video,jdbcType=VARCHAR},
+      indexnum = #{indexnum,jdbcType=VARCHAR},
+      opentype = #{opentype,jdbcType=VARCHAR},
+      opentimetype = #{opentimetype,jdbcType=VARCHAR},
+      openendtime = #{openendtime,jdbcType=VARCHAR},
+      content = #{content,jdbcType=CLOB},
+      auditState = #{auditState,jdbcType=VARCHAR},
+      auditResult = #{auditResult,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.gsccs.cms.core.model.Content">
+    update cms_info
+    set site = #{site,jdbcType=VARCHAR},
+      channel = #{channel,jdbcType=VARCHAR},
+      title = #{title,jdbcType=VARCHAR},
+      shortTitle = #{shorttitle,jdbcType=VARCHAR},
+      titleColor = #{titlecolor,jdbcType=VARCHAR},
+      titleBlod = #{titleblod,jdbcType=VARCHAR},
+      source = #{source,jdbcType=VARCHAR},
+      author = #{author,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      tags = #{tags,jdbcType=VARCHAR},
+      img = #{img,jdbcType=VARCHAR},
+      url = #{url,jdbcType=VARCHAR},
+      attchs = #{attchs,jdbcType=VARCHAR},
+      addtime = #{addtime,jdbcType=TIMESTAMP},
+      templet = #{templet,jdbcType=VARCHAR},
+      isTop = #{istop,jdbcType=VARCHAR},
+      ishot = #{ishot,jdbcType=VARCHAR},
+      isimgs = #{isimgs,jdbcType=VARCHAR},
+      topEndTime = #{topendtime,jdbcType=TIMESTAMP},
+      clickNum = #{clicknum,jdbcType=INTEGER},
+      addUser = #{adduser,jdbcType=VARCHAR},
+      state = #{state,jdbcType=VARCHAR},
+      issign = #{issign,jdbcType=VARCHAR},
+      iscomment = #{iscomment,jdbcType=VARCHAR},
+      video = #{video,jdbcType=VARCHAR},
+      indexnum = #{indexnum,jdbcType=VARCHAR},
+      opentype = #{opentype,jdbcType=VARCHAR},
+      opentimetype = #{opentimetype,jdbcType=VARCHAR},
+      openendtime = #{openendtime,jdbcType=VARCHAR},
+      auditState = #{auditState,jdbcType=VARCHAR},
+      auditResult = #{auditResult,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <sql id="Example_Clause">
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim >
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+  </sql>
+</mapper>

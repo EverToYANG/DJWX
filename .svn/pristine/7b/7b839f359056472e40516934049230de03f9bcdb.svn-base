@@ -1,0 +1,102 @@
+package com.gsccs.cms.controller.web;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.chanjar.weixin.common.api.WxConsts;
+import me.chanjar.weixin.common.exception.WxErrorException;
+import me.chanjar.weixin.mp.api.WxMpConfigStorage;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.member.service.MembergroupService;
+
+/**
+ * 会员相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebMemberController")
+@RequestMapping("/web")
+public class WebMemberController {
+
+	private String DOMAIN = "http://dunhuangwenbohui.cn/wx";
+	private String WXAPPID = "wx1562950d23bf4c3a";
+
+	@Resource
+	private MemberService memberService;
+	@Resource
+	private MembergroupService membergroupService;
+	@Autowired
+	private WxMpConfigStorage wxMpConfigStorage;
+
+	/**
+	 * 会员中心
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/home.html")
+	public String home(ModelMap map,HttpServletRequest request) {
+		Member member = null;
+		String code = request.getParameter("code");
+		try {
+			wxMpConfigStorage.init(WXAPPID);
+			WxMpService wxMpService = new WxMpServiceImpl();
+			wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
+
+			if (StringUtils.isEmpty(code)) {
+				String redirectURI = DOMAIN + "/web/home.html";
+				String authurl = wxMpService.oauth2buildAuthorizationUrl(
+						redirectURI, WxConsts.OAUTH2_SCOPE_BASE, null);
+				return "redirect:" + authurl;
+			} else {
+				String openid = wxMpService.oauth2getAccessToken(code)
+						.getOpenId();
+				member = memberService.findById(openid);
+			}
+		} catch (WxErrorException e) {
+			e.printStackTrace();
+		}
+		map.put("member", member);
+		return "web/home";
+	}
+
+	/**
+	 * 会员认证
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/auth.html")
+	public String auth(String openid, String phonenum, ModelMap map,
+			HttpServletResponse response) {
+		map.put("forwardSeconds", 3);
+		map.put("forwardUrl", "member/index.htm");
+		map.put("msg", "恭喜您，注册成功了!<br>正在跳转到会员中心!");
+		return "msg";
+	}
+
+	/**
+	 * 退出
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/mlogout.htm")
+	public String mlogout(ModelMap map, HttpServletResponse response) {
+		map.put("forwardSeconds", 3);
+		map.put("forwardUrl", "mlogin.jsp");
+		map.put("msg", "会员退出成功");
+		return "msg";
+	}
+}

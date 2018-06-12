@@ -1,0 +1,29 @@
+package com.gsccs.cms.core.service;
+
+import java.util.List;
+
+import com.gsccs.cms.core.model.WxConfig;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月14日
+ */
+
+public interface WxConfigService {
+
+	// 插入
+	public String insert(WxConfig wxConfig);
+
+	// 更新
+	public void update(WxConfig wxConfig);
+
+	// 根据id查询
+	public WxConfig findById(String id);
+
+	// 查询all
+	public List<WxConfig> findAll();
+
+	// 根据id删除
+	public void del(String id);
+}

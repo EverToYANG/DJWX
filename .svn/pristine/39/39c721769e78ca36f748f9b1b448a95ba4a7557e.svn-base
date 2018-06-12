@@ -1,0 +1,46 @@
+package com.gsccs.cms.bass.filter;
+
+import java.io.IOException;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * 防止xss攻击
+ * @author x.d zhang
+ * @version 1.0
+ *
+ */
+public class AccessDeniedFilter implements Filter {
+
+	private static final String ACCESS_DENIED = "Access denied!";
+
+	@Override
+	public void destroy() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void doFilter(ServletRequest servletRequest,
+			ServletResponse servletResponse, FilterChain filterChain) {
+		HttpServletResponse localHttpServletResponse = (HttpServletResponse) servletResponse;
+		try {
+			localHttpServletResponse.sendError(403, ACCESS_DENIED);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void init(FilterConfig arg0) throws ServletException {
+		// TODO Auto-generated method stub
+
+	}
+
+}

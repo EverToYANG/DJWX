@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.member.dao.MemberMapper">
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.member.model.Member">
+		<id column="id" property="id" jdbcType="VARCHAR" />
+
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="wxappid" property="wxappid" jdbcType="VARCHAR" />
+		<result column="sex" property="sex" jdbcType="VARCHAR" />
+		<result column="birthday" property="birthday" jdbcType="TIMESTAMP" />
+		<result column="phone" property="phone" jdbcType="VARCHAR" />
+		<result column="email" property="email" jdbcType="VARCHAR" />
+		<result column="lasttime" property="lasttime" jdbcType="TIMESTAMP" />
+		<result column="addtime" property="addtime" jdbcType="TIMESTAMP" />
+		<result column="intro" property="intro" jdbcType="VARCHAR" />
+		<result column="credit" property="credit" jdbcType="INTEGER" />
+		<result column="experience" property="experience" jdbcType="INTEGER" />
+		<result column="img" property="img" jdbcType="VARCHAR" />
+		<result column="realid" property="realid" jdbcType="VARCHAR" />
+		<!-- -->
+		<result column="realname" property="realname" jdbcType="VARCHAR" />
+		<result column="unitname" property="unitname" jdbcType="VARCHAR" />
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		id, realid, name, wxappid, sex, birthday, phone, email,
+		lasttime, addtime, intro, credit, experience, img,realname, unitname,
+		groupname
+	</sql>
+
+
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.member.model.MemberExample">
+		SELECT m.*
+		FROM cms_member
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+
+
+	<sql id="selectPageByExampleSql">
+		SELECT a.*,b.title unitname,c.name as realname
+		FROM cms_member a
+		left
+		join cms_wx_app b on a.wxappid = b.app_id
+		left join cms_member_party c
+		on a.partyid=c.id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</sql>
+
+
+	<select id="selectPageByExample" parameterType="com.gsccs.cms.member.model.MemberExample"
+		resultMap="BaseResultMap">
+		<include refid="selectPageByExampleSql" />
+	</select>
+
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from cms_member
+		where id = #{id,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from
+		cms_member
+		where id = #{id,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.member.model.MemberExample">
+		delete from cms_member
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" parameterType="com.gsccs.cms.member.model.Member">
+		insert into cms_member (id,
+		realid,
+		name, wxappid,
+		sex, birthday,
+		phone, email, 
+		lasttime, addtime, intro,
+		credit, experience, img
+		)
+		values
+		(#{id,jdbcType=VARCHAR},
+		#{realid,jdbcType=VARCHAR},
+		#{name,jdbcType=VARCHAR},
+		#{wxappid,jdbcType=VARCHAR},
+		#{sex,jdbcType=CHAR},
+		#{birthday,jdbcType=TIMESTAMP},
+		#{phone,jdbcType=VARCHAR},
+		#{email,jdbcType=VARCHAR}, 
+		#{lasttime,jdbcType=TIMESTAMP},
+		#{addtime,jdbcType=TIMESTAMP},
+		#{intro,jdbcType=VARCHAR},
+		#{credit,jdbcType=INTEGER},
+		#{experience,jdbcType=INTEGER}, 
+		#{img,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<select id="countByExample" parameterType="com.gsccs.cms.member.model.MemberExample"
+		resultType="java.lang.Integer">
+		select count(*) from cms_member m
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<update id="updateByExampleSelective" parameterType="map">
+		update cms_member
+		<set>
+			<if test="record.id != null">
+				id = #{record.id,jdbcType=VARCHAR},
+			</if>
+
+			<if test="record.realid != null">
+				realid = #{record.realid,jdbcType=VARCHAR},
+			</if>
+
+			<if test="record.name != null">
+				name = #{record.name,jdbcType=VARCHAR},
+			</if>
+			<if test="record.wxappid != null">
+				wxappid = #{record.wxappid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.sex != null">
+				sex = #{record.sex,jdbcType=CHAR},
+			</if>
+			<if test="record.birthday != null">
+				birthday = #{record.birthday,jdbcType=TIMESTAMP},
+			</if>
+
+			<if test="record.phone != null">
+				phone = #{record.phone,jdbcType=VARCHAR},
+			</if>
+			<if test="record.email != null">
+				email = #{record.email,jdbcType=VARCHAR},
+			</if>
+
+			<if test="record.lasttime != null">
+				lasttime = #{record.lasttime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="record.addtime != null">
+				addtime = #{record.addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="record.intro != null">
+				intro = #{record.intro,jdbcType=VARCHAR},
+			</if>
+			<if test="record.credit != null">
+				credit = #{record.credit,jdbcType=INTEGER},
+			</if>
+			<if test="record.experience != null">
+				experience = #{record.experience,jdbcType=INTEGER},
+			</if>
+			<if test="record.img != null">
+				img = #{record.img,jdbcType=VARCHAR},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update cms_member
+		set id = #{record.id,jdbcType=VARCHAR},
+		realname =
+		#{record.realname,jdbcType=INTEGER},
+		realid =
+		#{record.realid,jdbcType=VARCHAR},
+		name =
+		#{record.name,jdbcType=VARCHAR},
+		wxappid =
+		#{record.wxappid,jdbcType=VARCHAR},
+		sex = #{record.sex,jdbcType=CHAR},
+		birthday = #{record.birthday,jdbcType=TIMESTAMP},
+		phone =
+		#{record.phone,jdbcType=VARCHAR},
+		email =
+		#{record.email,jdbcType=VARCHAR},
+		unitname =
+		#{record.unitname,jdbcType=CHAR},
+		lasttime =
+		#{record.lasttime,jdbcType=TIMESTAMP},
+		addtime =
+		#{record.addtime,jdbcType=TIMESTAMP},
+		intro =
+		#{record.intro,jdbcType=VARCHAR},
+		credit =
+		#{record.credit,jdbcType=INTEGER},
+		experience =
+		#{record.experience,jdbcType=INTEGER},
+		img =
+		#{record.img,jdbcType=VARCHAR}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.member.model.Member">
+		<!-- WARNING - @mbggenerated This element is automatically generated by 
+			MyBatis Generator, do not modify. This element was generated on Fri Feb 01 
+			19:56:20 CST 2013. -->
+		update cms_member
+		<set>
+			<if test="realname != null">
+				realname = #{realname,jdbcType=INTEGER},
+			</if>
+			<if test="realid != null">
+				realid = #{realid,jdbcType=VARCHAR},
+			</if>
+
+			<if test="name != null">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="wxappid != null">
+				wxappid = #{wxappid,jdbcType=VARCHAR},
+			</if>
+			<if test="sex != null">
+				sex = #{sex,jdbcType=CHAR},
+			</if>
+			<if test="birthday != null">
+				birthday = #{birthday,jdbcType=TIMESTAMP},
+			</if>
+
+			<if test="phone != null">
+				phone = #{phone,jdbcType=VARCHAR},
+			</if>
+			<if test="email != null">
+				email = #{email,jdbcType=VARCHAR},
+			</if>
+			<if test="unitname != null">
+				unitname = #{unitname,jdbcType=CHAR},
+			</if>
+			<if test="lasttime != null">
+				lasttime = #{lasttime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="addtime != null">
+				addtime = #{addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="intro != null">
+				intro = #{intro,jdbcType=VARCHAR},
+			</if>
+			<if test="credit != null">
+				credit = #{credit,jdbcType=INTEGER},
+			</if>
+			<if test="experience != null">
+				experience = #{experience,jdbcType=INTEGER},
+			</if>
+			<if test="img != null">
+				img = #{img,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.member.model.Member">
+		update cms_member
+		set
+		realid = #{realid,jdbcType=VARCHAR},
+		name =
+		#{name,jdbcType=VARCHAR},
+		wxappid = #{wxappid,jdbcType=VARCHAR},
+		sex =
+		#{sex,jdbcType=CHAR},
+		birthday = #{birthday,jdbcType=TIMESTAMP},
+		phone =
+		#{phone,jdbcType=VARCHAR},
+		email = #{email,jdbcType=VARCHAR},
+		lasttime =
+		#{lasttime,jdbcType=TIMESTAMP},
+		addtime =
+		#{addtime,jdbcType=TIMESTAMP},
+		intro = #{intro,jdbcType=VARCHAR},
+		credit = #{credit,jdbcType=INTEGER},
+		experience =
+		#{experience,jdbcType=INTEGER},
+		img = #{img,jdbcType=VARCHAR}
+		where id =
+		#{id,jdbcType=VARCHAR}
+	</update>
+
+	<sql id="Example_Clause">
+		<foreach collection="oredCriteria" item="criteria" separator="or">
+			<if test="criteria.valid">
+				<trim>
+					<foreach collection="criteria.criteria" item="criterion">
+						<choose>
+							<when test="criterion.noValue">
+								and ${criterion.condition}
+							</when>
+							<when test="criterion.singleValue">
+								and ${criterion.condition} #{criterion.value}
+							</when>
+							<when test="criterion.betweenValue">
+								and ${criterion.condition} #{criterion.value} and
+								#{criterion.secondValue}
+							</when>
+							<when test="criterion.listValue">
+								and ${criterion.condition}
+								<foreach close=")" collection="criterion.value" item="listItem"
+									open="(" separator=",">
+									#{listItem}
+								</foreach>
+							</when>
+						</choose>
+					</foreach>
+				</trim>
+			</if>
+		</foreach>
+	</sql>
+</mapper>

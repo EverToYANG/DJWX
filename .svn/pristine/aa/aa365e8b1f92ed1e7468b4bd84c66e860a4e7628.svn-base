@@ -1,0 +1,197 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.Date;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.EscapeUnescape;
+import com.gsccs.cms.bass.utils.MD5;
+import com.gsccs.cms.bass.utils.Mail;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.Membergroup;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.member.service.MembergroupService;
+
+/**
+ * 会员相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebMemberController")
+@RequestMapping("/web")
+public class WebMemberController extends CmsBaseController {
+
+	@Resource
+	private MemberService memberService;
+	@Resource
+	private MembergroupService membergroupService;
+
+	/**
+	 * 会员登录
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/mlogin.htm")
+	public void mlogin(Member member, String RememberMe, String ValidateCode,
+			ModelMap map, HttpServletResponse response) {
+		try {
+			// 记住用户名
+			if ("on".equals(RememberMe)) {
+				Cookie cookie = new Cookie("CMS_memberLoginName",
+						EscapeUnescape.escape(member.getId()));
+				cookie.setMaxAge(1000 * 60 * 60 * 24 * 365);// 有效时间为一年
+				response.addCookie(cookie);
+			}
+			if (ValidateCode != null
+					&& ValidateCode.equals(session.getAttribute("rand"))) {
+				msg = memberService.checkLogin(session, member);
+			} else {
+				msg = "验证码错误!";
+			}
+			if (msg == null || "".equals(msg)) {
+				operlogService.log(member.getId(), "会员登录", request);
+			}
+			ResponseUtil.writeUTF(response, msg);
+		} catch (Exception e) {
+			e.printStackTrace();
+			operlogService.log(member.getId(), "会员登录失败:" + e.toString(),
+					request);
+			ResponseUtil.writeUTF(response, e.getMessage());
+		}
+	}
+
+	/**
+	 * 检查登录名是否重复
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/memberCheckLoginname.htm")
+	public void memberCheckLoginname(Member member, ModelMap map,
+			HttpServletResponse response) {
+		// 判断用户是否存在
+		if (memberService.have(member)) {
+			ResponseUtil.writeUTF(response, "此会员名已存在!");
+		}
+	}
+
+	/**
+	 * 注册处理
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/mregister.htm")
+	public String mregister(Member member, String ValidateCode, ModelMap map,
+			HttpServletResponse response) {
+		try {
+			if (ValidateCode != null
+					&& !ValidateCode.equals(session.getAttribute("rand"))) {
+				map.put("msg", "验证码错误!");
+				map.put("isBack", true);
+				return "msg";
+			}
+			// 判断是否是禁用会员名
+			String memberLimitName = getConfigVal("memberLimitName");
+			if (memberLimitName.indexOf(member.getId() + ",") > -1
+					|| memberLimitName.indexOf("," + member.getId()) > -1) {
+				map.put("msg", "禁止使用此会员名!");
+				map.put("isBack", true);
+				return "msg";
+			}
+			// 判断用户是否存在
+			if (memberService.have(member)) {
+				map.put("msg", "此会员名已存在!");
+				map.put("isBack", true);
+				return "msg";
+			}
+			member.setPwd(MD5.MD5(member.getPwd()));
+			member.setIsok("1");
+			member.setGrouptype(0);
+			member.setExperience(0);
+			member.setCredit(0);
+			// 默认注册会员是经验会员并处理所属会员组
+			if (member.getExperience() != null) {
+				Membergroup membergroup = membergroupService
+						.findByExperience(0);
+				if (membergroup != null) {
+					member.setGroupid(membergroup.getId());
+				} else {
+					member.setGroupid("");
+				}
+			} else {
+				member.setGroupid("");
+			}
+			memberService.add(member);
+			session.setAttribute("loginMember", member);
+		} catch (Exception e) {
+			e.printStackTrace();
+			map.put("msg", e.toString());
+			map.put("isBack", true);
+			return "msg";
+		}
+		map.put("forwardSeconds", 3);
+		map.put("forwardUrl", "member/index.htm");
+		map.put("msg", "恭喜您，注册成功了!<br>正在跳转到会员中心!");
+		return "msg";
+	}
+
+	/**
+	 * 找回密码
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/memberFindPwd.htm")
+	public String memberFindPwd(Member member, String ValidateCode,
+			ModelMap map, HttpServletResponse response) {
+		if (ValidateCode != null
+				&& !ValidateCode.equals(session.getAttribute("rand"))) {
+			map.put("msg", "验证码错误!");
+			map.put("isBack", true);
+			return "msg";
+		}
+		// 判断用户是否存在
+		member = memberService.findByLoginname(member);
+		if (member != null) {
+			String newPwd = UUID.randomUUID().toString().substring(0, 8);
+			member.setPwd(MD5.MD5(newPwd));
+			memberService.update(member);
+			// 发送邮件
+			Mail mail = new Mail(getConfig());
+			mail.sendMessage(member.getEmail(), "CMS:" + member.getId()
+					+ "找回密码邮件", "您的新密码为" + newPwd
+					+ ",请使用新密码登录，原密码已不可用。<br><a href='" + getBasePath()
+					+ "/mlogin.jsp'>" + getBasePath() + "/mlogin.jsp</a>");
+			msg = "已发送新密码到您的邮箱，请查收，并使用新密码登录!";
+		} else {
+			msg = "此会员不存在!";
+			map.put("isBack", true);
+		}
+		map.put("msg", msg);
+		return "msg";
+	}
+
+	/**
+	 * 退出
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/mlogout.htm")
+	public String mlogout(ModelMap map, HttpServletResponse response) {
+		session.removeAttribute("loginMember");
+		session.removeAttribute("loginMembergroup");
+		map.put("forwardSeconds", 3);
+		map.put("forwardUrl", "mlogin.jsp");
+		map.put("msg", "会员退出成功");
+		return "msg";
+	}
+}

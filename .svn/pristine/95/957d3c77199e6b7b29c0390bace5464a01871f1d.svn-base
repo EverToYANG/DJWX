@@ -1,0 +1,92 @@
+package com.gsccs.cms.course.model;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * 课程参加人员
+ * 
+ * @author x.d zhang
+ * 
+ */
+public class CourseInfo {
+
+	private String id;
+	private String courseid;
+	private String infoid;
+	private String infotitle;
+	private String infourl;
+	private Date addtime;
+	private Integer ordernum;
+
+	private String addtimestr;
+
+	public String getCourseid() {
+		return courseid;
+	}
+
+	public void setCourseid(String courseid) {
+		this.courseid = courseid;
+	}
+
+	public String getInfoid() {
+		return infoid;
+	}
+
+	public void setInfoid(String infoid) {
+		this.infoid = infoid;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getInfotitle() {
+		return infotitle;
+	}
+
+	public void setInfotitle(String infotitle) {
+		this.infotitle = infotitle;
+	}
+
+	public String getInfourl() {
+		return infourl;
+	}
+
+	public void setInfourl(String infourl) {
+		this.infourl = infourl;
+	}
+
+	public Date getAddtime() {
+		return addtime;
+	}
+
+	public void setAddtime(Date addtime) {
+		this.addtime = addtime;
+	}
+
+	public Integer getOrdernum() {
+		return ordernum;
+	}
+
+	public void setOrdernum(Integer ordernum) {
+		this.ordernum = ordernum;
+	}
+
+	public String getAddtimestr() {
+		if (null != addtime) {
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+			addtimestr = df.format(addtime);
+		}
+		return addtimestr;
+	}
+
+	public void setAddtimestr(String addtimestr) {
+		this.addtimestr = addtimestr;
+	}
+
+}

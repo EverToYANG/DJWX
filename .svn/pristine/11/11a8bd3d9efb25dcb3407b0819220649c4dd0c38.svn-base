@@ -1,0 +1,36 @@
+package com.gsccs.cms.member.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.member.model.PartyMember;
+import com.gsccs.cms.member.model.PartyMemberExample;
+
+public interface PartyMemberMapper {
+
+	int countByExample(PartyMemberExample example);
+
+	int deleteByExample(PartyMemberExample example);
+
+	int deleteByPrimaryKey(String id);
+
+	int insert(PartyMember record);
+
+	List<PartyMember> selectByExample(PartyMemberExample example);
+
+	List<PartyMember> selectPageByExample(PartyMemberExample example);
+
+	PartyMember selectByPrimaryKey(String id);
+	PartyMember selectByIdcode(String idcode);
+
+	int updateByExampleSelective(@Param("record") PartyMember record,
+			@Param("example") PartyMemberExample example);
+
+	int updateByExample(@Param("record") PartyMember record,
+			@Param("example") PartyMemberExample example);
+
+	int updateByPrimaryKeySelective(PartyMember record);
+
+	int updateByPrimaryKey(PartyMember record);
+}

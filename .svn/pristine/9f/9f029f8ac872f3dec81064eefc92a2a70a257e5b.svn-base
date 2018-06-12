@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.core.dao.WxConfigMapper" >
+  <resultMap id="BaseResultMap" type="com.gsccs.cms.core.model.WxConfig" >
+    <id column="app_id" property="appId" jdbcType="VARCHAR" />
+    <result column="secret" property="secret" jdbcType="VARCHAR" />
+    <result column="token" property="token" jdbcType="VARCHAR" />
+    <result column="access_token" property="accessToken" jdbcType="VARCHAR" />
+    <result column="aes_key" property="aesKey" jdbcType="VARCHAR" />
+    <result column="expirestime" property="expirestime" jdbcType="BIGINT" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="mchid" property="mchid" jdbcType="VARCHAR" />
+    <result column="apikey" property="apikey" jdbcType="VARCHAR" />
+    <result column="certlocalpath" property="certlocalpath" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    app_id, secret, token, access_token, aes_key, expirestime, title, mchid, apikey, 
+    certlocalpath
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.gsccs.cms.core.model.WxConfigExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from cms_wx_config
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from cms_wx_config
+    where app_id = #{appId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from cms_wx_config
+    where app_id = #{appId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.gsccs.cms.core.model.WxConfigExample" >
+    delete from cms_wx_config
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.gsccs.cms.core.model.WxConfig" >
+    insert into cms_wx_config (app_id, secret, token, 
+      access_token, aes_key, expirestime, 
+      title, mchid, apikey, 
+      certlocalpath)
+    values (#{appId,jdbcType=VARCHAR}, #{secret,jdbcType=VARCHAR}, #{token,jdbcType=VARCHAR}, 
+      #{accessToken,jdbcType=VARCHAR}, #{aesKey,jdbcType=VARCHAR}, #{expirestime,jdbcType=BIGINT}, 
+      #{title,jdbcType=VARCHAR}, #{mchid,jdbcType=VARCHAR}, #{apikey,jdbcType=VARCHAR}, 
+      #{certlocalpath,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.gsccs.cms.core.model.WxConfig" >
+    insert into cms_wx_config
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="appId != null" >
+        app_id,
+      </if>
+      <if test="secret != null" >
+        secret,
+      </if>
+      <if test="token != null" >
+        token,
+      </if>
+      <if test="accessToken != null" >
+        access_token,
+      </if>
+      <if test="aesKey != null" >
+        aes_key,
+      </if>
+      <if test="expirestime != null" >
+        expirestime,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="mchid != null" >
+        mchid,
+      </if>
+      <if test="apikey != null" >
+        apikey,
+      </if>
+      <if test="certlocalpath != null" >
+        certlocalpath,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="appId != null" >
+        #{appId,jdbcType=VARCHAR},
+      </if>
+      <if test="secret != null" >
+        #{secret,jdbcType=VARCHAR},
+      </if>
+      <if test="token != null" >
+        #{token,jdbcType=VARCHAR},
+      </if>
+      <if test="accessToken != null" >
+        #{accessToken,jdbcType=VARCHAR},
+      </if>
+      <if test="aesKey != null" >
+        #{aesKey,jdbcType=VARCHAR},
+      </if>
+      <if test="expirestime != null" >
+        #{expirestime,jdbcType=BIGINT},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="mchid != null" >
+        #{mchid,jdbcType=VARCHAR},
+      </if>
+      <if test="apikey != null" >
+        #{apikey,jdbcType=VARCHAR},
+      </if>
+      <if test="certlocalpath != null" >
+        #{certlocalpath,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.gsccs.cms.core.model.WxConfigExample" resultType="java.lang.Integer" >
+    select count(*) from cms_wx_config
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update cms_wx_config
+    <set >
+      <if test="record.appId != null" >
+        app_id = #{record.appId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.secret != null" >
+        secret = #{record.secret,jdbcType=VARCHAR},
+      </if>
+      <if test="record.token != null" >
+        token = #{record.token,jdbcType=VARCHAR},
+      </if>
+      <if test="record.accessToken != null" >
+        access_token = #{record.accessToken,jdbcType=VARCHAR},
+      </if>
+      <if test="record.aesKey != null" >
+        aes_key = #{record.aesKey,jdbcType=VARCHAR},
+      </if>
+      <if test="record.expirestime != null" >
+        expirestime = #{record.expirestime,jdbcType=BIGINT},
+      </if>
+      <if test="record.title != null" >
+        title = #{record.title,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mchid != null" >
+        mchid = #{record.mchid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.apikey != null" >
+        apikey = #{record.apikey,jdbcType=VARCHAR},
+      </if>
+      <if test="record.certlocalpath != null" >
+        certlocalpath = #{record.certlocalpath,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update cms_wx_config
+    set app_id = #{record.appId,jdbcType=VARCHAR},
+      secret = #{record.secret,jdbcType=VARCHAR},
+      token = #{record.token,jdbcType=VARCHAR},
+      access_token = #{record.accessToken,jdbcType=VARCHAR},
+      aes_key = #{record.aesKey,jdbcType=VARCHAR},
+      expirestime = #{record.expirestime,jdbcType=BIGINT},
+      title = #{record.title,jdbcType=VARCHAR},
+      mchid = #{record.mchid,jdbcType=VARCHAR},
+      apikey = #{record.apikey,jdbcType=VARCHAR},
+      certlocalpath = #{record.certlocalpath,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.core.model.WxConfig" >
+    update cms_wx_config
+    <set >
+      <if test="secret != null" >
+        secret = #{secret,jdbcType=VARCHAR},
+      </if>
+      <if test="token != null" >
+        token = #{token,jdbcType=VARCHAR},
+      </if>
+      <if test="accessToken != null" >
+        access_token = #{accessToken,jdbcType=VARCHAR},
+      </if>
+      <if test="aesKey != null" >
+        aes_key = #{aesKey,jdbcType=VARCHAR},
+      </if>
+      <if test="expirestime != null" >
+        expirestime = #{expirestime,jdbcType=BIGINT},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="mchid != null" >
+        mchid = #{mchid,jdbcType=VARCHAR},
+      </if>
+      <if test="apikey != null" >
+        apikey = #{apikey,jdbcType=VARCHAR},
+      </if>
+      <if test="certlocalpath != null" >
+        certlocalpath = #{certlocalpath,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where app_id = #{appId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.gsccs.cms.core.model.WxConfig" >
+    update cms_wx_config
+    set secret = #{secret,jdbcType=VARCHAR},
+      token = #{token,jdbcType=VARCHAR},
+      access_token = #{accessToken,jdbcType=VARCHAR},
+      aes_key = #{aesKey,jdbcType=VARCHAR},
+      expirestime = #{expirestime,jdbcType=BIGINT},
+      title = #{title,jdbcType=VARCHAR},
+      mchid = #{mchid,jdbcType=VARCHAR},
+      apikey = #{apikey,jdbcType=VARCHAR},
+      certlocalpath = #{certlocalpath,jdbcType=VARCHAR}
+    where app_id = #{appId,jdbcType=VARCHAR}
+  </update>
+</mapper>

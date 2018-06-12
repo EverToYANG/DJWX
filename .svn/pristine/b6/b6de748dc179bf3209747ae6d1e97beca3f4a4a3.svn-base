@@ -1,0 +1,111 @@
+package com.gsccs.cms.auth.model;
+
+import java.io.Serializable;
+
+public class Adminlink implements Serializable{
+    
+    private String id;
+    private String name;
+    private String url;
+    private String isok;
+    private String isokStr;
+    private Integer ordernum;
+    private String img;
+    private String type;
+    public static String TYPE_SYS="0";//系统链接
+    public static String TYPE_USER="1";//个人链接
+    private String userid;
+    
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getIsok() {
+		return isok;
+	}
+
+	public void setIsok(String isok) {
+		this.isok = isok;
+	}
+
+	public Integer getOrdernum() {
+		return ordernum;
+	}
+
+	public void setOrdernum(Integer ordernum) {
+		this.ordernum = ordernum;
+	}
+
+	public String getImg() {
+		return img;
+	}
+
+	public void setImg(String img) {
+		this.img = img;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public static String getTYPE_SYS() {
+		return TYPE_SYS;
+	}
+
+	public static void setTYPE_SYS(String tYPE_SYS) {
+		TYPE_SYS = tYPE_SYS;
+	}
+
+	public static String getTYPE_USER() {
+		return TYPE_USER;
+	}
+
+	public static void setTYPE_USER(String tYPE_USER) {
+		TYPE_USER = tYPE_USER;
+	}
+
+	public String getUserid() {
+		return userid;
+	}
+
+	public void setUserid(String userid) {
+		this.userid = userid;
+	}
+
+	public String getIsokStr() {
+		if ("1".equals(isok)) {
+			isokStr="是";
+		}else {
+			isokStr="否";
+		}
+		return isokStr;
+	}
+
+	public void setIsokStr(String isokStr) {
+		this.isokStr = isokStr;
+	}
+}

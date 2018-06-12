@@ -1,0 +1,58 @@
+package com.gsccs.cms.controller.pojo;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.gsccs.cms.module.model.VoteItem;
+import com.gsccs.cms.module.model.VoteTopic;
+
+public class VoteResponse {
+
+	private VoteTopic question;
+	private List<VoteItem> answersList;
+
+	public VoteTopic getQuestion() {
+		return question;
+	}
+
+	public void setQuestion(VoteTopic question) {
+		this.question = question;
+	}
+
+	public List<VoteItem> getAnswersList() {
+		List<VoteItem> list = new ArrayList<>();
+		if (null != answersList && answersList.size()>0){
+			Integer sum = 0;
+			for(VoteItem voteItem:answersList){
+				sum = sum+voteItem.getSelectnum();
+			}
+			
+			for(VoteItem voteItem:answersList){
+				if (sum.intValue()==0){
+					voteItem.setRatenum(0.0f);
+				}else{
+					float num=(float)(Math.round(voteItem.getSelectnum()*1.0/sum*100.0*100)/100);
+					voteItem.setRatenum(num);
+				}
+				list.add(voteItem);
+			}
+		}
+		answersList = list;
+		return answersList;
+	}
+
+	public void setAnswersList(List<VoteItem> answersList) {
+		this.answersList = answersList;
+		
+	}
+	
+	public static void main(String[] args) {
+		Integer sum = 109;
+		Integer selnum = 103;
+		
+		float num=(float)(Math.round(103*1.0/109*100.0*100)/100);
+		System.out.println(num);
+	}
+	
+
+}

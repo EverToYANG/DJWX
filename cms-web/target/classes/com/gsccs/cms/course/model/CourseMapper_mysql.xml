@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.course.dao.CourseMapper">
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.course.model.Course">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="unitid" property="unitid" jdbcType="VARCHAR" />
+		<result column="addtime" property="addtime" jdbcType="TIMESTAMP" />
+		<result column="state" property="state" jdbcType="VARCHAR" />
+		<result column="ordernum" property="ordernum" jdbcType="INTEGER" />
+		<result column="wxappid" property="wxappid" jdbcType="VARCHAR" />
+		<result column="isopen" property="isopen" jdbcType="VARCHAR" />
+		<result column="plannum" property="plannum" jdbcType="INTEGER" />
+		<result column="realnum" property="realnum" jdbcType="INTEGER" />
+		<result column="address" property="address" jdbcType="VARCHAR" />
+
+		<!-- -->
+		<result column="unitname" property="unitname" jdbcType="VARCHAR" />
+	</resultMap>
+	<resultMap id="ResultMapWithBLOBs" type="com.gsccs.cms.course.model.Course"
+		extends="BaseResultMap">
+		<result column="content" property="content" jdbcType="LONGVARCHAR" />
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		id, name, unitid, addtime, state, ordernum, wxappid,isopen, plannum,
+		realnum,address
+	</sql>
+	<sql id="Blob_Column_List">
+		content
+	</sql>
+	<select id="selectByExampleWithBLOBs" resultMap="ResultMapWithBLOBs"
+		parameterType="com.gsccs.cms.course.model.CourseExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		,
+		<include refid="Blob_Column_List" />
+		from course_base
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.course.model.CourseExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from course_base
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	<select id="selectPageByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.course.model.CourseExample">
+		select distinct *
+		from (
+		select a.*,b.name as unitname
+		from course_base a left join party_unit b on a.unitid = b.id
+		) as aa
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</select>
+	<select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs"
+		parameterType="java.lang.Integer">
+		select
+		<include refid="Base_Column_List" />
+		,
+		<include refid="Blob_Column_List" />
+		from course_base
+		where id = #{id,jdbcType=INTEGER}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from course_base
+		where id = #{id,jdbcType=INTEGER}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.course.model.CourseExample">
+		delete from course_base
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		parameterType="com.gsccs.cms.course.model.Course">
+		insert into course_base (id, name, unitid,
+		addtime, state, ordernum,
+		wxappid, isopen,plannum, realnum,
+		content,address)
+		values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR},
+		#{unitid,jdbcType=VARCHAR},
+		#{addtime,jdbcType=TIMESTAMP}, #{state,jdbcType=VARCHAR}, #{ordernum,jdbcType=INTEGER},
+		#{wxappid,jdbcType=VARCHAR},
+		#{isopen,jdbcType=VARCHAR},
+		#{plannum,jdbcType=INTEGER},
+		#{realnum,jdbcType=INTEGER},
+		#{content,jdbcType=LONGVARCHAR},#{address,jdbcType=VARCHAR})
+	</insert>
+
+	<select id="countByExample" parameterType="com.gsccs.cms.course.model.CourseExample"
+		resultType="java.lang.Integer">
+		select count(*) from course_base
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+
+	<update id="updateByExampleSelective" parameterType="map">
+		update course_base
+		<set>
+			<if test="record.id != null">
+				id = #{record.id,jdbcType=INTEGER},
+			</if>
+			<if test="record.name != null">
+				name = #{record.name,jdbcType=VARCHAR},
+			</if>
+			<if test="record.unitid != null">
+				unitid = #{record.unitid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.addtime != null">
+				addtime = #{record.addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="record.state != null">
+				state = #{record.state,jdbcType=VARCHAR},
+			</if>
+			<if test="record.ordernum != null">
+				ordernum = #{record.ordernum,jdbcType=INTEGER},
+			</if>
+			<if test="record.wxappid != null">
+				wxappid = #{record.wxappid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.plannum != null">
+				plannum = #{record.plannum,jdbcType=INTEGER},
+			</if>
+			<if test="record.realnum != null">
+				realnum = #{record.realnum,jdbcType=INTEGER},
+			</if>
+			<if test="record.content != null">
+				content = #{record.content,jdbcType=LONGVARCHAR},
+			</if>
+			<if test="record.address != null">
+				address = #{record.address,jdbcType=VARCHAR},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExampleWithBLOBs" parameterType="map">
+		update course_base
+		set id = #{record.id,jdbcType=INTEGER},
+		name = #{record.name,jdbcType=VARCHAR},
+		unitid = #{record.unitid,jdbcType=VARCHAR},
+		addtime = #{record.addtime,jdbcType=TIMESTAMP},
+		state = #{record.state,jdbcType=VARCHAR},
+		ordernum = #{record.ordernum,jdbcType=INTEGER},
+		wxappid = #{record.wxappid,jdbcType=VARCHAR},
+		isopen = #{record.isopen,jdbcType=VARCHAR},
+		plannum = #{record.plannum,jdbcType=INTEGER},
+		realnum = #{record.realnum,jdbcType=INTEGER},
+		content = #{record.content,jdbcType=LONGVARCHAR},
+		address = #{record.address,jdbcType=VARCHAR}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update course_base
+		set id = #{record.id,jdbcType=INTEGER},
+		name = #{record.name,jdbcType=VARCHAR},
+		unitid = #{record.unitid,jdbcType=VARCHAR},
+		addtime = #{record.addtime,jdbcType=TIMESTAMP},
+		state = #{record.state,jdbcType=VARCHAR},
+		ordernum = #{record.ordernum,jdbcType=INTEGER},
+		wxappid = #{record.wxappid,jdbcType=VARCHAR},
+		plannum = #{record.plannum,jdbcType=INTEGER},
+		realnum = #{record.realnum,jdbcType=INTEGER},
+		address = #{record.address,jdbcType=INTEGER}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.course.model.Course">
+		update course_base
+		<set>
+			<if test="name != null">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="unitid != null">
+				unitid = #{unitid,jdbcType=VARCHAR},
+			</if>
+			<if test="addtime != null">
+				addtime = #{addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="state != null">
+				state = #{state,jdbcType=VARCHAR},
+			</if>
+			<if test="ordernum != null">
+				ordernum = #{ordernum,jdbcType=INTEGER},
+			</if>
+			<if test="wxappid != null">
+				wxappid = #{wxappid,jdbcType=VARCHAR},
+			</if>
+			<if test="isopen != null">
+				isopen = #{isopen,jdbcType=VARCHAR},
+			</if>
+			<if test="plannum != null">
+				plannum = #{plannum,jdbcType=INTEGER},
+			</if>
+			<if test="realnum != null">
+				realnum = #{realnum,jdbcType=INTEGER},
+			</if>
+			<if test="content != null">
+				content = #{content,jdbcType=LONGVARCHAR},
+			</if>
+			<if test="address != null">
+				address = #{address,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKeyWithBLOBs" parameterType="com.gsccs.cms.course.model.Course">
+		update course_base
+		set name = #{name,jdbcType=VARCHAR},
+		unitid = #{unitid,jdbcType=VARCHAR},
+		addtime = #{addtime,jdbcType=TIMESTAMP},
+		state = #{state,jdbcType=VARCHAR},
+		ordernum = #{ordernum,jdbcType=INTEGER},
+		wxappid = #{wxappid,jdbcType=VARCHAR},
+		plannum = #{plannum,jdbcType=INTEGER},
+		realnum = #{realnum,jdbcType=INTEGER},
+		content = #{content,jdbcType=LONGVARCHAR},
+		address = #{address,jdbcType=VARCHAR}
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.course.model.Course">
+		update course_base
+		set name = #{name,jdbcType=VARCHAR},
+		unitid = #{unitid,jdbcType=VARCHAR},
+		addtime = #{addtime,jdbcType=TIMESTAMP},
+		state = #{state,jdbcType=VARCHAR},
+		ordernum = #{ordernum,jdbcType=INTEGER},
+		wxappid = #{wxappid,jdbcType=VARCHAR},
+		isopen = #{isopen,jdbcType=VARCHAR},
+		plannum = #{plannum,jdbcType=INTEGER},
+		realnum = #{realnum,jdbcType=INTEGER},
+		address = #{address,jdbcType=VARCHAR}
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+</mapper>

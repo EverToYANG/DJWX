@@ -1,0 +1,130 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="fs" uri="/fs-tags"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="">
+<meta name="author" content="">
+
+<%@include file="/include/bsie_head.jsp"%>
+
+</head>
+
+<body>
+	<%@include file="/include/loading.jsp"%>
+	<div >
+		<div class="row-fluid">
+
+			<c:if test='${"false" != param.cansign }'>
+				<div class="widget-box collapsible">
+					<div class="widget-title">
+						<span class="icon"> <i class="icon-edit"></i>
+						</span>
+						<h5>信息签收</h5>
+						<div class="buttons">
+							<a href="#collapseOne" data-toggle="collapse" class="btn btn-mini"><i class="icon-retweet"></i>展开/关闭</a>
+						</div>
+					</div>
+					<div class="collapse in" id="collapseOne">
+						<div class="widget-content">
+							<div id="errorDiv" class="alert alert-error hide">
+								<span id="errorInfo"></span>
+							</div>
+							用户名: <INPUT id=loginname maxLength=50 size="10" type=text name=loginname value="" /> 密码: <INPUT id=pwd maxLength=50 size="10" type=password name=pwd value="" />
+
+
+							<button type="button" onclick="infosign()" class="btn">
+								<i class="icon-edit"></i> 签 收
+							</button>
+						</div>
+					</div>
+				</div>
+				<script>
+		function infosign(){
+			if($.trim($("#loginname").val())==""){
+				$("#errorDiv").fadeIn("slow"); 
+				$("#errorInfo").html("请输入用户名"); 
+				$("#loginname").focus();
+				return false;
+			}else{
+				$("#errorDiv").fadeOut("slow"); 
+			}
+			if($.trim($("#pwd").val())==""){
+				$("#errorDiv").fadeIn("slow"); 
+				$("#errorInfo").html("请输入密码"); 
+				$("#pwd").focus();
+				return false;
+			}else{
+				$("#errorDiv").fadeOut("slow"); 
+			}
+			$.post("infoSignDo.do","id=${param.id}&loginname="+$("#loginname").val()+"&pwd="+$("#pwd").val(),infoSignComplete,"text");
+		}
+		function infoSignComplete(data){
+			if(data.indexOf("操作成功")>-1){
+				$("#errorDiv").fadeIn("slow"); 
+				$("#errorInfo").html("操作成功"); 
+				var id=data.replace("操作成功","");
+				$("#issign"+id).html("是");
+				var date=new Date();
+				$("#signtime"+id).html(date.getFullYear()+"-"+(date.getMonth() + 1)+"-"+date.getDate());
+				$("#ip"+id).html("<%=request.getRemoteAddr()%>
+					");
+						} else {
+							$("#errorDiv").fadeIn("slow");
+							$("#errorInfo").html(data);
+						}
+					}
+					if (GetCookie("CMS_infosignLoginName") != null) {
+						$("#loginname").val(GetCookie("CMS_infosignLoginName"));
+					}
+					if (GetCookie("CMS_infosignPwd") != null) {
+						$("#pwd").val(GetCookie("CMS_infosignPwd"));
+					}
+				</script>
+			</c:if>
+
+			<div class="widget-box">
+				<div class="widget-title">
+					<span class="icon"> <i class="icon-th"></i>
+					</span>
+					<h5>信息签收明细</h5>
+					<div class="buttons">
+						<a href="#" onclick="location.reload();" class="btn btn-mini"><i class="icon-refresh"></i> 刷 新</a>
+					</div>
+				</div>
+				<div class="widget-content nopadding">
+
+					<table class="table table-bordered table-striped with-check table-hover">
+						<thead>
+							<tr>
+								<Th width="25%">签收用户</Th>
+								<Th width="25%">是否签收</Th>
+								<Th width="25%">签收时间</Th>
+								<Th width="25%">签收IP</Th>
+							</tr>
+						</thead>
+						<tbody>
+							<c:forEach var="bean" items="${infosignList}" varStatus="status">
+								<tr>
+									<td>${bean.name }</td>
+									<td id="issign${bean.userid }">${not empty bean.signtime?"是":"否" }</td>
+									<td id="signtime${bean.userid }">${bean.signtimeStr }</td>
+									<td id="ip${bean.userid }">${bean.ip }</td>
+								</tr>
+							</c:forEach>
+						</tbody>
+					</table>
+
+				</div>
+			</div>
+			<!--/row-->
+		</div>
+		<!--/span-->
+
+		<%@include file="/include/foot.jsp"%>
+		<script src="${pageContext.request.contextPath}/static/common/js/cookie.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+package com.gsccs.cms.member.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.member.model.MembergroupAuth;
+import com.gsccs.cms.member.model.MembergroupAuthExample;
+
+public interface MembergroupAuthMapper {
+    
+    int countByExample(MembergroupAuthExample example);
+
+    
+    int deleteByExample(MembergroupAuthExample example);
+
+    
+    int deleteByPrimaryKey(String id);
+
+    
+    int insert(MembergroupAuth record);
+
+    
+    int insertSelective(MembergroupAuth record);
+
+    
+    List<MembergroupAuth> selectByExample(MembergroupAuthExample example);
+
+    
+    MembergroupAuth selectByPrimaryKey(String id);
+
+    
+    int updateByExampleSelective(@Param("record") MembergroupAuth record, @Param("example") MembergroupAuthExample example);
+
+    
+    int updateByExample(@Param("record") MembergroupAuth record, @Param("example") MembergroupAuthExample example);
+
+    
+    int updateByPrimaryKeySelective(MembergroupAuth record);
+
+    
+    int updateByPrimaryKey(MembergroupAuth record);
+}

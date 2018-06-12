@@ -1,0 +1,111 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="fs" uri="/fs-tags"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="">
+<meta name="author" content="">
+
+<%@include file="/include/bsie_head.jsp"%>
+
+</head>
+
+<body>
+	<input type="hidden" id="pageFuncId" value="${param.pageFuncId }">
+	<%@include file="/include/loading.jsp"%>
+	<jsp:include page="/head.do" flush="true" />
+	<div class="container-fluid" >
+		<div class="row-fluid">
+			<form id="form1" class="form-horizontal" action="htmlInfoDo.do" method="post">
+				<div class="widget-box">
+					<div class="widget-title">
+						<span class="icon"> <i class="icon-th"></i>
+						</span>
+						<h5>信息页静态化</h5>
+						<div class="buttons">
+							<a href="#" onclick="location.reload();" class="btn btn-mini"><i class="icon-refresh"></i> 刷 新</a>
+						</div>
+					</div>
+					<div class="widget-content nopadding">
+						<div class="control-group" style='display:${siteAdmin?"block":"none"}'>
+							<label class="control-label" style="width: 160px">是否所有栏目</label>
+							<div class="controls" style="margin-left: 190px;">
+								<label style="float: left"><input type="radio" name="createType" value="channels" checked>否 </label> <label style="float: left"><input type="radio" name="createType" value="all">是</label>
+							</div>
+						</div>
+						<div class="control-group">
+							<label class="control-label" style="width: 160px">开始时间</label>
+							<div class="controls" style="margin-left: 190px;">
+								<input name="starttime" rel="tooltip" data-placement="top" title="请选择信息添加开始时间" class="Wdate" id="starttime" type="text" style="width: 160px" size="14" readonly onClick="WdatePicker({skin:'default',dateFmt:'yyyy-MM-dd'})" />
+							</div>
+						</div>
+						<div class="control-group">
+							<label class="control-label" style="width: 160px">结束时间</label>
+							<div class="controls" style="margin-left: 190px;">
+								<input name="endtime" rel="tooltip" data-placement="top" title="请选择信息添加结束时间" class="Wdate" id="endtime" type="text" style="width: 160px" size="14" readonly onClick="WdatePicker({skin:'default',dateFmt:'yyyy-MM-dd'})" />
+							</div>
+						</div>
+						<table class="table table-bordered table-striped with-check table-hover">
+							<thead>
+								<tr>
+									<th><input type="checkbox" id="title-table-checkbox" name="title-table-checkbox" /></th>
+									<th style="min-width: 200px">栏目名称</th>
+								</tr>
+							</thead>
+							<tbody>
+								<c:forEach var="channel" items="${channelList}" varStatus="status">
+									<tr treeItemLevel="1">
+										<td><c:if test='${siteAdmin || "true" == channel.haveChannelRole }'>
+												<input type="checkbox" name="ids" value="${channel.id }" />
+											</c:if></td>
+										<td><c:if test='${"true" == channel.hasChildren}'>
+												<img align="absmiddle" style="cursor: pointer" onClick="displayChildren(this);" isAjax="true" isOpen="false" id="${channel.id }" src="${pageContext.request.contextPath}/static/tree/image/plus.gif" />
+											</c:if> <c:if test='${"true" != channel.hasChildren}'>
+												<img align="absmiddle" src="${pageContext.request.contextPath}/static/tree/image/empty.gif" />
+											</c:if> <img align="absmiddle" border="0" src="${pageContext.request.contextPath}/static/tree/image/folder.gif" />&nbsp; ${channel.name }</td>
+									</tr>
+								</c:forEach>
+							</tbody>
+						</table>
+					</div>
+
+					<div id="errorDiv" class="alert alert-error hide">
+						<span id="errorInfo"></span>
+					</div>
+
+					<div class="navbar">
+						<div class="navbar-inner">
+							<fs:operButtons />
+						</div>
+					</div>
+
+				</div>
+			</form>
+		</div>
+		<!--/row-->
+
+
+	</div>
+	<!--/span-->
+
+	<%@include file="/include/foot.jsp"%>
+
+	<script src="${pageContext.request.contextPath}/static/tree/bootstraptree.js"></script>
+	<script>
+            basePath="${pageContext.request.contextPath}";
+			ajaxUrl="${pageContext.request.contextPath}/cms/htmlChannelSon.do";
+			ajaxPara="";
+            </script>
+
+	<script src="${pageContext.request.contextPath}/static/common/js/checkAll.js"></script>
+	<script language="javascript" type="text/javascript" src="${pageContext.request.contextPath}/static/My97DatePicker/WdatePicker.js" defer="defer"></script>
+	<script src="${pageContext.request.contextPath}/static/admin/cms/js/htmlInfo.js"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/sco.modal.js"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/sco.confirm.js"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/check.js"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/checkLoginName.js"></script>
+</body>
+</html>

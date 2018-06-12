@@ -1,0 +1,41 @@
+package com.gsccs.cms.course.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseExample;
+
+public interface CourseMapper {
+
+	int countByExample(CourseExample example);
+
+	int countByExampleCache(CourseExample example);
+
+	int deleteByExample(CourseExample example);
+
+	int deleteByPrimaryKey(String id);
+
+	int insert(Course record);
+
+	int insertSelective(Course record);
+
+	List<Course> selectByExample(CourseExample example);
+
+	List<Course> selectPageByExample(CourseExample example);
+
+	List<Course> selectPageByExampleCache(CourseExample example);
+
+	Course selectByPrimaryKey(String id);
+
+	int updateByExampleSelective(@Param("record") Course record,
+			@Param("example") CourseExample example);
+
+	int updateByExample(@Param("record") Course record,
+			@Param("example") CourseExample example);
+
+	int updateByPrimaryKeySelective(Course record);
+
+	int updateByPrimaryKey(Course record);
+}

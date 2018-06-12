@@ -1,0 +1,140 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CMS 会员登录</title>
+<meta name="description" content="">
+<meta name="author" content="">
+
+<%@include file="/include/bsie_head.jsp"%>
+
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/unicorn/css/style.css">
+<style type="text/css">
+.form-signin1 {
+	background-color: #fff;
+	border: 1px solid #e5e5e5;
+	padding: 19px 29px 29px;
+	margin: 0 auto 20px;
+	max-width: 550px;
+	_width: 550px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	-webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+	-moz-box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+#login-header {
+	padding: 12px 20px;
+	margin-bottom: 1em;
+	background: #3C4049;
+	background: -moz-linear-gradient(top, #4A515B 0%, #3C4049 100%);
+	/* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #4A515B),
+		color-stop(100%, #3C4049)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #4A515B 0%, #3C4049 100%);
+	/* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #4A515B 0%, #3C4049 100%);
+	/* Opera11.10+ */
+	background: -ms-linear-gradient(top, #4A515B 0%, #3C4049 100%);
+	/* IE10+ */
+	background: linear-gradient(top, #4A515B 0%, #3C4049 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#4A515B',
+		endColorstr='#3C4049');
+	-ms-filter:
+		"progid:DXImageTransform.Microsoft.gradient(startColorstr='#4A515B', endColorstr='#3C4049')";
+	border-radius: 5px;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, .5);
+}
+
+#login-header h3 {
+	margin-bottom: 0;
+	font-size: 26px;
+	color: #FFF;
+	text-decoration: 1px 1px 2px rgba(0, 0, 0, .4);
+}
+</style>
+</head>
+<script> 
+ if (window.top!=window){
+ 	window.top.location.href  = window.location.href;
+ }
+</script>
+<body>
+
+	<%@include file="/include/top.jsp"%>
+
+	<!--[if lte IE 6]>
+<div id="ie6-warning">
+</div>
+<div class="alert alert-error" style="text-align:center">
+  <button type="button" class="close" data-dismiss="alert">×</button>
+  <strong>注意</strong> 您正在使用 Internet Explorer 6，低版本的IE浏览器在本页面的显示效果可能有差异。建议您升级到 
+  <a href="http://www.microsoft.com/china/windows/internet-explorer/" target="_blank">Internet Explorer 8+</a> 或以下浏览器： 
+  <a href="http://www.mozillaonline.com/" target="_blank">Firefox</a> / <a href="http://www.google.com/chrome/?hl=zh-CN" target="_blank">Chrome</a> / 
+  <a href="http://www.apple.com.cn/safari/" target="_blank">Safari</a> / <a href="http://www.operachina.com/" target="_blank">Opera</a>
+</div>
+<![endif]-->
+	<div class="container">
+
+		<form class="form-horizontal form-signin1" action="mlogin.do" method="post" onSubmit="return formSubmit();">
+			<div id="login-header">
+
+				<h3>CMS 会员登录</h3>
+
+			</div>
+			<hr>
+
+			<div class="bs-docs-example" id="errorDiv" style="display: none">
+				<div class="alert alert-block alert-error fade in" style="">
+					<span id="errorInfo"></span>
+				</div>
+			</div>
+
+			<div class="alert alert-success" id="successDiv" style="display: none">
+				<span id="successInfo"></span>
+			</div>
+			<div class="control-group" id="usernameDiv">
+				<label class="control-label" for="username">用户名</label>
+				<div class="controls">
+					<input type="text" id="username" name="loginname" placeholder="用户名"> <span style="color: Red;">*</span> <span class="help-inline" id="usernameHelp"></span>
+				</div>
+			</div>
+			<div class="control-group" id="passwordDiv">
+				<label class="control-label" for="password">密码</label>
+				<div class="controls">
+					<input type="password" id="password" name="pwd" placeholder="密码"> <span style="color: Red;">*</span> <span class="help-inline" id="passwordHelp"></span>
+				</div>
+			</div>
+			<div class="control-group" id="ValidateCodeDiv">
+				<label class="control-label" for="ValidateCode">验证码</label>
+				<div class="controls">
+					<input type="text" id="ValidateCode" name="ValidateCode" style="width: 50px" maxlength="4" placeholder="验证码"> <img src="${pageContext.request.contextPath}/image.jsp" title="点击重新获取验证码" style="cursor: hand" onclick="this.src='image.jsp?date='+new Date();" /> <span style="color: Red;">*</span> <span class="help-inline" id="ValidateCodeHelp"></span>
+				</div>
+			</div>
+			<div class="control-group">
+				<div class="controls">
+					<label class="checkbox"> <input id="RememberMe" type="checkbox" name="RememberMe" onclick="RememberMeClick()" />在此计算机上保留登录帐号 <a href="findPwd.jsp">忘记密码?</a>
+					</label>
+				</div>
+			</div>
+			<div class="control-group" style="text-align: center">
+				<button class="btn btn-large btn-primary" type="submit">登 录</button>
+				<a class="btn btn-large" href="register.jsp">注 册</a>
+
+			</div>
+			<%@include file="/include/copyright.jsp"%>
+		</form>
+
+	</div>
+	<!-- /container -->
+
+
+	<%@include file="/include/bsie_foot.jsp"%>
+	<script src="${pageContext.request.contextPath}/static/common/js/cookie.js"></script>
+	<script src="${pageContext.request.contextPath}/static/common/js/mlogin.js"></script>
+
+</body>
+</html>

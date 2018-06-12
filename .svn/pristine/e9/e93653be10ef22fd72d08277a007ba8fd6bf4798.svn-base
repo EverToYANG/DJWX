@@ -1,0 +1,37 @@
+package com.gsccs.cms.course.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.course.model.Learnlog;
+import com.gsccs.cms.course.model.LearnlogExample;
+
+public interface LearnlogMapper {
+
+	int countByExample(LearnlogExample example);
+
+	int deleteByExample(LearnlogExample example);
+
+	int deleteByPrimaryKey(String id);
+
+	int insert(Learnlog record);
+
+	int insertSelective(Learnlog record);
+
+	List<Learnlog> selectByExample(LearnlogExample example);
+
+	List<Learnlog> selectPageByExample(LearnlogExample example);
+
+	Learnlog selectByPrimaryKey(String id);
+
+	int updateByExampleSelective(@Param("record") Learnlog record,
+			@Param("example") LearnlogExample example);
+
+	int updateByExample(@Param("record") Learnlog record,
+			@Param("example") LearnlogExample example);
+
+	int updateByPrimaryKeySelective(Learnlog record);
+
+	int updateByPrimaryKey(Learnlog record);
+}

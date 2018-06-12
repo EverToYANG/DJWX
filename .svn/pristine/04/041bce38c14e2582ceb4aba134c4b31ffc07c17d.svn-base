@@ -1,0 +1,145 @@
+package com.gsccs.cms.controller.module;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.module.model.Comment;
+import com.gsccs.cms.module.service.CommentService;
+
+/**
+ * 评论相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller
+@RequestMapping("/comment")
+public class CommentController extends CmsBaseController {
+
+	@Resource
+	private CommentService commentService;
+	@Resource
+	private MemberService memberService;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String list(Comment comment,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		if (!subject.hasRole(AuthConst.SYS_ADMIN)) {
+			comment.setSiteid(getWxApp().getId());
+		}
+		map.put("objtypes", comment.getObjtypes());
+		List<Comment> commentList = commentService.find(comment, order,
+				currPage, pageSize, false);
+		int totalCount = commentService.count(comment, false);
+		Pager pager = new Pager(request);
+		pager.appendParam("objtype");
+		pager.appendParam("objid");
+		pager.appendParam("content");
+		pager.appendParam("state");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("comment/list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", commentList);
+		map.put("order", order);
+		return "module/comment";
+	}
+
+	/**
+	 * 审核
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/audit.do")
+	public String commentState(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				try {
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							commentService.state(idArr[i].trim());
+						}
+					}
+					msg = "审核评论(" + ids + ")成功!";
+					map.put("forwardSeconds", 3);
+				} catch (Exception e) {
+					map.put("forwardSeconds", 0);
+					e.printStackTrace();
+					msg = "审核评论(" + ids + ")失败:" + e.toString() + "!";
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "comment/list.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/del.do")
+	public String commentDel(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response){
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Comment comment;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						comment = commentService.findById(idArr[i]);
+						if (comment != null) {
+							try {
+								commentService.del(idArr[i]);
+							} catch (Exception e) {
+								operlogService.log(
+										getLoginName(),
+										"删除评论失败:" + comment.getId() + " "
+												+ e.getMessage(), request);
+							}
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "comment/list.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+}

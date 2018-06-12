@@ -1,0 +1,167 @@
+package com.gsccs.cms.auth.shiro;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.LockedAccountException;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.gsccs.cms.auth.model.Func;
+import com.gsccs.cms.auth.model.Oper;
+import com.gsccs.cms.auth.model.Roles;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.FuncService;
+import com.gsccs.cms.auth.service.PermService;
+import com.gsccs.cms.auth.service.RoleService;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.utils.AuthConst;
+
+/*
+ * 
+ */
+public class UserRealm extends AuthorizingRealm {
+
+	@Autowired
+	private UserService userService;
+	@Autowired
+	private FuncService funcService;
+	@Autowired
+	private PermService permService;
+	@Autowired
+	private RoleService roleService;
+	
+	// 授权
+	@Override
+	protected AuthorizationInfo doGetAuthorizationInfo(
+			PrincipalCollection principals) {
+		String accountid = (String) principals.getPrimaryPrincipal();
+		//Users user = (Users) principals.getPrimaryPrincipal();
+		SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
+		Users user = userService.findById(accountid);
+		//.setRoles(findStringRole(user));
+		authorizationInfo.setStringPermissions(findStringAuth(user));
+		authorizationInfo.setRoles(findStringRole(user));
+		return authorizationInfo;
+	}
+
+	
+	//认证
+	@Override
+	protected AuthenticationInfo doGetAuthenticationInfo(
+			AuthenticationToken token) throws AuthenticationException {
+		String username = (String) token.getPrincipal();
+		System.out.println(username);
+		Users user = userService.findByLoginName(username);
+		if (user == null) {
+			// 账号不存在
+			throw new UnknownAccountException();
+		}
+		if (!user.getIsok().equals("1")) {
+			// 帐号锁定
+			throw new LockedAccountException();
+		}
+
+		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(
+				user.getId(), // 用户名
+				user.getPwd(), // 密码
+				// ByteSource.Util.bytes(user.getCredentialsSalt()),//salt=username+salt
+				getName() // realm name
+		);
+		return authenticationInfo;
+	}
+
+	@Override
+	public void clearCachedAuthorizationInfo(PrincipalCollection principals) {
+		super.clearCachedAuthorizationInfo(principals);
+	}
+
+	@Override
+	public void clearCachedAuthenticationInfo(PrincipalCollection principals) {
+		super.clearCachedAuthenticationInfo(principals);
+	}
+
+	@Override
+	public void clearCache(PrincipalCollection principals) {
+		super.clearCache(principals);
+	}
+
+	public void clearAllCachedAuthorizationInfo() {
+		getAuthorizationCache().clear();
+	}
+
+	public void clearAllCachedAuthenticationInfo() {
+		getAuthenticationCache().clear();
+	}
+
+	public void clearAllCache() {
+		clearAllCachedAuthenticationInfo();
+		clearAllCachedAuthorizationInfo();
+	}
+
+	public Set<String> findStringAuth(Users user) {
+		if (null==user){
+			return null;
+		}
+		Set<String> auths = new HashSet<String>();
+		List<Func> funcList = null;
+		List<Oper> operList = null;
+		// 超级管理员默认拥有所有操作权限
+		if (AuthConst.SYSTEM_ADMINISTRATOR.equals(user.getLoginname())) {
+			funcList = funcService.selectAll("1");
+		} else {
+			funcList = funcService.selectAllAuth(user.getId());
+			operList = permService.selectAllOper(user.getId());
+		}
+
+		if (null != funcList && funcList.size() > 0) {
+			for (Func func : funcList) {
+				if (null != func.getCode() && !func.getCode().equals("")) {
+					auths.add(func.getCode());
+				}
+			}
+		}
+		if (null != operList && operList.size() > 0) {
+			for (Oper oper : operList) {
+				if (null != oper.getCode() && !oper.getCode().equals("")) {
+					auths.add(oper.getCode());
+				}
+			}
+		}
+		return auths;
+	}
+
+	public Set<String> findStringRole(Users user) {
+		if (null==user){
+			return null;
+		}
+		Set<String> auths = new HashSet<String>();
+		List<Roles> roleList = null;
+		// 超级管理员默认拥有所有操作权限
+		if (AuthConst.SYSTEM_ADMINISTRATOR.equals(user.getLoginname())) {
+			roleList = roleService.findAll(null, "", null);
+		} else {
+			roleList = roleService.findByUser(user.getId());
+		}
+		// 超级管理员默认拥有所有操作权限
+		if (null != roleList && roleList.size() > 0) {
+			for (Roles role : roleList) {
+				if (StringUtils.isNotEmpty(role.getId())) {
+					auths.add(role.getId());
+				}
+			}
+		}
+		return auths;
+	}
+
+}

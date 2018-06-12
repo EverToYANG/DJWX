@@ -1,0 +1,301 @@
+package com.gsccs.cms.controller.exam;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.exam.domain.Message;
+import com.gsccs.cms.exam.domain.PaperCreatorParam;
+import com.gsccs.cms.exam.model.ExamPaper;
+import com.gsccs.cms.exam.model.Field;
+import com.gsccs.cms.exam.model.QuestionQueryResult;
+import com.gsccs.cms.exam.model.QuestionStruts;
+import com.gsccs.cms.exam.service.ExamService;
+import com.gsccs.cms.exam.service.QuestionService;
+import com.gsccs.cms.exam.util.xml.Object2Xml;
+import com.gsccs.cms.exam.utils.Page;
+import com.gsccs.cms.exam.utils.PagingUtil;
+import com.gsccs.cms.exam.utils.QuestionAdapter;
+
+@Controller
+@RequestMapping("/exam")
+public class ExamPaperController {
+
+	@Autowired
+	private ExamService examService;
+	@Autowired
+	private QuestionService questionService;
+
+	private static final String SUCCESS_Message = "success";
+	private static final String failed_Message = "failed";
+
+	@RequestMapping(value = "/paper.do", method = RequestMethod.GET)
+	public String exampaperListPage(Model model,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = " ") String order, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+
+		Page<ExamPaper> pageModel = new Page<ExamPaper>();
+		pageModel.setPageNo(currPage);
+		pageModel.setPageSize(pageSize);
+		List<ExamPaper> paperList = examService.getExamPaperListByPaperType("1",
+				pageModel);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(10);
+		pager.setOutStrBootstrap("exam/paper.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", paperList);
+		map.put("order", order);
+		return "course/paper_list";
+	}
+
+	
+	@RequestMapping(value = "/paperadd", method = RequestMethod.GET)
+	public String exampaperAddPage(Model model) {
+		List<Field> fieldList = questionService.getAllField(null);
+		model.addAttribute("fieldList", fieldList);
+		return "course/paper-add";
+	}
+
+	
+	@RequestMapping(value = "/paperedit/{exampaperid}", method = RequestMethod.GET)
+	public String exampaperEditPage(Model model,
+			@PathVariable("exampaperid") Integer exampaperid,
+			HttpServletRequest request) {
+		if (null==exampaperid){
+			return "course/paper_add";
+		}
+		String strUrl = "http://" + request.getServerName() // 服务器地址
+				+ ":" + request.getServerPort() + "/";
+
+		ExamPaper examPaper = examService.getExamPaperById(exampaperid);
+		StringBuilder sb = new StringBuilder();
+		if (examPaper.getContent() != null
+				&& !examPaper.getContent().equals("")) {
+			List<QuestionQueryResult> questionList = Object2Xml.toBean(
+					examPaper.getContent(), List.class);
+			for (QuestionQueryResult question : questionList) {
+				/*
+				 * AnswerSheetItem as = new AnswerSheetItem();
+				 * as.setAnswer(question.getAnswer());
+				 * as.setQuestion_type_id(question.getQuestionTypeId());
+				 * as.setPoint(question.getQuestionPoint());
+				 */
+				QuestionAdapter adapter = new QuestionAdapter(question, strUrl);
+				sb.append(adapter.getStringFromXML());
+			}
+		}
+
+		model.addAttribute("htmlStr", sb);
+		model.addAttribute("exampaperid", exampaperid);
+		model.addAttribute("exampapername", examPaper.getName());
+		return "course/paper_edit";
+	}
+
+	@RequestMapping(value = "/paperedit/{exampaperid}", method = RequestMethod.POST)
+	public @ResponseBody
+	Message exampaperOnUpdate(Model model,
+			@PathVariable("exampaperid") int exampaperid,
+			@RequestBody HashMap<Integer, Float> questionPointMap) {
+
+		Message message = new Message();
+		try {
+			ExamPaper examPaper = new ExamPaper();
+			List<Integer> idList = new ArrayList<Integer>();
+			Iterator<Integer> it = questionPointMap.keySet().iterator();
+			float sum = 0;
+			while (it.hasNext()) {
+				int key = it.next();
+				idList.add(key);
+			}
+			List<QuestionQueryResult> questionList = examService
+					.getQuestionDescribeListByIdList(idList);
+			for (QuestionQueryResult q : questionList) {
+				q.setQuestionPoint(questionPointMap.get(q.getQuestionId()));
+				sum += questionPointMap.get(q.getQuestionId());
+			}
+			String content = Object2Xml.toXml(questionList);
+			examPaper.setContent(content);
+			examPaper.setTotal_point(sum);
+			examPaper.setId(exampaperid);
+			examService.updateExamPaper(examPaper);
+		} catch (Exception e) {
+			message.setResult(e.getLocalizedMessage());
+		}
+		return message;
+	}
+
+	@RequestMapping(value = "/paper-add", method = RequestMethod.POST)
+	public @ResponseBody
+	Message createExamPaper(@RequestBody PaperCreatorParam param) {
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+
+		Message message = new Message();
+		ExamPaper examPaper = new ExamPaper();
+		examPaper.setName(param.getPaperName());
+		examPaper.setDuration(param.getTime());
+		examPaper.setPass_point(param.getPassPoint());
+		examPaper.setPaper_type(param.getPaperType());
+		examPaper.setCreator(userid);
+		examPaper.setTotal_point(param.getPaperPoint());
+
+		// 手工组卷
+		if (param.getQuestionKnowledgePointRate().size() == 0) {
+			try {
+				examService.insertExamPaper(examPaper);
+			} catch (Exception ex) {
+				message.setResult(ex.getMessage());
+			}
+			message.setGeneratedId(examPaper.getId());
+			return message;
+		}
+		List<Integer> idList = new ArrayList<Integer>();
+
+		HashMap<Integer, Float> knowledgeMap = param
+				.getQuestionKnowledgePointRate();
+		Iterator<Integer> it = knowledgeMap.keySet().iterator();
+		while (it.hasNext()) {
+			idList.add(it.next());
+		}
+
+		HashMap<Integer, HashMap<Integer, List<QuestionStruts>>> questionMap = questionService
+				.getQuestionStrutsMap(idList);
+
+		try {
+			examService.createExamPaper(questionMap,
+					param.getQuestionTypeNum(), param.getQuestionTypePoint(),
+					param.getQuestionKnowledgePointRate(), examPaper);
+			message.setGeneratedId(examPaper.getId());
+		} catch (Exception e) {
+			e.printStackTrace();
+			message.setResult(e.getMessage());
+		}
+
+		return message;
+	}
+
+	@RequestMapping(value = "paper-publish", method = RequestMethod.POST)
+	public @ResponseBody
+	Message publishExamPaper(@RequestBody Integer examPaperId) {
+
+		Message message = new Message();
+		ExamPaper examPaper = new ExamPaper();
+		examPaper.setId(examPaperId);
+		examPaper.setStatus(1);
+		try {
+			examService.updateExamPaper(examPaper);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+
+		}
+
+		return message;
+	}
+
+	@RequestMapping(value = "paper-update", method = RequestMethod.POST)
+	public @ResponseBody
+	Message updateExamPaper(@RequestBody ExamPaper examPaper) {
+
+		Message message = new Message();
+		examPaper.setStatus(-1);
+		try {
+			examService.updateExamPaper(examPaper);
+			message.setObject(examPaper);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+
+		}
+
+		return message;
+	}
+
+	@RequestMapping(value = "paper-preview/{exampaperid}", method = RequestMethod.GET)
+	public String exampaperPreviewPage(Model model,
+			@PathVariable("exampaperid") int exampaperid,
+			HttpServletRequest request) {
+
+		String strUrl = "http://" + request.getServerName() // 服务器地址
+				+ ":" + request.getServerPort() + "/";
+
+		ExamPaper examPaper = examService.getExamPaperById(exampaperid);
+		StringBuilder sb = new StringBuilder();
+		if (examPaper.getContent() != null
+				&& !examPaper.getContent().equals("")) {
+			List<QuestionQueryResult> questionList = Object2Xml.toBean(
+					examPaper.getContent(), List.class);
+			for (QuestionQueryResult question : questionList) {
+				/*
+				 * AnswerSheetItem as = new AnswerSheetItem();
+				 * as.setAnswer(question.getAnswer());
+				 * as.setQuestion_type_id(question.getQuestionTypeId());
+				 * as.setPoint(question.getQuestionPoint());
+				 */
+				QuestionAdapter adapter = new QuestionAdapter(question, strUrl);
+				sb.append(adapter.getStringFromXML());
+			}
+		}
+
+		model.addAttribute("htmlStr", sb);
+		model.addAttribute("exampaperid", exampaperid);
+		model.addAttribute("exampapername", examPaper.getName());
+		return "course/paper_preview";
+	}
+
+	@RequestMapping(value = "paper-delete", method = RequestMethod.POST)
+	public @ResponseBody
+	Message deleteExamPaper(@RequestBody Integer examPaperId) {
+		Message message = new Message();
+		try {
+			ExamPaper examPaper = examService.getExamPaperById(examPaperId);
+			if (examPaper.getStatus() == 1) {
+				message.setResult("已发布的试卷不允许删除");
+				return message;
+			}
+			examService.deleteExamPaper(examPaperId);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+		}
+		return message;
+	}
+
+	@RequestMapping(value = "paper-offline", method = RequestMethod.POST)
+	public @ResponseBody
+	Message offlineExamPaper(@RequestBody Integer examPaperId) {
+		Message message = new Message();
+		ExamPaper examPaper = new ExamPaper();
+		examPaper.setId(examPaperId);
+		examPaper.setStatus(2);
+		try {
+			examService.updateExamPaper(examPaper);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+		}
+		return message;
+	}
+
+}

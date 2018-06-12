@@ -1,0 +1,94 @@
+package com.gsccs.cms.search.service.impl;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.util.CmsConst;
+import com.gsccs.cms.search.SolrServer;
+import com.gsccs.cms.search.service.IndexService;
+
+@Service("indexService")
+public class IndexServiceImpl implements IndexService {
+	
+	private static Logger logger = Logger.getLogger(IndexServiceImpl.class);
+	
+	@Resource
+	private ConfigService configService;
+
+	@Override
+	public void writeDoc(Content content) {
+		// 获取连接服务
+		HttpSolrServer solrServer = null;
+		try {
+			//Solr服务地址
+			Config solrUrlConf = configService.findByCode(CmsConst.SOLR_SERVER_PATH);
+			if (null != solrUrlConf){
+				String solrUrl = solrUrlConf.getCode();
+				solrServer = SolrServer.getInstance().getServer(solrUrl);
+				solrServer.addBean(content);
+				solrServer.commit();
+			}
+			
+		} catch (SolrServerException e) {
+			logger.info("连接全文检索服务器出错." + e.getMessage());
+		} catch (IOException e) {
+			logger.info("创建索引失败." + e.getMessage());
+		} catch (Exception e){
+			logger.info("创建索引失败." + e.getMessage());
+		}
+	}
+
+	@Override
+	public void writeDoc(List<Content> contents) {
+		// 获取连接服务
+		HttpSolrServer solrServer = null;
+		
+		try {
+			Config solrUrlConf = configService.findByCode(CmsConst.SOLR_SERVER_PATH);
+			if (null != solrUrlConf){
+				String solrUrl = solrUrlConf.getCode();
+				solrServer = SolrServer.getInstance().getServer(solrUrl);
+				solrServer.addBean(contents);
+				solrServer.commit();
+			}
+		} catch (SolrServerException e) {
+			logger.info("连接全文检索服务器出错." + e.getMessage());
+		} catch (IOException e) {
+			logger.info("创建索引失败." + e.getMessage());
+		} 
+	}
+
+	@Override
+	public void optimize() {
+		HttpSolrServer solrServer = null;
+		try {
+			Config solrUrlConf = configService.findByCode(CmsConst.SOLR_SERVER_PATH);
+			if (null != solrUrlConf){
+				String solrUrl = solrUrlConf.getCode();
+				solrServer = SolrServer.getInstance().getServer(solrUrl);
+				solrServer.optimize();
+			}
+		} catch (SolrServerException e) {
+			logger.info("连接全文检索服务器出错." + e.getMessage());
+		} catch (IOException e) {
+			logger.info("创建索引失败." + e.getMessage());
+		}
+		
+	}
+
+	@Override
+	public void writeAllDoc() {
+		
+	}
+
+}

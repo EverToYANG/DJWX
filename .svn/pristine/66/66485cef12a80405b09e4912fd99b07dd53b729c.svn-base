@@ -1,0 +1,85 @@
+package com.gsccs.cms.freemarker.directive;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.bass.base.BaseDirective;
+
+import freemarker.core.Environment;
+import freemarker.ext.beans.BeansWrapper;
+import freemarker.ext.beans.StringModel;
+import freemarker.template.TemplateDirectiveBody;
+import freemarker.template.TemplateDirectiveModel;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateModel;
+
+/**
+ * 参数 infoid 信息id spanAttr 点击量显示span的属性 loadjs 是否加载依赖的js
+ * 
+ * 返回值 ajaxInfoClickHtml 生成的内容
+ * 
+ * 此标签依赖的文件 jquery
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+
+@Service("infoClickDirective")
+public class AjaxInfoClickDirective extends BaseDirective implements
+		TemplateDirectiveModel {
+
+	public void execute(Environment env, Map params, TemplateModel[] loopVars,
+			TemplateDirectiveBody body) throws TemplateException, IOException {
+
+		// 获取参数
+		// 信息id
+		String infoid = getParam(params, "infoid");
+		
+		String siteid = getParam(params,  "siteid");
+		
+		// 点击量显示span的属性
+		String spanAttr = getParam(params, "spanAttr");
+		// 是否加载引用的js
+		String loadjs = getParam(params, "loadjs");
+
+		Writer out = env.getOut();
+		if (body != null) {
+			// 设置循环变量
+			/*if (loopVars != null && loopVars.length > 0
+					&& infoid.trim().length() > 0) {*/
+			if (loopVars != null && loopVars.length > 0) {
+				String contextPath = env.getDataModel().get("contextPath")
+						.toString();
+				StringBuilder sb = new StringBuilder();
+
+				if ("true".equals(loadjs)) {
+					// 导入js
+					sb.append("<script src='" + contextPath
+							+ "js/jquery-1.7.2.min.js'></script>");
+				}
+				// 生成唯一标识
+				String uuid = UUID.randomUUID().toString().replace("-", "");
+				// 生成显示点击量的span,默认显示0
+				sb.append("<span id='clickNumSpan' "
+						+ spanAttr + ">0</span>");
+				sb.append("<script>");
+				// 执行ajax操作
+				sb.append("$.post('" + contextPath + "web/clickDo.htm','id="
+						+ infoid + "&siteid=" + siteid + "',clickNumResult"
+						+ ",'text');");
+				// 回调函数
+				sb.append("function clickNumResult(data){");
+				// 显示点击量
+				sb.append("$('#clickNumSpan').html(data);");
+				sb.append("}");
+				sb.append("</script>");
+				loopVars[0] = new StringModel(sb.toString(), new BeansWrapper());
+				body.render(env.getOut());
+			}
+		}
+	}
+}

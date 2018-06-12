@@ -1,0 +1,51 @@
+package com.gsccs.cms.controller.weixin;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.weixin.model.WxApp;
+import com.gsccs.cms.weixin.service.WxAppService;
+
+import io.github.elkan1788.mpsdk4j.mvc.WechatWebSupport;
+import io.github.elkan1788.mpsdk4j.vo.MPAccount;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月16日
+ */
+
+@Controller
+@RequestMapping("/api")
+public class WeiXinController extends WechatWebSupport {
+	
+	@Autowired
+	private WxAppService wxAppService;
+	
+	@RequestMapping(value = "/{appid}")
+	public void wxAPPAuth(@PathVariable("appid") String appid,
+			HttpServletRequest req, HttpServletResponse resp) {
+		try{
+			System.out.println("认证appID:"+appid);
+			MPAccount mpAct = new MPAccount();
+			WxApp wxApp = wxAppService.findById(appid);
+			// 添加微信号
+			mpAct.setAppId(appid);
+			System.out.println("认证Secret:"+wxApp.getSecret());
+			mpAct.setAppSecret(wxApp.getSecret());
+			mpAct.setToken(wxApp.getToken());
+			_wk.setMpAct(mpAct);
+			// 配置消息处理器
+			_wk.setWechatHandler(new WeiXinHandler());
+			this.interact(req, resp);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+}

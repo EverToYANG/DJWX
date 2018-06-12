@@ -1,0 +1,190 @@
+package com.gsccs.cms.controller.auth;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.model.Func;
+import com.gsccs.cms.auth.service.FuncService;
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.RoleSite;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Visit;
+import com.gsccs.cms.core.service.RoleSiteService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.VisitService;
+import com.gsccs.cms.core.util.CmsConst;
+
+/**
+ * 后台管理相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+
+@Controller
+public class MainController extends CmsBaseController {
+
+	@Resource
+	private FuncService funcService;
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private RoleSiteService roleSiteService;
+	@Resource
+	private VisitService visitService;
+
+	/**
+	 * 管理中心
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/index")
+	public String index(String pageFuncId, ModelMap map,HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		List<Func> funcList = null;
+		String funcid = null;
+		System.out.println(AuthConst.SYS_ADMIN+":"+subject.hasRole(AuthConst.SYS_ADMIN));
+		if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+			funcList = funcService.selectRoot();
+		} else {
+			funcList = funcService.selectRootAuth(getLoginUser().getId());
+		}
+		System.out.println(funcList.size());
+		if (funcList != null && funcList.size() > 0) {
+			funcid = funcList.get(0).getId();
+		}
+		map.put("funcList", funcList);
+		map.put("funcid", funcid);
+		return "sysmg/index";
+	}
+
+	/**
+	 * 管理中心 欢迎页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/main")
+	public String main(@RequestParam(defaultValue = "day") String statType,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "5") int pageSize, String pageFuncId,
+			ModelMap map, HttpServletResponse response) {
+		return "sysmg/main";
+	}
+
+	/**
+	 * 管理中心 头部
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/head.do")
+	public String head(String pageFuncId, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		// 如果有pageFuncId参数，处理导航
+		if (StringUtils.isNotEmpty(pageFuncId)) {
+			map.put("funcNav",
+					funcService.getPars(request.getSession(), pageFuncId, null));
+			map.put("pageFuncId", pageFuncId);
+		}
+		return "admin/inc/head";
+	}
+
+	/**
+	 * 管理中心 菜单
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/menu.do")
+	public String menu(String funcid, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		List<Func> funcList = new ArrayList<Func>();
+		if (funcid == null || funcid.trim().length() == 0) {
+			if (session.getAttribute("funcid") != null
+					&& StringUtils.isNotEmpty(session.getAttribute("funcid")
+							.toString())) {
+				funcid = session.getAttribute("funcid").toString();
+			} else {
+				// 设置为第一个根菜单
+				// 提取一级菜单
+				if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+					funcList = funcService.selectRoot();
+				} else {
+					funcList = funcService.selectRootAuth(getLoginUser().getId());
+				}
+				if (funcList != null && funcList.size() > 0) {
+					funcid = funcList.get(0).getId();
+				}
+			}
+		}
+		session.setAttribute("funcid", funcid);
+		// 提取权限并放到session中
+		if (session.getAttribute("funcs") != null) {
+			funcList = (List<Func>) session.getAttribute("funcs");
+		} else {
+			if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+				funcList = funcService.selectAll("1");
+			} else {
+				funcList = funcService.selectAllAuth(getLoginUser().getId());
+			}
+			if (funcList != null && funcList.size() > 0) {
+				for (int i = 0; i < funcList.size(); i++) {
+					if (funcService.haveSon(funcList.get(i).getId())) {
+						funcList.get(i).setHasChildren("1");
+					}
+				}
+			}
+			session.setAttribute("funcs", funcList);
+		}
+		map.put("func", funcService.selectById(funcid));
+		map.put("menuTree", funcService.createTree(request, funcid, funcList));
+		return "sysmg/menu";
+	}
+
+	@ResponseBody
+	@RequestMapping("/func_json.do")
+	public List<Func> menujson(String funcid,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		List<Func> funcList = new ArrayList<Func>();
+		Subject subject = SecurityUtils.getSubject();  
+		if (StringUtils.isEmpty(funcid)) {
+			// 提取一级菜单
+			if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+				funcList = funcService.selectRoot();
+			} else {
+				funcList = funcService.selectRootAuth(getLoginUser().getId());
+			}
+			funcid = funcList.get(0).getId();
+		} else {
+			if (subject.hasRole(AuthConst.SYS_ADMIN)) {
+				funcList = funcService.selectAll("1");
+			} else {
+				funcList = funcService.selectAllAuth(getLoginUser().getId());
+			}
+		}
+
+		List<Func> userMenu = funcService.createTree(funcid, funcList);
+		return userMenu;
+	}
+}

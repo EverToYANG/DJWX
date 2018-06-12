@@ -1,0 +1,43 @@
+package com.gsccs.cms.search;
+
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+
+/**
+ * 全文检索服务
+ * 
+ * @version 3.0
+ * @author x.d zhang
+ * 
+ */
+public class SolrServer {
+
+	private static SolrServer solrServer = null;
+	private static HttpSolrServer server = null;
+	//private static String url = "http://10.209.19.147:8983/solr";
+	
+	public static synchronized SolrServer getInstance() {
+		if (solrServer == null) {
+			solrServer = new SolrServer();
+		}
+		return solrServer;
+	}
+
+	public static HttpSolrServer getServer(String url) {
+		if (server == null) {
+			server = new HttpSolrServer(url);
+			server.setSoTimeout(1000); 
+			server.setConnectionTimeout(1000);
+			server.setDefaultMaxConnectionsPerHost(100);
+			server.setMaxTotalConnections(100);
+			//默认值为false
+			server.setFollowRedirects(false); 
+			// 是否允许压缩，默认为false.
+			// 应用服务器必须支持 gzip or deflate
+			server.setAllowCompression(true);
+			// 默认为0
+			server.setMaxRetries(1); 
+		}
+		return server;
+	}
+
+}

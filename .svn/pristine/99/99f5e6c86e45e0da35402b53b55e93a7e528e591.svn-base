@@ -1,0 +1,32 @@
+package com.gsccs.cms.course.service;
+
+import java.util.List;
+
+import org.omg.PortableInterceptor.INACTIVE;
+
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseFeed;
+import com.gsccs.cms.course.model.CourseInfo;
+import com.gsccs.cms.course.model.CourseVote;
+
+
+/*
+ * 课程业务接口
+ */
+public interface CourseService {
+	
+	public Integer addCourse(Course param);
+	public void editCourse(Course param);
+	public List<Course> find(Course param,String orderstr,int page,int pagesize);
+	public List<CourseInfo> findInfoList(Integer courseid);
+	public List<CourseFeed> findFeedList(String deptid,Integer courseid);
+	public List<CourseFeed> findByParid(String parid);
+	public List<CourseVote> findVoteList(Integer courseid);
+	public Course getCourse(Integer id);
+	public void addCourseFed(CourseFeed courseFed);
+	public void delCourseById(Integer courseid);
+	
+	public Integer count(Course param);
+	
+	
+}

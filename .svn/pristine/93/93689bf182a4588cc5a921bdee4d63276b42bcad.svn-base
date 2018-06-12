@@ -1,0 +1,48 @@
+package com.gsccs.cms.course.model;
+
+/**
+ * 课程参加人员
+ * 
+ * @author x.d zhang
+ * 
+ */
+public class CourseUser {
+
+	private String courseid;
+	private String userid;
+	private String username;
+	private String leantype;
+
+	public String getUserid() {
+		return userid;
+	}
+
+	public void setUserid(String userid) {
+		this.userid = userid;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getLeantype() {
+		return leantype;
+	}
+
+	public void setLeantype(String leantype) {
+		this.leantype = leantype;
+	}
+
+	public String getCourseid() {
+		return courseid;
+	}
+
+	public void setCourseid(String courseid) {
+		this.courseid = courseid;
+	}
+
+}

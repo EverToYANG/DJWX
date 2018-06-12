@@ -1,0 +1,105 @@
+package com.gsccs.cms.auth.model;
+
+import java.io.Serializable;
+
+public class Unit implements Serializable {
+
+	private String id;
+	private String wxappid;
+	private String ismailStr;
+	private String hasChildren;
+	private String name;
+
+	private String parid;
+	private String sql;
+	private String isok;
+	private String isokStr;
+
+	private Integer ordernum;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getWxappid() {
+		return wxappid;
+	}
+
+	public void setWxappid(String wxappid) {
+		this.wxappid = wxappid;
+	}
+
+	public String getHasChildren() {
+		return hasChildren;
+	}
+
+	public void setHasChildren(String hasChildren) {
+		this.hasChildren = hasChildren;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getParid() {
+		return parid;
+	}
+
+	public void setParid(String parid) {
+		this.parid = parid;
+	}
+
+	public String getIsok() {
+		return isok;
+	}
+
+	public void setIsok(String isok) {
+		this.isok = isok;
+	}
+
+	public Integer getOrdernum() {
+		return ordernum;
+	}
+
+	public void setOrdernum(Integer ordernum) {
+		this.ordernum = ordernum;
+	}
+
+	public String getIsokStr() {
+		isokStr = "否";
+		if ("1".equals(isok)) {
+			isokStr = "是";
+		}
+		return isokStr;
+	}
+
+	public void setIsokStr(String isokStr) {
+		this.isokStr = isokStr;
+	}
+
+	public String getIsmailStr() {
+		ismailStr = "否";
+		return ismailStr;
+	}
+
+	public void setIsmailStr(String ismailStr) {
+		this.ismailStr = ismailStr;
+	}
+
+	public String getSql() {
+		return sql;
+	}
+
+	public void setSql(String sql) {
+		this.sql = sql;
+	}
+
+}

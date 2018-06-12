@@ -1,0 +1,117 @@
+package com.gsccs.cms.course.model;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class Course {
+    private Integer id;
+
+    private String name;
+
+    private String unitid;
+
+    private Date addtime;
+
+    private String state;
+
+    private Integer ordernum;
+
+    private String site;
+
+    private Integer plannum;
+
+    private Integer realnum;
+
+    private String content;
+    
+    private String addtimestr;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name == null ? null : name.trim();
+    }
+
+    public String getUnitid() {
+        return unitid;
+    }
+
+    public void setUnitid(String unitid) {
+        this.unitid = unitid == null ? null : unitid.trim();
+    }
+
+    public Date getAddtime() {
+        return addtime;
+    }
+
+    public void setAddtime(Date addtime) {
+        this.addtime = addtime;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state == null ? null : state.trim();
+    }
+
+    public Integer getOrdernum() {
+        return ordernum;
+    }
+
+    public void setOrdernum(Integer ordernum) {
+        this.ordernum = ordernum;
+    }
+
+    public String getSite() {
+        return site;
+    }
+
+    public void setSite(String site) {
+        this.site = site == null ? null : site.trim();
+    }
+
+    public Integer getPlannum() {
+        return plannum;
+    }
+
+    public void setPlannum(Integer plannum) {
+        this.plannum = plannum;
+    }
+
+    public Integer getRealnum() {
+        return realnum;
+    }
+
+    public void setRealnum(Integer realnum) {
+        this.realnum = realnum;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content == null ? null : content.trim();
+    }
+
+	public String getAddtimestr() {
+		 SimpleDateFormat sf =new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+		return sf.format(addtime);
+	}
+
+	public void setAddtimestr(String addtimestr) {
+		this.addtimestr = addtimestr;
+	}
+}

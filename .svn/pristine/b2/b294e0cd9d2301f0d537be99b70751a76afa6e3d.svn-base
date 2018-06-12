@@ -1,0 +1,1688 @@
+package com.gsccs.cms.controller.core;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.filters.TagNameFilter;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.bass.utils.HtmlCode;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.ContentImg;
+import com.gsccs.cms.core.model.ContentSign;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.ContentImgService;
+import com.gsccs.cms.core.service.ContentSignService;
+import com.gsccs.cms.core.service.HtmlquartzService;
+import com.gsccs.cms.core.service.RoleChannelService;
+import com.gsccs.cms.core.service.SensitiveService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.util.CmsConst;
+
+/**
+ * 站点内容相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller
+@RequestMapping("/cms")
+public class ContentController extends CmsBaseController {
+
+	@Resource
+	private RoleChannelService roleChannelService;
+	@Resource
+	private HtmlquartzService htmlquartzService;
+	@Resource
+	private SensitiveService sensitiveService;
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private ContentSignService infoSignService;
+	@Resource
+	private ContentImgService infoImgService;
+	@Resource
+	private UserService userService;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/info.do")
+	public String info(ModelMap map, HttpServletResponse response) {
+		Site site = getManageSite();
+		if (site != null) {
+			// 栏目管理页面
+			// 获取一级栏目
+			List<Channel> channelList = channelService.findByPar(site.getId(),
+					"par");
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("channelList", channelList);
+		}
+		return "cms/info";
+	}
+
+	/**
+	 * 下级数据
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoChannelSon.do")
+	public String infoChannelSon(String pid, String plevel, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(pid) && StringUtils.isNotEmpty(plevel)) {
+			// 提取子
+			List<Channel> channelList = channelService.findByPar("", pid);
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("channelList", channelList);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/infoChannelSon";
+	}
+
+	/**
+	 * 管理页面信息列表
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoList.do")
+	public String infoList(Content info,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			String htmlIndexnumStr, ModelMap map, HttpServletResponse response) {
+		if (info == null) {
+			info = new Content();
+		}
+		info.setSite(getManageSite().getId());
+		if (info.getChannel() != null && info.getChannel().length() > 0) {
+			Channel channel = channelService.findById(info.getChannel());
+			map.put("channel", channel);
+		}
+		List<Content> infoList = contentService.find(info, order, currPage,
+				pageSize);
+		int totalCount = contentService.count(info);
+		Pager pager = new Pager(request);
+		pager.appendParam("channel");
+		pager.appendParam("issign");
+		pager.appendParam("iscomment");
+		pager.appendParam("htmlIndexnumLike");
+		pager.appendParam("title");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("infoList.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", infoList);
+		map.put("order", order);
+		return "cms/infoList";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoEdit.do")
+	public String infoEdit(String id, String channelid, ModelMap map,
+			HttpServletResponse response) {
+		Site site = getManageSite();
+		if (site != null) {
+			// 获取一级栏目
+			List<Channel> channelList = channelService.findByPar(site.getId(),
+					"par");
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("site", site);
+			map.put("channelList", channelList);
+			Channel channel = null;
+			// 编辑
+			if (StringUtils.isNotEmpty(id)) {
+				Content info = contentService.findById(id);
+				map.put("info", info);
+				channel = channelService.findById(info.getChannel());
+				// 查询签收用户
+				List<ContentSign> infosignList = infoSignService
+						.findByInfo(info.getId());
+				map.put("infosignList", infosignList);
+				// 查询图片集
+				ContentImg infoImg = new ContentImg();
+				infoImg.setInfoid(info.getId());
+				List<ContentImg> infoImgList = infoImgService.find(infoImg,
+						" ordernum ");
+				map.put("infoImgList", infoImgList);
+			}
+			// 添加,传递参数channel.id
+			if (StringUtils.isNotEmpty(channelid)) {
+				channel = channelService.findById(channelid);
+			}
+			map.put("channel", channel);
+			// 查询所有用户，签收时使用
+			List<Users> userList = userService.findAll();
+			map.put("userList", userList);
+			map.put("site", site);
+		}
+		return "cms/infoEdit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoEditDo.do")
+	public String infoEditDo(
+			Content content,
+			String oldchannelid,
+			String[] signusers,
+			String type,
+			String pageFuncId,
+			@RequestParam(value = "imgfile", required = false) MultipartFile imgfile,
+			String oldImg,
+			@RequestParam(value = "videoUpload", required = false) MultipartFile videoUpload,
+			@RequestParam(value = "attch", required = false) MultipartFile[] attch,
+			String[] oldattchs, String delOldimgs, HttpServletRequest request,
+			ModelMap map, HttpServletResponse response) {
+
+		Config sitePathConfig = configService
+				.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+		String rootPath = sitePathConfig.getConfigvalue();
+		Site site = getManageSite();
+		String sitePath = rootPath + "/" + site.getSourcepath() + "/";
+
+		SimpleDateFormat formater = new SimpleDateFormat("yyyyMMdd");
+		String datapath = formater.format(new Date());
+
+		map.put("type", type);
+		if (content != null) {
+			String oper = "添加";
+			try {
+				// 2014-7-24修改，对site中是否需要审核，进行判断,如果site中对info信息不需要审核，site中1需要审核。0不需要审核
+				// 直接content.setAuditState 1
+				// 否则 set 0
+				if (site.getAuditState().equals(CmsConst.SITE_AUDITSTATE_NO)) {
+					content.setAuditState(CmsConst.INFO_AUDITSTATE_OK);
+				} else {
+					content.setAuditState(CmsConst.INFO_AUDITSTATE_NO);
+				}
+				content.setSite(site.getId());
+				// 敏感词处理
+				content.setTitle(sensitiveService.replace(content.getTitle()));
+				content.setShorttitle(sensitiveService.replace(content
+						.getShorttitle()));
+				content.setContent(sensitiveService.replace(content
+						.getContent()));
+				content.setDescription(sensitiveService.replace(content
+						.getDescription()));
+				content.setAttchs("");
+				// 附件处理
+				// 老附件
+				if (oldattchs != null && oldattchs.length > 0) {
+					for (int i = 0; i < oldattchs.length; i++) {
+						content.setAttchs(content.getAttchs() + oldattchs[i]
+								+ ";");
+					}
+				}
+				// 新上传的附件
+				if (attch != null && attch.length > 0) {
+					MultipartFile currAttch;
+					for (int i = 0; i < attch.length; i++) {
+						currAttch = attch[i];
+						if (currAttch != null && currAttch.getSize() > 0) {// 生成目标文件
+							String ext = FileUtil.getExt(
+									currAttch.getOriginalFilename())
+									.toLowerCase();
+							if (getConfigVal("attchType").indexOf(
+									ext.replace(".", "")) < 0) {
+								map.put("msg", "只能上传"
+										+ getConfigVal("attchType") + "格式的附件!");
+								map.put("isBack", true);
+								return "admin/msg";
+							}
+							String id = UUID.randomUUID().toString();
+
+							// 2014/8/4修改上传文件路径
+
+							/*
+							 * File targetFile = new File(sitePath + "/upload/"
+							 * + site.getId() + "/" + id + ext); File folder =
+							 * new File(sitePath + "/upload/" + site.getId() +
+							 * "/");
+							 */
+							File targetFile = new File(sitePath + "/upload/"
+									+ datapath + "/" + id + ext);
+							File folder = new File(sitePath + "/upload/"
+									+ datapath + "/");
+							if (!folder.exists()) {
+								folder.mkdirs();
+							}
+							if (!targetFile.exists()) {
+								targetFile.createNewFile();
+							}
+							// 复制到目标文件
+							FileUtil.copy(currAttch, targetFile);
+
+							// 生成访问地址
+							content.setAttchs(content.getAttchs() + "/"
+									+ site.getSourcepath() + "/upload/"
+									+ datapath + "/" + id + ext + ";");
+						}
+					}
+				}
+				if (videoUpload != null && videoUpload.getSize() > 0) {
+					// 生成目标文件
+					String ext = FileUtil.getExt(
+							videoUpload.getOriginalFilename()).toLowerCase();
+					if (!".flv".equals(ext)) {
+						map.put("msg", "只能上传flv格式的视频!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(sitePath + "/upload/" + datapath
+							+ "/" + id + ext);
+					File folder = new File(sitePath + "/upload/" + datapath
+							+ "/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(videoUpload, targetFile);
+
+					// 生成访问地址
+					content.setVideo("/" + site.getSourcepath() + "/upload/"
+							+ datapath + "/" + id + ext);
+				}
+
+				if ((content.getImg() == null || content.getImg().trim()
+						.length() == 0)
+						&& StringUtils.isNotEmpty(content.getContent())) {
+					// 如果没有选择信息图片，则检查信息内容中是否有图片
+					try {
+						Parser parser = new Parser(content.getContent());
+						NodeFilter filter = new TagNameFilter("img");
+						NodeList nodes = parser
+								.extractAllNodesThatMatch(filter);
+						Node eachNode = null;
+						ImageTag imageTag = null;
+						if (nodes != null && nodes.size() > 0) {
+							// 遍历所有的img节点
+							for (int i = 0; i < nodes.size(); i++) {
+								if (content.getImg() == null
+										|| content.getImg().trim().length() == 0) {
+									eachNode = (Node) nodes.elementAt(i);
+									if (eachNode instanceof ImageTag) {
+										imageTag = (ImageTag) eachNode;
+										content.setImg(imageTag
+												.getAttribute("src"));
+									}
+								} else {
+									break;
+								}
+							}
+						}
+					} catch (ParserException e) {
+						e.printStackTrace();
+					}
+				}
+				// 处理图片集
+				MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+				Enumeration<String> paramNames = multipartRequest
+						.getParameterNames();
+				String paramName, imgsid;
+				List<ContentImg> infoImgList = new ArrayList<ContentImg>();
+				List<ContentImg> oldContentImgList = new ArrayList<ContentImg>();
+				while (paramNames.hasMoreElements()) {
+					paramName = paramNames.nextElement();
+					if (paramName.startsWith("imgstitle")) {
+						imgsid = paramName.replace("imgstitle", "");
+						CommonsMultipartFile file = (CommonsMultipartFile) multipartRequest
+								.getFile("imgsfile" + imgsid);
+						if (file != null && file.getSize() > 0) {
+							// 生成目标文件
+							String ext = FileUtil.getExt(
+									file.getOriginalFilename()).toLowerCase();
+							if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+									&& !".gif".equals(ext)
+									&& !".png".equals(ext)) {
+								map.put("msg", "只能上传jpg,jpeg,gif,png格式的图片!");
+								map.put("isBack", true);
+								return "admin/msg";
+							}
+							String id = UUID.randomUUID().toString();
+							File targetFile = new File(sitePath + "/upload/"
+									+ datapath + "/" + id + ext);
+							File folder = new File(sitePath + "/upload/"
+									+ datapath + "/");
+							if (!folder.exists()) {
+								folder.mkdir();
+							}
+							if (!targetFile.exists()) {
+								targetFile.createNewFile();
+							}
+							// 复制到目标文件
+							FileUtil.copy(file, targetFile);
+							// 生成访问地址
+							ContentImg infoImg = new ContentImg();
+							infoImg.setImg("/" + site.getSourcepath()
+									+ "/upload/" + datapath + "/" + id + ext);
+							infoImg.setContent(request
+									.getParameter("imgscontent" + imgsid));
+							try {
+								infoImg.setOrdernum(Integer.parseInt(request
+										.getParameter("imgsordernum" + imgsid)));
+							} catch (Exception e) {
+							}
+							infoImg.setTitle(request.getParameter("imgstitle"
+									+ imgsid));
+							infoImgList.add(infoImg);
+							// 如果没有选择信息图片，使用图片集中的第一张图片
+							// 2014-11-18-niu 修改 图片取到src下面所有
+							/*
+							 * if (content.getImg() == null ||
+							 * content.getImg().trim().length() == 0) {
+							 * content.setImg(infoImg.getImg()); }
+							 */
+						}
+					}
+					if (paramName.startsWith("oldimgsid")) {
+						// 需要更新的图片
+						imgsid = paramName.replace("oldimgsid", "");
+						ContentImg infoImg = new ContentImg();
+						infoImg.setId(imgsid);
+						infoImg.setInfoid(content.getId());
+						infoImg.setImg(request.getParameter("oldimgsimg"
+								+ imgsid));
+						infoImg.setContent(request
+								.getParameter("oldimgscontent" + imgsid));
+						try {
+							infoImg.setOrdernum(Integer.parseInt(request
+									.getParameter("oldimgsordernum" + imgsid)));
+						} catch (Exception e) {
+						}
+						infoImg.setTitle(request.getParameter("oldimgstitle"
+								+ imgsid));
+						oldContentImgList.add(infoImg);
+					}
+				}
+				// 如果没有摘要，则自动生成
+				if (StringUtils.isEmpty(content.getDescription())
+						&& StringUtils.isNotEmpty(content.getContent())) {
+					content.setDescription(HtmlCode.replaceHtml(content
+							.getContent()));
+					if (content.getDescription().length() > 500) {
+						content.setDescription(content.getDescription()
+								.substring(0, 500));
+					}
+				}
+				content.setIsimgs("0");
+
+				if (content.getId() != null
+						&& content.getId().trim().length() > 0) {
+					// 更新
+					oper = "更新";
+					Content oldContent = contentService.findById(content
+							.getId());
+					if (oldContent != null) {
+						oldContent.setAuditState("0");
+						oldContent.setAuthor(content.getAuthor());
+						oldContent.setAddtime(content.getAddtime());
+						oldContent.setAttchs(content.getAttchs());
+						oldContent.setChannel(content.getChannel());
+						oldContent.setContent(content.getContent());
+						oldContent.setDescription(content.getDescription());
+						oldContent.setImg(content.getImg());
+						oldContent.setIstop(content.getIstop());
+						oldContent.setIshot(content.getIshot());
+						oldContent.setShorttitle(content.getShorttitle());
+						oldContent.setSite(content.getSite());
+						oldContent.setSource(content.getSource());
+						oldContent.setTags(content.getTags());
+						oldContent.setTemplet(content.getTemplet());
+						oldContent.setTitle(content.getTitle());
+						oldContent.setTitleblod(content.getTitleblod());
+						oldContent.setTitlecolor(content.getTitlecolor());
+						oldContent.setTopendtime(content.getTopendtime());
+						oldContent.setUrl(content.getUrl());
+						oldContent.setIssign(content.getIssign());
+						oldContent.setIscomment(content.getIscomment());
+						oldContent.setVideo(content.getVideo());
+						oldContent.setOpenendtime(content.getOpenendtime());
+						oldContent.setOpentimetype(content.getOpentimetype());
+						oldContent.setOpentype(content.getOpentype());
+						oldContent.setIndexnum(content.getIndexnum());
+						if (imgfile != null && imgfile.getSize() > 0) {
+							// 生成目标文件
+							String ext = FileUtil.getExt(
+									imgfile.getOriginalFilename())
+									.toLowerCase();
+							if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+									&& !".gif".equals(ext)
+									&& !".png".equals(ext)) {
+								map.put("msg", "只能上传jpg,jpeg,gif,png格式的图片!");
+								map.put("isBack", true);
+								return "admin/msg";
+							}
+							String id = UUID.randomUUID().toString();
+							File targetFile = new File(sitePath + "/upload/"
+									+ datapath + "/" + id + ext);
+							File folder = new File(sitePath + "/upload/"
+									+ datapath + "/");
+							if (!folder.exists()) {
+								folder.mkdirs();
+							}
+							if (!targetFile.exists()) {
+								targetFile.createNewFile();
+							}
+							// 复制到目标文件
+							FileUtil.copy(imgfile, targetFile);
+							// 生成访问地址
+							oldContent.setImg("/" + site.getSourcepath()
+									+ "/upload/" + datapath + "/" + id + ext);
+						}
+						contentService.update(oldContent);
+						operlogService.log(getLoginName(), oper + "信息("
+								+ oldContent.getTitle() + ")成功", request);
+						// 删除图片集
+						if (StringUtils.isNotEmpty(delOldimgs)) {
+							String dels[] = delOldimgs.split(";");
+							if (dels != null && dels.length > 0) {
+								for (int i = 0; i < dels.length; i++) {
+									if (dels[i].trim().length() > 0) {
+										infoImgService.del(dels[i]);
+									}
+								}
+							}
+						}
+						// 更新图片集
+						if (oldContentImgList.size() > 0) {
+							for (int i = 0; i < oldContentImgList.size(); i++) {
+								infoImgService.update(oldContentImgList.get(i));
+							}
+						}
+					}
+				} else {
+					// 添加
+					if (content.getAddtime() == null) {
+						content.setAddtime(new Date());
+					}
+					if (imgfile != null && imgfile.getSize() > 0) {
+						// 生成目标文件
+						String ext = FileUtil.getExt(
+								imgfile.getOriginalFilename()).toLowerCase();
+						if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+								&& !".gif".equals(ext) && !".png".equals(ext)) {
+							map.put("msg", "只能上传jpg,jpeg,gif,png格式的图片!");
+							map.put("isBack", true);
+							return "admin/msg";
+						}
+						String id = UUID.randomUUID().toString();
+						File targetFile = new File(sitePath + "/upload/"
+								+ datapath + "/" + id + ext);
+						File folder = new File(sitePath + "/upload/" + datapath
+								+ "/");
+						if (!folder.exists()) {
+							folder.mkdir();
+						}
+						if (!targetFile.exists()) {
+							targetFile.createNewFile();
+						}
+						// 复制到目标文件
+						FileUtil.copy(imgfile, targetFile);
+						// 生成访问地址
+						content.setImg("/" + site.getSourcepath() + "/upload/"
+								+ datapath + "/" + id + ext);
+					}
+					content.setAdduser(getLoginUser().getId());
+					content.setClicknum(0);
+					contentService.insert(content);
+					operlogService.log(getLoginName(),
+							oper + "信息(" + content.getTitle() + ")成功", request);
+				}
+				// 处理签收用户
+				infoSignService.infoedit(content.getId(), signusers);
+				// 处理图片集
+				if (infoImgList.size() > 0) {
+					for (int i = 0; i < infoImgList.size(); i++) {
+						infoImgList.get(i).setInfoid(content.getId());
+						infoImgService.add(infoImgList.get(i));
+					}
+				}
+				// 查询图片集
+				ContentImg infoImg = new ContentImg();
+				infoImg.setInfoid(content.getId());
+				if (infoImgService.count(infoImg) > 0) {
+					content = contentService.findById(content.getId());
+					content.setIsimgs("1");
+					contentService.update(content);
+				}
+				// 生成静态页面
+				contentService.html(content.getId(), getApplication(),
+						getContextPath(), request, getLoginName());
+				// 检查此信息所属栏目是否设置当此栏目中的信息变更后需要进行的静态化处理
+				Channel channel = channelService.findById(content.getChannel());
+				boolean ismakehtml = true;
+				if (channel != null) {
+					site = siteService.findById(content.getSite());
+					if ("1".equals(channel.getHtmlchannel())) {
+						// 所属栏目静态化
+						channelService.html(site, channel, getApplication(),
+								request, getLoginName(), 0);
+						ismakehtml = false;
+					}
+					if ("1".equals(channel.getHtmlchannelold())) {
+						// 原所属栏目静态化
+						if (oldchannelid != null
+								&& oldchannelid.trim().length() > 0
+								&& !oldchannelid.equals(content.getChannel())) {
+							Channel oldchannel = channelService
+									.findById(oldchannelid);
+							channelService.html(site, oldchannel,
+									getApplication(), request, getLoginName(),
+									0);
+							ismakehtml = false;
+						}
+					}
+					if ("1".equals(channel.getHtmlparchannel())) {
+						// 所属栏目的父栏目静态化
+						List<Channel> channeList = channelService
+								.findPath(content.getChannel());
+						if (channeList != null && channeList.size() > 0) {
+							for (int i = 0; i < channeList.size(); i++) {
+								if (!channeList.get(i).getId()
+										.equals(content.getChannel())) {
+									channelService.html(site,
+											channeList.get(i),
+											getApplication(), request,
+											getLoginName(), 0);
+								}
+							}
+						}
+						ismakehtml = false;
+					}
+					if ("1".equals(channel.getHtmlsite())) {
+						// 首页静态化
+						siteService.html(content.getSite(), getApplication(),
+								request.getContextPath() + "/", request,
+								getLoginName());
+						ismakehtml = false;
+					}
+				}
+				if (ismakehtml) {
+					return "cms/infoMakehtml";
+				} else {
+					msg = "操作成功";
+					if ("channel".equals(type)) {
+						map.put("forwardUrl", "infoList.do?info.channel="
+								+ content.getChannel() + "&pageFuncId="
+								+ pageFuncId);
+					} else {
+						map.put("forwardUrl", "infoEdit.do?pageFuncId="
+								+ pageFuncId);
+					}
+					map.put("forwardSeconds", 3);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				operlogService.log(
+						getLoginName(),
+						oper + "信息(" + content.getTitle() + ")失败:"
+								+ e.toString(), request);
+				msg = "操作失败:" + e.toString();
+				map.put("forwardSeconds", 0);
+			}
+		}
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 复制
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoCopy.do")
+	public String infoCopy(String channelid, String ids, ModelMap map,
+			HttpServletResponse response){
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0 && channelid != null) {
+				Channel toChannel = channelService.findById(channelid);
+				Channel channel = toChannel;
+				if (toChannel != null) {
+					Content info = null;
+					Channel oldChannel = null;
+					try {
+						for (int i = 0; i < idArr.length; i++) {
+							if (idArr[i].trim().length() > 0) {
+								info = contentService.findById(idArr[i]);
+								if (info != null) {
+									oldChannel = channelService.findById(info
+											.getChannel());
+									info.setChannel(channelid);
+									info.setId("");
+									contentService.insert(info);
+									// 处理图片集
+									List<ContentImg> infoImgList = infoImgService
+											.findByInfoid(idArr[i]);
+									if (infoImgList != null
+											&& infoImgList.size() > 0) {
+										for (int j = 0; j < infoImgList.size(); j++) {
+											infoImgList.get(j).setId("");
+											infoImgList.get(j).setInfoid(
+													info.getId());
+											infoImgService.add(infoImgList
+													.get(j));
+										}
+									}
+									// 处理签收
+									List<ContentSign> infoSignList = infoSignService
+											.findByInfo(idArr[i]);
+									if (infoSignList != null
+											&& infoSignList.size() > 0) {
+										for (int j = 0; j < infoSignList.size(); j++) {
+											infoSignList.get(j).setId("");
+											infoSignList.get(j).setInfoid(
+													info.getId());
+											infoSignService.save(infoSignList
+													.get(j));
+										}
+									}
+									contentService.html(info.getId(),
+											getApplication(), getContextPath(),
+											request, getLoginName());
+									sb.append(idArr[i] + ";");
+									msg = "复制信息(" + oldChannel.getName()
+											+ " >> " + toChannel.getName()
+											+ " " + info.getTitle() + ")成功!";
+								}
+								operlogService
+										.log(getLoginName(), msg, request);
+							}
+						}
+						// 处理静态化
+						boolean ismakehtml = true;
+						Site site = siteService.findById(info.getSite());
+						// 新栏目处理
+						if (toChannel != null) {
+							if ("1".equals(toChannel.getHtmlchannel())) {
+								// 所属栏目静态化
+								channelService.html(site, toChannel,
+										getApplication(), request,
+										getLoginName(), 0);
+								ismakehtml = false;
+							}
+							if ("1".equals(toChannel.getHtmlparchannel())) {
+								// 所属栏目的父栏目静态化
+								List<Channel> channeList = channelService
+										.findPath(channelid);
+								if (channeList != null && channeList.size() > 0) {
+									for (int i = 0; i < channeList.size(); i++) {
+										if (!channeList.get(i).getId()
+												.equals(channelid)) {
+											channelService.html(site,
+													channeList.get(i),
+													getApplication(), request,
+													getLoginName(), 0);
+										}
+									}
+								}
+								ismakehtml = false;
+							}
+							if ("1".equals(toChannel.getHtmlsite())) {
+								// 首页静态化
+								siteService.html(info.getSite(),
+										getApplication(),
+										request.getContextPath() + "/",
+										request, getLoginName());
+								ismakehtml = false;
+							}
+						}
+						if (ismakehtml) {
+							return "cms/infoCopyMakehtml";
+						} else {
+							msg = "复制信息成功!";
+						}
+					} catch (Exception e) {
+						msg = "复制信息(" + oldChannel.getName() + " >> "
+								+ toChannel.getName() + " " + info.getTitle()
+								+ ")失败:" + e.toString() + "!";
+						operlogService.log(getLoginName(), msg, request);
+						msg = "复制信息失败:" + e.getMessage();
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 移动
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	@RequestMapping("/infoMove.do")
+	public String infoMove(String channelid, String ids, ModelMap map,
+			HttpServletResponse response){
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0 && channelid != null) {
+				Channel oldChannel = null;
+				List<Channel> oldList = new ArrayList<Channel>();
+				String oldChannelIds = "";
+				Content info = null;
+				Channel toChannel = channelService.findById(channelid);
+				Channel channel = toChannel;
+				if (toChannel != null) {
+					try {
+						for (int i = 0; i < idArr.length; i++) {
+							if (idArr[i].trim().length() > 0) {
+								info = contentService.findById(idArr[i]);
+								oldChannel = channelService.findById(info
+										.getChannel());
+								if (oldChannelIds.indexOf(oldChannel.getId()) < 0) {
+									oldList.add(oldChannel);
+									oldChannelIds += oldChannel.getId() + ";";
+								}
+								if (info != null) {
+									info.setChannel(channelid);
+									contentService.update(info);
+									contentService.html(info.getId(),
+											getApplication(), getContextPath(),
+											request, getLoginName());
+									sb.append(idArr[i] + ";");
+									msg = "移动信息(" + oldChannel.getName()
+											+ " >> " + toChannel.getName()
+											+ " " + info.getTitle() + ")成功!";
+								}
+								operlogService
+										.log(getLoginName(), msg, request);
+							}
+						}
+						map.put("oldChannelIds", oldChannelIds);
+						// 处理静态化
+						boolean ismakehtml = true;
+						Site site = siteService.findById(info.getSite());
+						boolean ishtmlsite = false;
+						Map<String, Channel> channelHtmled = new HashMap<String, Channel>();
+						// 原栏目处理
+						if (oldList != null && oldList.size() > 0) {
+							for (Channel channel2 : oldList) {
+								if (channel2 != null) {
+									if ("1".equals(channel2.getHtmlchannel())) {
+										// 所属栏目静态化
+										channelHtmled.put(channel2.getId(),
+												channel2);
+									}
+									if ("1".equals(channel2.getHtmlparchannel())) {
+										// 所属栏目的父栏目静态化
+										List<Channel> channeList = channelService
+												.findPath(channel2.getId());
+										if (channeList != null
+												&& channeList.size() > 0) {
+											for (int i = 0; i < channeList
+													.size(); i++) {
+												if (!channeList
+														.get(i)
+														.getId()
+														.equals(channel2
+																.getId())) {
+													channelHtmled.put(
+															channeList.get(i)
+																	.getId(),
+															channeList.get(i));
+												}
+											}
+										}
+									}
+									if ("1".equals(channel2.getHtmlsite())) {
+										ishtmlsite = true;
+									}
+								}
+							}
+						}
+						// 新栏目处理
+						if (toChannel != null) {
+							if ("1".equals(toChannel.getHtmlchannel())) {
+								// 所属栏目静态化
+								channelHtmled.put(toChannel.getId(), toChannel);
+							}
+							if ("1".equals(toChannel.getHtmlparchannel())) {
+								// 所属栏目的父栏目静态化
+								List<Channel> channeList = channelService
+										.findPath(channelid);
+								if (channeList != null && channeList.size() > 0) {
+									for (int i = 0; i < channeList.size(); i++) {
+										if (!channeList.get(i).getId()
+												.equals(channelid)) {
+											channelHtmled
+													.put(channeList.get(i)
+															.getId(),
+															channeList.get(i));
+										}
+									}
+								}
+							}
+							if ("1".equals(toChannel.getHtmlsite())) {
+								ishtmlsite = true;
+							}
+						}
+						// 处理需要静态化的栏目
+						if (channelHtmled != null && channelHtmled.size() > 0) {
+							Iterator<String> channelHtmls = channelHtmled
+									.keySet().iterator();
+							while (channelHtmls.hasNext()) {
+								channel = channelHtmled
+										.get(channelHtmls.next());
+								if (channel != null) {
+									channelService.html(site, channel,
+											getApplication(), request,
+											getLoginName(), 0);
+								}
+							}
+							ismakehtml = false;
+						}
+						if (ishtmlsite) {
+							// 首页静态化
+							siteService.html(info.getSite(), getApplication(),
+									request.getContextPath() + "/", request,
+									getLoginName());
+							ismakehtml = false;
+						}
+						if (ismakehtml) {
+							return "cms/infoMoveMakehtml";
+						} else {
+							msg = "移动信息成功!";
+						}
+					} catch (Exception e) {
+						msg = "移动信息(" + oldChannel.getName() + " >> "
+								+ toChannel.getName() + " " + info.getTitle()
+								+ ")失败:" + e.toString() + "!";
+						operlogService.log(getLoginName(), msg, request);
+						msg = "移动信息失败:" + e.getMessage();
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	// @FuncAuth(codes={"infoEdit","info"})
+
+	@RequestMapping("/infoMakehtml.do")
+	public String infoMakehtml(String id, String pageFuncId,
+			String htmlChannelOld, String oldchannelid, String htmlChannel,
+			String htmlChannelPar, String htmlIndex, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			Content info = contentService.findById(id);
+			Channel channel = channelService.findById(info.getChannel());
+			Site site = siteService.findById(info.getSite());
+			try {
+				if ("1".equals(htmlChannelOld)) {
+					Channel oldchannel = channelService.findById(oldchannelid);
+					// 原所属栏目静态化
+					channelService.html(site, oldchannel, getApplication(),
+							request, getLoginName(), 0);
+				}
+				if ("1".equals(htmlChannel)) {
+					// 所属栏目静态化
+					channelService.html(site, channel, getApplication(),
+							request, getLoginName(), 0);
+				}
+				if ("1".equals(htmlChannelPar)) {
+					// 所属栏目的父栏目静态化
+					List<Channel> channeList = channelService.findPath(info
+							.getChannel());
+					if (channeList != null && channeList.size() > 0) {
+						for (int i = 0; i < channeList.size(); i++) {
+							if (!channeList.get(i).getId()
+									.equals(info.getChannel())) {
+								channelService.html(site, channeList.get(i),
+										getApplication(), request,
+										getLoginName(), 0);
+							}
+						}
+					}
+				}
+				if ("1".equals(htmlIndex)) {
+					// 首页静态化
+					siteService.html(info.getSite(), getApplication(),
+							request.getContextPath() + "/", request,
+							getLoginName());
+				}
+				msg = "静态化处理成功!";
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "静态化处理失败，原因:"
+						+ e.getMessage().replace("<", "&lt;")
+								.replace(">", "&gt;").replace("\n", "<br/>");
+			}
+		}
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	// @FuncAuth(codes="info")
+
+	@RequestMapping("/infoCopyMakehtml.do")
+	public String infoCopyMakehtml(String channelid, String pageFuncId,
+			String htmlChannelOld, String oldchannelid, String htmlChannel,
+			String htmlChannelPar, String htmlIndex, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (StringUtils.isNotEmpty(channelid)) {
+			Channel channel = channelService.findById(channelid);
+			Site site = siteService.findById(channel.getSite());
+			try {
+				if ("1".equals(htmlChannel)) {
+					// 所属栏目静态化
+					channelService.html(site, channel, getApplication(),
+							request, getLoginName(), 0);
+				}
+				if ("1".equals(htmlChannelPar)) {
+					// 所属栏目的父栏目静态化
+					List<Channel> channeList = channelService.findPath(channel
+							.getId());
+					if (channeList != null && channeList.size() > 0) {
+						for (int i = 0; i < channeList.size(); i++) {
+							if (!channeList.get(i).getId()
+									.equals(channel.getId())) {
+								channelService.html(site, channeList.get(i),
+										getApplication(), request,
+										getLoginName(), 0);
+							}
+						}
+					}
+				}
+				if ("1".equals(htmlIndex)) {
+					// 首页静态化
+					siteService.html(channel.getSite(), getApplication(),
+							request.getContextPath() + "/", request,
+							getLoginName());
+				}
+				msg = "静态化处理成功!";
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "静态化处理失败，原因:" + e.getMessage();
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", "true");
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	// @FuncAuth(codes="info")
+
+	@RequestMapping("/infoMoveMakehtml.do")
+	public String infoMoveMakehtml(String channelid, String pageFuncId,
+			String htmlChannelOld, String oldChannelIds, String htmlChannel,
+			String htmlChannelPar, String htmlIndex, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (StringUtils.isNotEmpty(channelid)) {
+			Channel channel = channelService.findById(channelid);
+			Site site = siteService.findById(channel.getSite());
+			try {
+				if ("1".equals(htmlChannelOld)) {
+					if (StringUtils.isNotEmpty(oldChannelIds)) {
+						String[] oldIdArr = oldChannelIds.split(";");
+						if (oldIdArr != null && oldIdArr.length > 0) {
+							for (String oldId : oldIdArr) {
+								Channel oldchannel = channelService
+										.findById(oldId);
+								// 原所属栏目静态化
+								channelService.html(site, oldchannel,
+										getApplication(), request,
+										getLoginName(), 0);
+							}
+						}
+					}
+				}
+				if ("1".equals(htmlChannel)) {
+					// 所属栏目静态化
+					channelService.html(site, channel, getApplication(),
+							request, getLoginName(), 0);
+				}
+				if ("1".equals(htmlChannelPar)) {
+					// 所属栏目的父栏目静态化
+					List<Channel> channeList = channelService.findPath(channel
+							.getId());
+					if (channeList != null && channeList.size() > 0) {
+						for (int i = 0; i < channeList.size(); i++) {
+							if (!channeList.get(i).getId()
+									.equals(channel.getId())) {
+								channelService.html(site, channeList.get(i),
+										getApplication(), request,
+										getLoginName(), 0);
+							}
+						}
+					}
+				}
+				if ("1".equals(htmlIndex)) {
+					// 首页静态化
+					siteService.html(channel.getSite(), getApplication(),
+							request.getContextPath() + "/", request,
+							getLoginName());
+				}
+				msg = "静态化处理成功!";
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "静态化处理失败，原因:" + e.getMessage();
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", "true");
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoDel.do")
+	public String infoDel(String ids, String channel, String pageFuncId,
+			ModelMap map, HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Content info = null;
+				List<Channel> oldList = new ArrayList<Channel>();
+				String oldChannelIds = "";
+				Channel oldChannel;
+				Site site;
+				try {
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							info = contentService.findById(idArr[i]);
+							oldChannel = channelService.findById(info
+									.getChannel());
+							if (oldChannelIds.indexOf(oldChannel.getId()) < 0) {
+								oldList.add(oldChannel);
+								oldChannelIds += oldChannel.getId() + ";";
+							}
+							if (info != null) {
+								contentService.delhtml(idArr[i], request);
+								contentService.del(idArr[i]);
+								sb.append(idArr[i] + ";");
+								msg = "删除信息(" + info.getTitle() + ")成功!";
+							}
+							operlogService.log(getLoginName(), msg, request);
+						}
+					}
+					if (info != null) {
+						if (oldList != null && oldList.size() > 0) {
+							for (Channel channel1 : oldList) {
+								// 检查此信息所属栏目是否设置当此栏目中的信息变更后需要进行的静态化处理
+								if (channel1 != null) {
+									site = siteService.findById(info.getSite());
+									if ("1".equals(channel1.getHtmlchannel())) {
+										// 所属栏目静态化
+										channelService.html(site, channel1,
+												getApplication(), request,
+												getLoginName(), 0);
+									}
+									if ("1".equals(channel1.getHtmlparchannel())) {
+										// 所属栏目的父栏目静态化
+										List<Channel> channeList = channelService
+												.findPath(channel1.getId());
+										if (channeList != null
+												&& channeList.size() > 0) {
+											for (int i = 0; i < channeList
+													.size(); i++) {
+												if (!channeList
+														.get(i)
+														.getId()
+														.equals(channel1
+																.getId())) {
+													channelService.html(site,
+															channeList.get(i),
+															getApplication(),
+															request,
+															getLoginName(), 0);
+												}
+											}
+										}
+									}
+									if ("1".equals(channel1.getHtmlsite())) {
+										// 首页静态化
+										siteService.html(info.getSite(),
+												getApplication(),
+												request.getContextPath() + "/",
+												request, getLoginName());
+									}
+								}
+							}
+						}
+					}
+					map.put("forwardSeconds", 3);
+				} catch (Exception e) {
+					map.put("forwardSeconds", 0);
+					msg = "删除信息(" + info.getTitle() + ")失败:" + e.toString()
+							+ "!";
+					operlogService.log(getLoginName(), msg, request);
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "infoList.do?pageFuncId=" + pageFuncId
+				+ "&channel=" + channel);
+		return "admin/msg";
+	}
+
+	/**
+	 * 静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	// @FuncAuth(codes="info")
+
+	@RequestMapping("/infoHtml.do")
+	public String infoHtml(String ids, String channel, String pageFuncId,
+			ModelMap map, HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				try {
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							contentService.html(idArr[i].trim(),
+									getApplication(), getContextPath(),
+									request, getLoginName());
+						}
+					}
+					msg = "静态化成功";
+					map.put("forwardSeconds", 3);
+				} catch (Exception e) {
+					map.put("forwardSeconds", 0);
+					msg = "静态化失败:" + e.toString() + "!";
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "infoList.do?pageFuncId=" + pageFuncId
+				+ "&channel=" + channel);
+		return "admin/msg";
+	}
+
+	/**
+	 * 信息提取页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	// @FuncAuth(codes="infoExtract")
+	@RequestMapping("/infoExtract.do")
+	public String infoExtract(Content info,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (info == null) {
+			info = new Content();
+		}
+		List<Content> infoList = contentService.find(info, order, currPage,
+				pageSize);
+		int totalCount = contentService.count(info);
+		Pager pager = new Pager(request);
+		pager.appendParam("channel");
+		pager.appendParam("site");
+		pager.appendParam("channelname1");
+		pager.appendParam("sitename1");
+		pager.appendParam("searchKey");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("infoExtract.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", infoList);
+		map.put("order", order);
+		return "cms/infoExtract";
+	}
+
+	/**
+	 * 信息提取
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoExtractDo.do")
+	public String infoExtractDo(String channelid, String ids, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(channelid) && StringUtils.isNotEmpty(ids)) {
+			Channel channel = channelService.findById(channelid);
+			if (channel != null) {
+				try {
+					String[] idArr = ids.split(";");
+					if (idArr != null && idArr.length > 0) {
+						Content info;
+						for (int i = 0; i < idArr.length; i++) {
+							if (idArr[i].trim().length() > 0) {
+								info = contentService.findById(idArr[i].trim());
+								if (info != null) {
+									// 复制到新栏目
+									if (info != null) {
+										info.setChannel(channel.getId());
+										info.setId("");
+										info.setSite(channel.getSite());
+										contentService.insert(info);
+
+										// 处理图片集
+										List<ContentImg> infoImgList = infoImgService
+												.findByInfoid(idArr[i]);
+										if (infoImgList != null
+												&& infoImgList.size() > 0) {
+											for (int j = 0; j < infoImgList
+													.size(); j++) {
+												infoImgList.get(j).setId("");
+												infoImgList.get(j).setInfoid(
+														info.getId());
+												infoImgService.add(infoImgList
+														.get(j));
+											}
+										}
+										// 处理签收
+										List<ContentSign> infoSignList = infoSignService
+												.findByInfo(idArr[i]);
+										if (infoSignList != null
+												&& infoSignList.size() > 0) {
+											for (int j = 0; j < infoSignList
+													.size(); j++) {
+												infoSignList.get(j).setId("");
+												infoSignList.get(j).setInfoid(
+														info.getId());
+												infoSignService
+														.save(infoSignList
+																.get(j));
+											}
+										}
+										contentService.html(info.getId(),
+												getApplication(),
+												getContextPath(), request,
+												getLoginName());
+										msg = "提取信息 " + info.getTitle() + " 到 "
+												+ channel.getName() + " "
+												+ info.getTitle() + ")成功!";
+									}
+								}
+							}
+						}
+					}
+					boolean ismakehtml = true;
+					if (channel != null) {
+						Site site = siteService.findById(channel.getSite());
+						if ("1".equals(channel.getHtmlchannel())) {
+							// 所属栏目静态化
+							channelService.html(site, channel,
+									getApplication(), request, getLoginName(),
+									0);
+							ismakehtml = false;
+						}
+						if ("1".equals(channel.getHtmlparchannel())) {
+							// 所属栏目的父栏目静态化
+							List<Channel> channeList = channelService
+									.findPath(channelid);
+							if (channeList != null && channeList.size() > 0) {
+								for (int i = 0; i < channeList.size(); i++) {
+									if (!channeList.get(i).getId()
+											.equals(channelid)) {
+										channelService.html(site,
+												channeList.get(i),
+												getApplication(), request,
+												getLoginName(), 0);
+									}
+								}
+							}
+							ismakehtml = false;
+						}
+						if ("1".equals(channel.getHtmlsite())) {
+							// 首页静态化
+							siteService.html(channel.getSite(),
+									getApplication(), request.getContextPath()
+											+ "/", request, getLoginName());
+							ismakehtml = false;
+						}
+					}
+					if (ismakehtml) {
+						return "cms/infoExtractMakehtml";
+					} else {
+						msg = "提取成功";
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					msg = "提取信息失败:" + e.getMessage();
+				}
+			} else {
+				msg = "没有找到要提取到的栏目";
+			}
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	// @FuncAuth(codes="infoExtract")
+
+	@RequestMapping("/infoExtractMakehtml.do")
+	public String infoExtractMakehtml(String channelid, String pageFuncId,
+			String htmlChannel, String htmlChannelPar, String htmlIndex,
+			ModelMap map, HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (StringUtils.isNotEmpty(channelid)) {
+			Channel channel = channelService.findById(channelid);
+			Site site = siteService.findById(channel.getSite());
+			try {
+				if ("1".equals(htmlChannel)) {
+					// 所属栏目静态化
+					channelService.html(site, channel, getApplication(),
+							request, getLoginName(), 0);
+				}
+				if ("1".equals(htmlChannelPar)) {
+					// 所属栏目的父栏目静态化
+					List<Channel> channeList = channelService.findPath(channel
+							.getId());
+					if (channeList != null && channeList.size() > 0) {
+						for (int i = 0; i < channeList.size(); i++) {
+							if (!channeList.get(i).getId()
+									.equals(channel.getId())) {
+								channelService.html(site, channeList.get(i),
+										getApplication(), request,
+										getLoginName(), 0);
+							}
+						}
+					}
+				}
+				if ("1".equals(htmlIndex)) {
+					// 首页静态化
+					siteService.html(channel.getSite(), getApplication(),
+							request.getContextPath() + "/", request,
+							getLoginName());
+				}
+				msg = "静态化处理成功!";
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "静态化处理失败，原因:" + e.getMessage();
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", "true");
+		return "admin/msg";
+	}
+
+	/**
+	 * 待审核管理页面信息列表
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	@RequestMapping("/auditInfoList.do")
+	public String auditInfoList(Content info,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			String htmlIndexnumStr, ModelMap map, HttpServletResponse response) {
+		if (info == null) {
+			info = new Content();
+		}
+		info.setSite(getManageSite().getId());
+		info.setAuditState("0");
+		if (info.getChannel() != null && info.getChannel().length() > 0) {
+			Channel channel = channelService.findById(info.getChannel());
+			map.put("channel", channel);
+		}
+		List<Content> infoList = contentService.find(info, order, currPage,
+				pageSize);
+		int totalCount = contentService.count(info);
+		Pager pager = new Pager(request);
+		pager.appendParam("channel");
+		pager.appendParam("issign");
+		pager.appendParam("iscomment");
+		pager.appendParam("htmlIndexnumLike");
+		pager.appendParam("title");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("infoList.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", infoList);
+		map.put("order", order);
+		return "cms/infoAuditList";
+	}
+
+	/**
+	 * 信息审核页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	@RequestMapping("/infoAudit.do")
+	public String infoAudit(String id, String channelid, ModelMap map,
+			HttpServletResponse response) {
+		Site site = getManageSite();
+		if (site != null) {
+			// 审核
+			if (StringUtils.isNotEmpty(id)) {
+				Content info = contentService.findById(id);
+				map.put("info", info);
+			}
+		}
+		return "cms/infoAudit";
+	}
+
+	/**
+	 * 信息审核页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/infoAuditDo.do")
+	public String infoAuditDo(String id, String auditState, String auditResult,
+			ModelMap map, HttpServletResponse response) {
+		Site site = getManageSite();
+		if (site != null) {
+			// 审核
+			Content info = null;
+			if (StringUtils.isNotEmpty(id)) {
+				try {
+					info = contentService.findById(id);
+					info.setAuditState("1");
+					info.setAuditState(auditState);
+					info.setAuditResult(auditResult);
+					contentService.update(info);
+
+					// 2015-2-13 niu x j 修改，审核信息后自动静态化 ----start
+					// 生成静态页面
+					contentService.html(info.getId(), getApplication(),
+							getContextPath(), request, getLoginName());
+					// 检查此信息所属栏目是否设置当此栏目中的信息变更后需要进行的静态化处理
+					Channel channel = channelService
+							.findById(info.getChannel());
+					boolean ismakehtml = true;
+					if (channel != null) {
+						site = siteService.findById(info.getSite());
+						if ("1".equals(channel.getHtmlchannel())) {
+							// 所属栏目静态化
+							channelService.html(site, channel,
+									getApplication(), request, getLoginName(),
+									0);
+							ismakehtml = false;
+						}
+					}
+					// 2015-2-13 niu x j 修改，审核信息后自动静态化 ----end
+
+					msg = "信息（" + info.getTitle() + "）审批成功!";
+				} catch (Exception e) {
+					msg = "信息（" + info.getTitle() + "）审批失败!";
+				}
+			}
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 日期型数据转换，将页面上的表示日期限的字符串，转换为Date型
+	 * **/
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat(
+				"yyyy-MM-dd HH:mm:ss");
+		dateFormat.setLenient(true);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, true));
+
+	}
+}

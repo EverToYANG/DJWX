@@ -1,0 +1,136 @@
+function checkAttribute() {
+	if (isCheckOne()) {
+		location.href = "goodsEdit.do?pageFuncId=" + $("#pageFuncId").val()
+				+ "&isShowHead=0&attrId=" + getCheckOneValue();
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+//添加产品
+function add(){
+	location.href = "goodsGuide.do";
+}
+
+function edit() {
+	if (isCheckOne()) {
+		location.href = "goodsEdit.do?pageFuncId=" + $("#pageFuncId").val()
+				+ "&isShowHead=0&id=" + getCheckOneValue()+"&attrId="
+				+ $("#attrId").val();
+		$("#errorDiv").fadeOut("slow");
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+
+//选择栏目
+function selectChannel(){
+	openWindow('选择栏目','channelTree.do?channelClick=selectChannel',500,500,'false');
+}
+
+// 提交验证
+function formCheck() {
+	var isCheck = true;
+	
+	if ($.trim($("#channelId").val()) == "") {
+		$("#channelHelp").html("必须选择");
+		$("#channelDiv").addClass("error");
+		$("#channelId").focus();
+		isCheck = false;
+	} else {
+		$("#channelHelp").html("");
+		$("#channelDiv").removeClass("error");
+	}
+	if ($.trim($("#title").val()) == "") {
+		$("#titleHelp").html("必须填写");
+		$("#titleDiv").addClass("error");
+		$("#title").focus();
+		isCheck = false;
+	} else {
+		$("#titleHelp").html("");
+		$("#titleDiv").removeClass("error");
+	}
+	return isCheck;
+}
+
+function selectTempletFile(templetid,inputid){
+	if(templetid==""){
+		$("#"+inputid+"Help").html("请先选择此站点使用的模板");
+		$("#"+inputid+"Div").addClass("error");
+	}else{
+		$("#"+inputid+"Help").html("");
+		$("#"+inputid+"Div").removeClass("error");
+		openWindow('选择模板文件','templetSiteSelectFile.do?inputid='+inputid+'&id='+templetid,0,0,'true');
+	}
+}
+// 选择栏目
+function selectCategory() {
+	openWindow('选择商品类目', 'categoryTree.do?categoryClick=selectCategory', 500,
+			500, 'false');
+}
+
+
+function del() {
+	if (isCheck()) {
+		var confirm = $.scojs_confirm({
+			content : "确定删除操作么?此操作无法回退!",
+			action : function() {
+				location.href = "goodsDel.do?pageFuncId="
+						+ $("#pageFuncId").val() + "&ids=" + getCheckValue()
+						+ "&channel=" + $("#channel").val();
+			}
+		});
+		confirm.show();
+		$("#errorDiv").fadeOut("slow");
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择数据");
+	}
+}
+
+/**
+ * 请求商品类型属性
+ * 
+ * @param typeid
+ * @param id
+ */
+
+function delImg(id) {
+	$("#img_tr_" + id).remove();
+}
+
+function addImg() {
+	var id = Math.uuidFast();
+	var str = "<tr id='img_tr_" + id + "'>";
+	str += "<td>";
+	str += " <a href=\"javascript:;\" onclick=\"delImg('" + id + "')\">[-]</a>";
+	str += "&nbsp;&nbsp;图片描述 <input type=\"text\" name=\"imgstitle"+id+"\" size=\"20\">";
+	str += "&nbsp;上传文件 <input type=\"file\" name=\"imgsfile"+id+"\">";
+	str += "<td>";
+	str += "</tr>";
+	$("#img_tr_0").after(str);
+}
+//会员价格
+function addVipPrice() {
+
+}
+//促销价格
+function delVolumePrice(id) {
+	$("#vp_tr_" + id).remove();
+}
+
+function addVolumePrice() {
+	var id = Math.uuidFast();
+	var str = "<tr id='vp_tr_" + id + "'>";
+	str += "<td>";
+	str += " <a href=\"javascript:;\" onclick=\"delVolumePrice('" + id
+			+ "')\">[-]</a>";
+	str += "&nbsp;&nbsp;优惠数量 <input type=\"text\" name=\"volume_number\" size=\"8\">";
+	str += "&nbsp;优惠价格 <input type=\"text\" name=\"volume_price\" size=\"8\">";
+	str += "<td>";
+	str += "</tr>";
+	$("#vp_tr_0").after(str);
+}
+
+

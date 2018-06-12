@@ -1,0 +1,285 @@
+package com.gsccs.cms.auth.model;
+
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * 用户对象
+ * 
+ * @author x.d zhang
+ * 
+ */
+public class Users implements Serializable {
+
+	private String id;
+	private String name;
+	private String phone;
+	private String pwd;
+	private String ismail;
+
+	private String unitNames;
+	private String unitid;
+	private String wxappid;
+	private String roleNames;
+	private String loginname;
+	private int loginFailNum;
+	private int loginNum;
+	private String sex;
+	private String sql;
+
+	private Date birthday;
+	private String birthdayStr;
+
+	private String corpid;
+	private String email;
+	private String isok;
+	private String isokStr;
+
+	private String corptitle;
+	private Date lastlogintime;
+	private Date addTime;
+	private String addTimeStr;
+	private Date lastestlogintime;
+	private String lastestlogintimeStr;
+	private String lastLoginTimeStr;
+
+	private static SimpleDateFormat sdf = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm");
+	private static SimpleDateFormat birthsdf = new SimpleDateFormat(
+			"yyyy-MM-dd");
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getLoginname() {
+		return loginname;
+	}
+
+	public void setLoginname(String loginname) {
+		this.loginname = loginname == null ? null : loginname.trim();
+	}
+
+	public String getPwd() {
+		return pwd;
+	}
+
+	public void setPwd(String pwd) {
+		this.pwd = pwd == null ? null : pwd.trim();
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex == null ? null : sex.trim();
+	}
+
+	public Date getBirthday() {
+		return birthday;
+	}
+
+	public void setBirthday(Date birthday) {
+		this.birthday = birthday;
+	}
+
+	public String getCorpid() {
+		return corpid;
+	}
+
+	public void setCorpid(String corpid) {
+		this.corpid = corpid;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email == null ? null : email.trim();
+	}
+
+	public String getIsok() {
+		return isok;
+	}
+
+	public void setIsok(String isok) {
+		this.isok = isok == null ? null : isok.trim();
+	}
+
+	public Date getLastlogintime() {
+		return lastlogintime;
+	}
+
+	public void setLastlogintime(Date lastlogintime) {
+		this.lastlogintime = lastlogintime;
+	}
+
+	public String getLastLoginTimeStr() {
+		if (getLastlogintime() != null
+				&& !sdf.format(getLastlogintime()).equals("2010-01-01 00:00")) {
+			return sdf.format(getLastlogintime());
+		} else {
+			return "第一次登录";
+		}
+	}
+
+	public void setLastLoginTimeStr(String lastLoginTimeStr) {
+		this.lastLoginTimeStr = lastLoginTimeStr;
+	}
+
+	public Date getLastestlogintime() {
+		return lastestlogintime;
+	}
+
+	public void setLastestlogintime(Date lastestlogintime) {
+		this.lastestlogintime = lastestlogintime;
+	}
+
+	public String getBirthdayStr() {
+		birthdayStr = "";
+		if (getBirthday() != null) {
+			birthdayStr = birthsdf.format(getBirthday());
+		}
+		return birthdayStr;
+	}
+
+	public void setBirthdayStr(String birthdayStr) {
+		this.birthdayStr = birthdayStr;
+	}
+
+	public int getLoginFailNum() {
+		return loginFailNum;
+	}
+
+	public void setLoginFailNum(int loginFailNum) {
+		this.loginFailNum = loginFailNum;
+	}
+
+	public int getLoginNum() {
+		return loginNum;
+	}
+
+	public void setLoginNum(int loginNum) {
+		this.loginNum = loginNum;
+	}
+
+	public Date getAddTime() {
+		return addTime;
+	}
+
+	public void setAddTime(Date addTime) {
+		this.addTime = addTime;
+	}
+
+	public String getAddTimeStr() {
+		if (addTime != null) {
+			return birthsdf.format(addTime);
+		}
+		return addTimeStr;
+	}
+
+	public void setAddTimeStr(String addTimeStr) {
+		this.addTimeStr = addTimeStr;
+	}
+
+	public String getLastestlogintimeStr() {
+		if (lastestlogintime != null) {
+			return birthsdf.format(lastestlogintime);
+		}
+		return lastestlogintimeStr;
+	}
+
+	public void setLastestlogintimeStr(String lastestlogintimeStr) {
+		this.lastestlogintimeStr = lastestlogintimeStr;
+	}
+
+	public String getIsokStr() {
+		if ("1".equals(isok)) {
+			return "是";
+		}
+		return "否";
+	}
+
+	public void setIsokStr(String isokStr) {
+		this.isokStr = isokStr;
+	}
+
+	public String getUnitNames() {
+		return unitNames;
+	}
+
+	public void setUnitNames(String unitNames) {
+		this.unitNames = unitNames;
+	}
+
+	public String getRoleNames() {
+		return roleNames;
+	}
+
+	public void setRoleNames(String roleNames) {
+		this.roleNames = roleNames;
+	}
+
+	public String getUnitid() {
+		return unitid;
+	}
+
+	public void setUnitid(String unitid) {
+		this.unitid = unitid;
+	}
+
+	public String getWxappid() {
+		return wxappid;
+	}
+
+	public void setWxappid(String wxappid) {
+		this.wxappid = wxappid;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getIsmail() {
+		return ismail;
+	}
+
+	public void setIsmail(String ismail) {
+		this.ismail = ismail;
+	}
+
+	public String getCorptitle() {
+		return corptitle;
+	}
+
+	public void setCorptitle(String corptitle) {
+		this.corptitle = corptitle;
+	}
+
+	public String getSql() {
+		return sql;
+	}
+
+	public void setSql(String sql) {
+		this.sql = sql;
+	}
+}

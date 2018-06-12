@@ -1,0 +1,288 @@
+package com.gsccs.cms.controller.web;
+
+import java.io.File;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.chanjar.weixin.common.api.WxConsts;
+import me.chanjar.weixin.common.exception.WxErrorException;
+import me.chanjar.weixin.mp.api.WxMpConfigStorage;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.bass.utils.OssConfig;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.service.CreditruleService;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.module.model.Consult;
+import com.gsccs.cms.module.model.Itemclass;
+import com.gsccs.cms.module.service.ConsultService;
+import com.gsccs.cms.module.service.ItemclassService;
+import com.gsccs.cms.weixin.model.WxApp;
+import com.gsccs.cms.weixin.service.WxAppService;
+import com.gsccs.cms.wx.service.MpMsgService;
+
+/**
+ * O2O控制类
+ * 
+ * 咨询操作
+ * 
+ */
+@Controller("WebConsultController")
+@RequestMapping("/web/{appid}")
+public class WebConsultController {
+	
+	//模板消息短id
+	private String tmlShortId = "OPENTM406851402";
+	@Resource
+	private ConsultService consultService;
+	@Resource
+	private CreditruleService creditruleService;
+	@Resource
+	private ChannelService channelService;
+	@Resource
+	private MpMsgService mpMsgService;
+	@Resource
+	private MemberService memberService;
+	@Resource
+	private ItemclassService itemclassService;
+	@Autowired
+	private WxAppService wxAppService;
+	@Autowired
+	private WxMpConfigStorage wxMpConfigStorage;
+
+	/**
+	 * 咨询列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbList.html")
+	public String guestbookList(
+			@PathVariable("appid") String appid,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "100") int pagesize,
+			@RequestParam(defaultValue = "") String code,
+			@RequestParam(defaultValue = "") String openid, 
+			ModelMap map,
+			HttpServletResponse response) {
+		Consult param = new Consult();
+		param.setSiteid(appid);
+		List<Consult> guestbookList = consultService.find(param,
+				"addtime desc", page, pagesize, true);
+		if (null != guestbookList && guestbookList.size() > 0) {
+			for (Consult guestbook : guestbookList) {
+				List<Consult> replyList = consultService.findByParid(
+						guestbook.getId(), true);
+				guestbook.setReplyList(replyList);
+			}
+		}
+		map.put("guestbookList", guestbookList);
+		return "web/item_list";
+	}
+
+	/**
+	 * 跳转发布页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbAdd.html")
+	public String publish(@PathVariable("appid") String appid,
+			@RequestParam(defaultValue = "") String code,
+			@RequestParam(defaultValue = "") String openid, ModelMap map,
+			HttpServletResponse response) {
+		Member member = null;
+		WxApp wxApp = null;
+		List<Itemclass> iclassList = null;
+		try {
+			wxApp = wxAppService.findById(appid);
+			if (StringUtils.isEmpty(openid)) {
+				wxMpConfigStorage.init(appid);
+				WxMpService wxMpService = new WxMpServiceImpl();
+				wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
+
+				if (StringUtils.isEmpty(code)) {
+					String redirectURI = wxApp.getDomain()
+							+ "/web/gbAdd.html";
+					String authurl = wxMpService.oauth2buildAuthorizationUrl(
+							redirectURI, WxConsts.OAUTH2_SCOPE_BASE, null);
+					return "redirect:" + authurl;
+				} else {
+					openid = wxMpService.oauth2getAccessToken(code).getOpenId();
+				}
+			}
+			Itemclass itemclass = new Itemclass();
+			itemclass.setCorpid(appid);
+			iclassList = itemclassService.find(itemclass);
+			member = memberService.findById(openid);
+		} catch (WxErrorException e) {
+			e.printStackTrace();
+		}
+		map.put("iclassList", iclassList);
+		map.put("member", member);
+		map.put("wxApp", wxApp);
+		return "web/item_form";
+	}
+	
+	/**
+	 * 咨询查询
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbQuery.html")
+	public String doQuery(@PathVariable String appid,
+			@RequestParam(defaultValue = "") String code,
+			@RequestParam(defaultValue = "") String openid,
+			@RequestParam(defaultValue = "") String keyword,
+			@RequestParam(defaultValue = "") Integer iclassid,
+			ModelMap map) {
+		List<Consult> guestbookList = null;
+		List<Itemclass> iclassList = null;
+		WxApp wxApp = null;
+		Member member = null;
+		try {
+			wxApp = wxAppService.findById(appid);
+			if (StringUtils.isEmpty(openid)) {
+				wxMpConfigStorage.init(appid);
+				WxMpService wxMpService = new WxMpServiceImpl();
+				wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
+
+				if (StringUtils.isEmpty(code)) {
+					String redirectURI = wxApp.getDomain()
+							+ "/web/gbQuery.html";
+					String authurl = wxMpService.oauth2buildAuthorizationUrl(
+							redirectURI, WxConsts.OAUTH2_SCOPE_BASE, null);
+					return "redirect:" + authurl;
+				} else {
+					openid = wxMpService.oauth2getAccessToken(code).getOpenId();
+				}
+			}
+			Consult param = new Consult();
+			param.setSiteid(appid);
+			param.setIclassid(iclassid);
+			param.setContent(keyword);
+			param.setMemberid(openid);
+			guestbookList = consultService.find(param, "addtime desc", 1, 100, true);
+			
+			
+			if (null != guestbookList && guestbookList.size() > 0) {
+				for (Consult guestbook : guestbookList) {
+					List<Consult> replyList = consultService.findByParid(
+							guestbook.getId(), true);
+					guestbook.setReplyList(replyList);
+				}
+			}
+			Itemclass itemclass = new Itemclass();
+			itemclass.setCorpid(appid);
+			iclassList = itemclassService.find(itemclass);
+			
+			member = memberService.findById(openid);
+		} catch (WxErrorException e) {
+			e.printStackTrace();
+		}
+		map.put("wxApp", wxApp);
+		map.put("member", member);
+		map.put("iclassList", iclassList);
+		map.put("guestbookList", guestbookList);
+		return "web/item_query";
+	}
+
+	/**
+	 * 事项提交保存
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbSave.html")
+	@ResponseBody
+	public String guestbookSave(
+			@PathVariable String appid,
+			@RequestParam(value = "imgfile", required = false) MultipartFile[] imgfiles,
+			Consult guestbook, ModelMap map, 
+			HttpServletRequest request,
+			HttpServletResponse response) {
+		WxApp wxApp = null;
+		String msg = null;
+		if (guestbook == null) {
+			return null;
+		}
+		
+		try {
+			wxApp = wxAppService.findById(appid);
+			String imgurls = "";
+			// 新上传的附件
+			if (imgfiles != null && imgfiles.length > 0) {
+				MultipartFile currAttch;
+				for (int i = 0; i < imgfiles.length; i++) {
+					currAttch = imgfiles[i];
+
+					if (currAttch != null && currAttch.getSize() > 0) {// 生成目标文件
+						String ext = FileUtil.getExt(
+								currAttch.getOriginalFilename()).toLowerCase();
+
+						String filename = new Date().getTime() + ext;
+						String filepath = OssConfig.ROOT_PATH
+								+ File.separator + appid + File.separator+OssConfig.TYPE_IMAGE+ File.separator;
+						File targetFile = new File(filepath+ filename);
+						File folder = new File(filepath);
+						if (!folder.exists()) {
+							folder.mkdirs();
+						}
+						if (!targetFile.exists()) {
+							targetFile.createNewFile();
+						}
+						// 复制到目标文件
+						FileUtil.copy(currAttch, targetFile);
+						// 生成访问地址
+						imgurls = imgurls + "/"+OssConfig.TYPE_IMAGE+"/" + filename + ",";
+					}
+				}
+			}
+
+			if (StringUtils.isNotEmpty(imgurls)) {
+				if (imgurls.endsWith(",")) {
+					imgurls = imgurls.substring(0, imgurls.length() - 1);
+				}
+				guestbook.setAlbums(imgurls);
+			}
+			// 保存留言内容
+			guestbook.setSiteid(appid);
+			guestbook.setAddtime(new Date());
+			guestbook.setIp(request.getRemoteAddr());
+			guestbook.setState("0");
+			consultService.add(guestbook);
+			
+			//跳转至按自身tel对应的list页面
+			String url = wxApp.getDomain()+ "/web/gbQuery.html";
+			// 发送模板通知
+			Map<String, String> data = new HashMap<String, String>();
+			data.put("first", "您好，我们已成功受理您提交的事项");
+			data.put("keyword1", guestbook.getAddtimeStr());
+			data.put("keyword2", "事项上报");
+			data.put("keyword3", "正在处理中");
+			data.put("remark",
+					"1.我们将会通过微信或者电话及时给您反馈处理进度。\n 2.您可以使用手机号主动查询处理进度.");
+			mpMsgService.sendMsg(appid, guestbook.getMemberid(), tmlShortId,
+					url, data);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return msg;
+	}
+}

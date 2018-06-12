@@ -1,0 +1,268 @@
+package com.gsccs.cms.module.service.impl;
+
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.module.dao.VoteItemMapper;
+import com.gsccs.cms.module.dao.VoteTopicMapper;
+import com.gsccs.cms.module.model.VoteItem;
+import com.gsccs.cms.module.model.VoteItemExample;
+import com.gsccs.cms.module.model.VoteTopic;
+import com.gsccs.cms.module.model.VoteTopicExample;
+import com.gsccs.cms.module.model.VoteTopicExample.Criteria;
+import com.gsccs.cms.module.service.VoteService;
+
+/**
+ * 网上调查服务类
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Service
+public class VoteServiceImpl implements VoteService {
+
+	@Resource
+	private VoteTopicMapper voteTopicMapper;
+	@Resource
+	private VoteItemMapper voteItemMapper;
+
+	/**
+	 * 分页查询
+	 */
+	public List<VoteTopic> find(VoteTopic question, String order, int currPage,
+			int pageSize, boolean cache) {
+		VoteTopicExample example = new VoteTopicExample();
+		Criteria criteria = example.createCriteria();
+		proSearchParam(question, criteria);
+		if (order != null && order.trim().length() > 0) {
+			example.setOrderByClause(order);
+		}
+		example.setCurrPage(currPage);
+		example.setPageSize(pageSize);
+		if (cache) {
+			return voteTopicMapper.selectPageByExampleCache(example);
+		} else {
+			return voteTopicMapper.selectPageByExample(example);
+		}
+	}
+
+	/**
+	 * 统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int count(VoteTopic question, boolean cache) {
+		VoteTopicExample example = new VoteTopicExample();
+		Criteria criteria = example.createCriteria();
+		proSearchParam(question, criteria);
+		if (cache) {
+			return voteTopicMapper.countByExampleCache(example);
+		} else {
+			return voteTopicMapper.countByExample(example);
+		}
+	}
+
+	/**
+	 * 处理查询条件
+	 * 
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(VoteTopic param, Criteria criteria) {
+		if (param != null) {
+			if (param.getId() != null
+					&& param.getId().trim().length() > 0) {
+				criteria.andIdLike("%" + param.getId().trim() + "%");
+			}
+			if (param.getName() != null
+					&& param.getName().trim().length() > 0) {
+				criteria.andNameLike("%" + param.getName().trim() + "%");
+			}
+			if (param.getSiteid() != null
+					&& param.getSiteid().trim().length() > 0) {
+				criteria.andSiteidEqualTo(param.getSiteid());
+			}
+			if (param.getAdduser() != null
+					&& param.getAdduser().trim().length() > 0) {
+				criteria.andAdduserEqualTo(param.getAdduser());
+			}
+			if (param.getSelecttype() != null
+					&& param.getSelecttype().trim().length() > 0) {
+				if ("1".equals(param.getSelecttype())) {
+					criteria.andSelecttypeEqualTo("1");
+				} else if ("0".equals(param.getSelecttype())) {
+					criteria.andSql(" (selecttype is null or selecttype='0') ");
+				}
+			}
+			if (param.getIsok() != null
+					&& param.getIsok().trim().length() > 0) {
+				if ("1".equals(param.getIsok())) {
+					criteria.andIsokEqualTo("1");
+				} else if ("0".equals(param.getIsok())) {
+					criteria.andSql(" (isok is null or isok='0') ");
+				}
+			}
+		}
+	}
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public VoteTopic findById(String id, boolean cache) {
+		if (cache) {
+			return voteTopicMapper.selectByPrimaryKeyCache(id);
+		} else {
+			return voteTopicMapper.selectByPrimaryKey(id);
+		}
+	}
+
+	/**
+	 * 更新
+	 * 
+	 * @param param
+	 */
+	public void update(VoteTopic param) {
+		voteTopicMapper.updateByPrimaryKey(param);
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public String add(VoteTopic voteTopic) {
+		voteTopic.setId(UUID.randomUUID().toString());
+		voteTopicMapper.insert(voteTopic);
+		return voteTopic.getId();
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void delItem(String id) {
+		voteTopicMapper.deleteByPrimaryKey(id);
+	}
+
+	
+
+	/**
+	 * 查询批定网上调查下选项
+	 * 
+	 * @param questidid
+	 * @return
+	 */
+	public List<VoteItem> findByTopicId(String topicid, String isok,
+			boolean cache) {
+		VoteItemExample example = new VoteItemExample();
+		VoteItemExample.Criteria criteria = example.createCriteria();
+		criteria.andTopicidEqualTo(topicid);
+		if (isok != null && isok.trim().length() > 0) {
+			if ("1".equals(isok)) {
+				criteria.andIsokEqualTo("1");
+			} else if ("0".equals(isok)) {
+				criteria.andSql(" (isok is null or isok='0') ");
+			}
+		}
+		example.setOrderByClause(" ordernum ");
+		if (cache) {
+			return voteItemMapper.selectByExampleCache(example);
+		} else {
+			return voteItemMapper.selectByExample(example);
+		}
+	}
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public VoteItem findItemById(String id, boolean cache) {
+		if (cache) {
+			return voteItemMapper.selectByPrimaryKeyCache(id);
+		} else {
+			return voteItemMapper.selectByPrimaryKey(id);
+		}
+	}
+
+	/**
+	 * 更新
+	 * 
+	 * @param answer
+	 */
+	public void update(VoteItem answer) {
+		voteItemMapper.updateByPrimaryKey(answer);
+	}
+
+	/**
+	 * 选择
+	 * 
+	 * @param id
+	 */
+	public void selectnum(String id) {
+		voteItemMapper.selectnum(id);
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param answer
+	 * @return
+	 */
+	public String addItem(VoteItem answer) {
+		answer.setId(UUID.randomUUID().toString());
+		voteItemMapper.insert(answer);
+		return answer.getId();
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void del(String id) {
+		voteItemMapper.deleteByPrimaryKey(id);
+	}
+
+	/**
+	 * 统计选择次数
+	 * 
+	 * @param questidid
+	 * @param isok
+	 * @param cache
+	 * @return
+	 */
+	public int countSelectnum(String topicid, String isok, boolean cache) {
+		VoteItemExample example = new VoteItemExample();
+		VoteItemExample.Criteria criteria = example.createCriteria();
+		criteria.andTopicidEqualTo(topicid);
+		if (isok != null && isok.trim().length() > 0) {
+			if ("1".equals(isok)) {
+				criteria.andIsokEqualTo("1");
+			} else if ("0".equals(isok)) {
+				criteria.andSql(" (isok is null or isok='0') ");
+			}
+		}
+		example.setOrderByClause(" ordernum ");
+		if (cache) {
+			return voteItemMapper.countSelectnumByExample(example);
+		} else {
+			return voteItemMapper.countSelectnumByExampleCache(example);
+		}
+	}
+	
+}

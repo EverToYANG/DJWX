@@ -1,0 +1,215 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.service.CreditruleService;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.module.model.Guestbook;
+import com.gsccs.cms.module.service.GuestBookService;
+import com.gsccs.cms.weixin.model.WxApp;
+import com.gsccs.cms.weixin.service.WxAppService;
+import com.gsccs.cms.wx.service.MpMsgService;
+
+/**
+ * O2O控制类
+ * 
+ * 留言相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller("WebGuestbookController")
+@RequestMapping("/web")
+public class WebGuestbookController extends CmsBaseController {
+
+	private String WXAPPID = "wx1562950d23bf4c3a";
+	private String tmlShortId = "OPENTM406851402";
+	private String DOMAIN = "http://www.pcwxdj.com";
+
+	@Resource
+	private GuestBookService guestbookService;
+	@Resource
+	private CreditruleService creditruleService;
+	@Resource
+	private ChannelService channelService;
+	@Resource
+	private MpMsgService mpMsgService;
+	@Resource
+	private MemberService memberService;
+	@Autowired
+	private WxAppService wxAppService;
+
+	/**
+	 * 咨询列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbList.html")
+	public String guestbookList(@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "500") int pagesize, ModelMap map, HttpServletResponse response) {
+		Guestbook param = new Guestbook();
+		List<Guestbook> guestbookList = guestbookService.find(param, "addtime desc", page, pagesize, true);
+		if (null != guestbookList && guestbookList.size() > 0) {
+			for (Guestbook guestbook : guestbookList) {
+				List<Guestbook> replyList = guestbookService.findByParid(guestbook.getId(), true);
+				guestbook.setReplyList(replyList);
+			}
+		}
+		map.put("guestbookList", guestbookList);
+		return "web/guestbook";
+	}
+
+	/**
+	 * 跳转发布页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbAdd.html")
+	public String publish(String code,String state,ModelMap map, HttpServletResponse response) {
+		String appId=state;
+		WxApp wxApp = wxAppService.findById(appId);
+		
+		String url="https://api.weixin.qq.com/sns/oauth2/access_token?appid="+wxApp.getAppId()+"&secret="+wxApp.getSecret()+"&code="+code+"&grant_type=authorization_code";
+		 CloseableHttpClient httpClient = getHttpClient();
+	     try {
+	            //用get方法发送http请求
+	            HttpGet get = new HttpGet(url);
+	            CloseableHttpResponse httpResponse = null;
+	            //发送get请求
+	            httpResponse = httpClient.execute(get);
+	            try{
+	                //response实体
+	                HttpEntity entity = httpResponse.getEntity();
+	                if (null != entity){
+	                	/*System.out.println("响应状态码:"+ httpResponse.getStatusLine());
+	                    System.out.println("-------------------------------------------------");
+	                    System.out.println("响应内容:" + EntityUtils.toString(entity));
+	                    System.out.println("-------------------------------------------------");*/
+	                	String rs= EntityUtils.toString(entity);
+	                	JSONObject obj = JSONObject.parseObject(rs);
+	                	String openid=obj.getString("openid");
+	                	System.out.println("openid=="+openid);
+	                	map.put("openid", openid);
+	                }
+	            }
+	            finally{
+	                httpResponse.close();
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+		
+	//https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx5378bb816fde866b&redirect_uri=http://www.pcwxdj.com/web/gbAdd.html&response_type=code&scope=snsapi_base&state=wx5378bb816fde866b#wechat_redirect
+		return "web/publish";
+	}
+
+
+	/* 查询二级单位 */
+	@RequestMapping("/getSon.html")
+	@ResponseBody
+	public String getSon(String id, HttpServletResponse response) {
+		Site site = new Site();
+		site.setSitetype(id);
+		List<Site> sites = siteService.find(site, null, 1, 100);
+		String sonSubjectJson = JSON.toJSONString(sites);
+		response.setCharacterEncoding("utf-8");
+		response.setContentType("application/json;charset=UTF-8");
+		return sonSubjectJson;
+	}
+
+	/**
+	 * 发布咨询
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbQuery.html")
+	public String query(ModelMap map, HttpServletResponse response) {
+		return "web/search";
+	}
+
+	/**
+	 * 事项提交保存
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbSave.html")
+	@ResponseBody
+	public String guestbookSave(String openid, Guestbook guestbook, String siteid, ModelMap map,
+			HttpServletResponse response) {
+		String msg = "";
+		if (guestbook != null) {
+			// 保存留言内容
+			Member member = memberService.findById(openid);
+
+			guestbook.setAddtime(new Date());
+			guestbook.setIp(request.getRemoteAddr());
+			guestbook.setState("0");
+			guestbook.setMemberid(member.getId());
+			guestbook.setMembername(member.getName());
+			msg = guestbookService.add(guestbook);
+
+			String url = "#";
+			// 发送模板通知
+			Map<String, String> data = new HashMap<String, String>();
+			data.put("first", "您好，我们已成功受理您提交的事项");
+			data.put("keyword1", guestbook.getAddtimeStr());
+			data.put("keyword2", "事项上报");
+			data.put("keyword3", "正在处理中");
+			data.put("remark", "<p>1.我们将会通过微信或者电话及时给您反馈处理进度。</p><p>2.您可以使用手机号主动查询处理进度.</p>");
+
+			mpMsgService.sendMsg(WXAPPID, openid, tmlShortId, url, data);
+
+			return msg;
+		}
+		return null;
+	}
+
+	// 图片上传
+	/*
+	 * @RequestMapping("/upload.html") public String
+	 * uploadImg(@RequestParam(value = "file", required = false) MultipartFile[]
+	 * file, HttpServletRequest request){
+	 * 
+	 * String path =
+	 * request.getSession().getServletContext().getRealPath("upload"); String
+	 * fileName=file[0].getName(); File targetFile = new File(path, fileName);
+	 * if(!targetFile.exists()){ targetFile.mkdirs(); }
+	 * 
+	 * //保存 try { file.transferTo(targetFile); } catch (Exception e) {
+	 * e.printStackTrace(); }
+	 * 
+	 * return "result"; }
+	 */
+
+	// curd
+	
+	  private CloseableHttpClient getHttpClient(){
+	        return HttpClients.createDefault();
+	    }
+
+}

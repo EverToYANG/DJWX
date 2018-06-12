@@ -1,0 +1,153 @@
+package com.gsccs.cms.controller.module;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseArticle;
+import com.gsccs.cms.module.model.Itemclass;
+import com.gsccs.cms.module.service.ItemclassService;
+
+/**
+ * 事项分类管理
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/iclass")
+public class IclassController extends CmsBaseController {
+	
+	@Resource
+	private ItemclassService itemclassService;
+
+	/**
+	 * 留言列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String list(Itemclass param, 
+			@RequestParam(defaultValue = "") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize, ModelMap map,
+			HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		if (!subject.hasRole(AuthConst.SYS_ADMIN)) {
+			param.setCorpid(getWxApp().getId());
+		}
+		List<Itemclass> list = itemclassService.find(param, order,
+				currPage, pageSize, false);
+		int totalCount = itemclassService.count(param, false);
+		Pager pager = new Pager(request);
+		pager.appendParam("title");
+		pager.appendParam("name");
+		pager.appendParam("state");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", list);
+		map.put("order", order);
+		return "module/iclass_list";
+	}
+
+	/**
+	 * 表单 页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/form.do")
+	public String iclassForm(Integer id, ModelMap map,
+			HttpServletResponse response) {
+		Itemclass  itemclass = null;
+		if (null != id) {
+			itemclass = itemclassService.findById(id);
+		}
+		map.put("iclass", itemclass);
+		return "module/iclass_form";
+	}
+	
+	
+	@RequestMapping("/save.do")
+	public String save(Itemclass itemclass, ModelMap map) {
+		if (null==itemclass) {
+			map.put("msg", "保存失败");
+			map.put("isCloseWindow", true);
+			map.put("isRefresh", true);
+			return "admin/msg";
+		}
+		
+		if (null==getWxApp()) {
+			map.put("msg", "保存失败,无公众账号管理权限。");
+			map.put("isCloseWindow", true);
+			map.put("isRefresh", true);
+			return "admin/msg";
+		}
+		
+		try{
+			if (null==itemclass.getId()){
+				itemclass.setCorpid(getWxApp().getId());
+				itemclassService.insert(itemclass);
+				map.put("msg", "保存成功");
+			}else{
+				itemclass.setCorpid(getWxApp().getId());
+				itemclassService.update(itemclass);
+				map.put("msg", "保存成功");
+			}
+		}catch(Exception e){
+			map.put("msg", "保存失败,错误原因:"+e.getMessage());
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/del.do")
+	public String del(String ids, String pageFuncId, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							itemclassService.del(idArr[i].trim());
+							msg = "删除事项分类成功!";
+							map.put("forwardSeconds", 3);
+						} catch (Exception e) {
+							map.put("forwardSeconds", 0);
+							e.printStackTrace();
+							msg = "删除事项分类失败:"
+									+ e.toString() + "!";
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "list.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+}

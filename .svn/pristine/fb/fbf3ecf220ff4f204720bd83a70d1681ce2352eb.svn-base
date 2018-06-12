@@ -1,0 +1,99 @@
+package com.gsccs.cms.search;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.SolrInputDocument;
+
+import com.gsccs.cms.core.model.Content;
+
+public class SolrTestService {
+
+	// 创建域的方式（创建索引||写入 lucene，查询只能查到这里面的被创建索引文件了的数据）
+	public void addIndex() throws SolrServerException, IOException {
+
+		String url = "http://10.209.19.147:8983/solr";
+		HttpSolrServer server = SolrServer.getInstance().getServer(url);
+		
+		Content content = new Content();
+		content.setId("1");
+		content.setTitle("014年巴西世界杯正式拉开战幕");
+		content.setHtmlIndexnum(1);
+		content.setAddtimeStr("20140620");
+		//content.setAddtimeStr("20140620");
+		//SolrInputDocument doc = new SolrInputDocument();
+		/*doc.addField("id", "6");
+		doc.addField("title", "都敏俊星星");
+		SolrInputDocument doc1 = new SolrInputDocument();
+		doc1.addField("id", "7");
+		doc1.addField("title", "千颂伊星星");
+		SolrInputDocument doc2 = new SolrInputDocument();
+		doc2.addField("id", "8");
+		doc2.addField("title", "星星");
+		Collection<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+		docs.add(doc);
+		docs.add(doc1);
+		docs.add(doc2);*/
+		server.addBean(content);
+		//server.add(docs);
+		server.commit();
+	}
+
+	// 删除索引文件
+	public void delteIndex() {
+		String url = "";
+		try {
+			HttpSolrServer server = SolrServer.getInstance().getServer(url);
+			server.deleteByQuery("*:*");
+			server.commit();
+		} catch (SolrServerException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 模糊查询
+	 */
+	public List<Content> searchInfoList(String key, int i) {
+		List<Content> list = new ArrayList<Content>();
+		String url = "";
+		Content info = null;
+		HttpSolrServer server = SolrServer.getInstance().getServer(url);
+		SolrQuery sQuery = new SolrQuery();
+		try {
+			String para = "";
+			if (!key.isEmpty()) {
+				para = para + "title:" + key;
+			}
+			// 执行 solr模糊查询方法
+			sQuery.setQuery(para);
+			sQuery.setStart(i); // 设置"其实位置"：表示从结果集的第几条数据开始显示。默认下标是0开始
+			sQuery.setRows(5); // 设置每页显示的行数
+			QueryResponse response;
+			response = server.query(sQuery); // query是（ solr自带的方法）
+			// 查询的结果由doc文档对象返回给Info对象。放到list存到作用域
+			SolrDocumentList slist = response.getResults();// 获取按条件查询筛选后的结果（
+															// solr自带的方法）
+			for (SolrDocument solrDocument : slist) {
+				info = new Content();
+				// 获取文档里面的title字段的value
+				info.setTitle(solrDocument.getFirstValue("title").toString());
+
+				list.add(info); // 把筛选中的值放到实体类列表里面
+			}
+		} catch (SolrServerException e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+}

@@ -1,0 +1,38 @@
+package com.jfinal.weixin.demo;
+
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.jfinal.weixin.sdk.api.UserApi;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月12日
+ */
+
+public class UserService {
+
+	/**
+	 * 获取用户列表
+	 * 
+	 * @return ApiResult
+	 */
+	public ApiResult getFollows(String appId) {
+		// 绑定当前appid
+		ApiConfigKit.setThreadLocalAppId(appId);
+		return UserApi.getFollows();
+	}
+
+	/**
+	 * 获取用户基本信息（包括UnionID机制）
+	 * 
+	 * @param openId
+	 *            普通用户的标识，对当前公众号唯一
+	 * @return ApiResult
+	 */
+	public ApiResult getUserInfo(String appId, String openId) {
+		// 绑定当前appid
+		ApiConfigKit.setThreadLocalAppId(appId);
+		return UserApi.getUserInfo(openId);
+	}
+}

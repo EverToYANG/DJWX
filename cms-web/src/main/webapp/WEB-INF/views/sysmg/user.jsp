@@ -1,0 +1,141 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib prefix="fs" uri="/fs-tags" %>
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+	<%@include file="/include/bsie_head.jsp" %>
+  </head>
+
+<body>
+<div class="container-fluid" >
+	<div class="row-fluid">
+		<div class="widget-box collapsible">
+			<div class="widget-title">
+								<span class="icon">
+									<i class="icon-search"></i>
+								</span>
+								<h5>用户搜索</h5>
+								<div class="buttons"><a href="#collapseOne" data-toggle="collapse" class="btn btn-mini"><i class="icon-retweet"></i>展开/关闭</a></div>
+			</div>
+			<div class="collapse in" id="collapseOne">
+				<div class="widget-content">
+				<form class="form-search" action="user.do" method="post">
+					<input type="hidden" id="pageFuncId" name="pageFuncId" value="${param.pageFuncId }"/>
+								所属单位：
+								
+								<input name="unitNames" type="text" maxlength="500"
+									class="input-medium search-query" value="${param.unitNames }"/>
+								用户登录名：
+								
+								<input name="loginname" type="text" maxlength="500"
+									class="input-medium search-query" value="${param.loginname }" />
+								用户名称：
+								
+								<input name="name" type="text" maxlength="500"
+									class="input-medium search-query" value="${param.name }"/>
+								角色：
+								
+								<input name="roleNames" type="text" maxlength="500"
+									class="input-medium search-query" value="${param.roleNames }"/>
+								每页显示条数：
+								<select name="pageSize" id="pageSize" style="width:70px">
+									<option selected="selected" value="10">
+										10
+									</option>
+									<option value="30" ${"30"==param.pageSize?"selected":"" }>
+										30
+									</option>
+									<option value="50" ${"50"==param.pageSize?"selected":"" }>
+										50
+									</option>
+								</select>
+								
+							<button type="submit" class="btn"><i class="icon-search"></i> 搜 索</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="widget-box">
+		<div class="widget-title">
+								<span class="icon">
+									<i class="icon-th"></i>
+								</span>
+								<h5>用户</h5>
+								<div class="buttons"><a href="#" onclick="location.reload();" class="btn btn-mini"><i class="icon-refresh"></i> 刷 新</a></div>
+		</div>
+		<div class="widget-content nopadding">
+			<table class="table table-bordered table-striped with-check table-hover">
+				<thead>
+					<tr>
+						<th><input type="checkbox" id="title-table-checkbox" name="title-table-checkbox" /></th>
+						<th>用户登录名</th>
+						<th>所属单位</th>
+						<th>用户名称</th>
+						<th>
+							<fs:order colName="角色" col="roleNames"/>
+						</th>
+						<th>
+							
+							<fs:order colName="创建日期" col="addTime"/>
+						</th>
+						<th>
+							
+							<fs:order colName="最后登录日期" col="lastestlogintime"/>
+						</th>
+						<th>
+							
+							<fs:order colName="登录次数" col="loginNum"/>
+						</th>
+						<th width="100">
+							
+							<fs:order colName="有效" col="isok"/>
+						</th>
+										</tr>
+									</thead>
+									<tbody>
+           					 			<c:forEach var="bean" items="${list}" varStatus="status">
+										<tr>
+											<td><input type="checkbox" name="ids" id="ids${bean.id }" show="${bean.loginname}" value="${bean.id }"/></td>
+											<td>${bean.loginname }</td>
+											<td>${bean.corptitle }</td>
+											<td>${bean.name }</td>
+											<td id="rolenames${bean.id }">${bean.roleNames }</td>
+											<td>${bean.addTimeStr }</td>
+											<td>${bean.lastestlogintimeStr }</td>
+											<td>${bean.loginNum }</td>
+											<td id="state${bean.id }">${bean.isokStr }</td>
+										</tr>
+           					 			</c:forEach>
+									</tbody>
+								</table>		
+							<div id="errorDiv" class="alert alert-error hide">
+					            <span id="errorInfo"></span>
+					          </div>			
+							</div>
+							
+								<div class="navbar">	
+								<div class="navbar-inner">
+									${pageStr }
+								</div>
+								</div>	
+								<div class="navbar">	
+								<div class="navbar-inner">
+									<fs:operButtons />
+								</div>
+								</div>
+							
+						</div>
+      </div><!--/row-->
+          
+          
+        </div><!--/span-->
+
+	<%@include file="/include/foot.jsp" %>
+<script src="${pageContext.request.contextPath}/static/common/js/checkAll.js"></script>
+            <script src="${pageContext.request.contextPath}/static/admin/sys/js/user.js"></script>
+            <script src="${pageContext.request.contextPath}/static/common/js/sco.modal.js"></script>
+            <script src="${pageContext.request.contextPath}/static/common/js/sco.confirm.js"></script>
+
+</body></html>

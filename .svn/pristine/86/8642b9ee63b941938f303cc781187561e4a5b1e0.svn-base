@@ -1,0 +1,52 @@
+package com.gsccs.cms.core.service;
+
+import javax.servlet.http.HttpServletRequest;
+
+
+/**
+ * 角色微信应用
+ * @author think
+ *
+ */
+public interface RoleWxAppService {
+
+	/**
+	 * 根据角色删除
+	 * 
+	 * @param roleid
+	 */
+	public void delByRole(String roleid);
+
+	/**
+	 * 根据角色删除
+	 * 
+	 * @param roleid
+	 */
+	public void delByRoleApp(String roleid, String appid);
+
+	/**
+	 * 保存
+	 * 
+	 * @param roleid
+	 * @param channelid
+	 */
+	public void save(String roleid, String wxappid);
+
+	/**
+	 * 判断是否有权限
+	 * 
+	 * @param roleid
+	 * @param wxappid
+	 */
+	public boolean have(String roleid, String wxappid);
+
+	/**
+	 * 判断是否有权限
+	 * 
+	 * @param roleid
+	 * @param wxappid
+	 */
+	public boolean haves(String roles, String wxappid);
+
+
+}

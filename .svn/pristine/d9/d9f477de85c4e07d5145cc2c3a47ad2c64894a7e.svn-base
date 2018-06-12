@@ -1,0 +1,58 @@
+//发送
+function send(){
+	location.href="send.do?pageFuncId="+$("#pageFuncId").val();
+}
+function formCheck(){
+	var ischeck=true;
+	if($("#tomembernames").val()=="" && !isCheckName("membergroups")){
+		$("#tomembernamesHelp").html("请输入收信人");
+		$("#tomembernamesDiv").addClass("error");
+		$("#tomembernames").focus();
+		ischeck=false;
+	}else{
+		$("#tomembernamesHelp").html("");
+		$("#tomembernamesDiv").removeClass("error");
+	}
+	if($.trim($("#title").val())==""){
+		$("#titleHelp").html("必须填写");
+		$("#titleDiv").addClass("error");
+		$("#title").focus();
+		ischeck=false;
+	}else{
+		$("#titleHelp").html("");
+		$("#titleDiv").removeClass("error");
+	}
+	if($.trim($("#content1").val())==""){
+		$("#contentHelp").html("必须填写");
+		$("#contentDiv").addClass("error");
+		$("#content1").focus();
+		ischeck=false;
+	}else{
+		if($.trim($("#content1").val()).length>500){
+			$("#contentHelp").html("内容只能在500字以内");
+			$("#contentDiv").addClass("error");
+			$("#content1").focus();
+			ischeck=false;
+		}else{
+			$("#contentHelp").html("");
+			$("#contentDiv").removeClass("error");
+		}
+	}
+	return ischeck;
+}
+
+function del(){
+	if(isCheck()){
+		var confirm = $.scojs_confirm({
+		content: "确定删除操作么?此操作无法回退!",
+		action: function() {
+				location.href="del.do?pageFuncId="+$("#pageFuncId").val()+"&ids="+getCheckValue();
+			}
+		});
+		confirm.show();
+		$("#errorDiv").fadeOut("slow"); 
+	}else{
+		$("#errorDiv").fadeIn("slow"); 
+		$("#errorInfo").html("请选择数据"); 
+	}
+}

@@ -1,0 +1,188 @@
+package com.gsccs.cms.controller.module;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.module.model.Guestbook;
+import com.gsccs.cms.module.service.GuestBookService;
+import com.gsccs.cms.wx.service.MpMsgService;
+
+/**
+ * 留言本相关操作
+ * 
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/guestbook")
+public class GuestbookController extends CmsBaseController {
+	
+	private String WXAPPID = "wx1562950d23bf4c3a";
+	private String tmlShortId = "OPENTM406851402";
+
+	@Resource
+	private GuestBookService guestbookService;
+	@Resource
+	private MpMsgService mpMsgService;
+
+	/**
+	 * 留言列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String list(Guestbook guestbook, String type,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize, ModelMap map,
+			HttpServletResponse response) {
+		if (guestbook == null) {
+			guestbook = new Guestbook();
+		}
+		guestbook.setType(type);
+		guestbook.setSiteid(getWxApp().getAppId());
+		List<Guestbook> guestbookList = guestbookService.find(guestbook, order,
+				currPage, pageSize, false);
+		int totalCount = guestbookService.count(guestbook, false);
+		Pager pager = new Pager(request);
+		pager.appendParam("title");
+		pager.appendParam("name");
+		pager.appendParam("state");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("guestbook/list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", guestbookList);
+		map.put("order", order);
+		map.put("guestbook", guestbook);
+
+		return "module/guestbook";
+	}
+
+	/**
+	 * 办理 页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/pro.do")
+	public String guestbookPro(String id,Guestbook guestbook, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			guestbook = guestbookService.findById(id);
+		}
+		map.put("guestbook", guestbook);
+		return "module/guestbookPro";
+	}
+
+	/**
+	 * 办理
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/proDo.do")
+	@ResponseBody
+	public String guestbookProDo(String id,String content,String name,
+			ModelMap map, HttpServletResponse response) {
+		if(StringUtils.isNotEmpty(id)){
+			//更新事项状态
+			Guestbook guestbook=guestbookService.findById(id);
+			guestbook.setState("1");
+			guestbookService.update(guestbook);
+			
+			//增加处理事项数据
+			Guestbook reGuestbook=new Guestbook();
+			reGuestbook.setId(UUID.randomUUID().toString());
+			reGuestbook.setParid(id);
+			reGuestbook.setName(name);
+			reGuestbook.setContent(content);
+			guestbookService.add(reGuestbook);
+			
+			//发送模板消息通知用户
+			String url = "#";
+			// 发送模板通知
+			Map<String,String> data = new HashMap<String, String>();
+			data.put("first", "您好，我们已成功处理您提交的事项");
+			data.put("keyword1", guestbook.getAddtimeStr());
+			data.put("keyword2", "事项上报");
+			data.put("keyword3", "已处理");
+			data.put("remark", reGuestbook.getContent());
+			mpMsgService.sendMsg(WXAPPID, guestbook.getMemberid(), tmlShortId, url, data);
+			
+			return "success";
+		}
+		
+		return null;
+	}
+
+	/**
+	 * 查看留言详情 页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/check.do")
+	public String guestbookCheck(Guestbook guestbook, ModelMap map,
+			HttpServletResponse response){
+		if (guestbook != null && guestbook.getId() != null
+				&& guestbook.getId().trim().length() > 0) {
+			guestbook = guestbookService.findById(guestbook.getId());
+		}
+		map.put("guestbook", guestbook);
+		return "guestbook/check";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/del.do")
+	public String guestbookDel(String ids, String pageFuncId, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Guestbook guestbook = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							guestbook = guestbookService.findById(idArr[i]);
+							if (guestbook != null) {
+								guestbookService.del(guestbook.getId());
+								msg = "删除留言(" + guestbook.getTitle() + ")成功!";
+								map.put("forwardSeconds", 3);
+							}
+						} catch (Exception e) {
+							map.put("forwardSeconds", 0);
+							e.printStackTrace();
+							msg = "删除留言(" + guestbook.getTitle() + ")失败:"
+									+ e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "guestbook/list.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+}

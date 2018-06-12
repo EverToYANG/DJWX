@@ -1,0 +1,66 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<%@include file="/include/bsie_head.jsp" %>
+
+  </head>
+
+<body >
+<%@include file="/include/loading.jsp" %>
+<div class="widget-content nopadding">
+								<form class="form-horizontal" method="post" action="templetLinkEditDo.do" name="form" id="form"  onsubmit="return formCheck();"/>
+                                   <input type="hidden" name="id" value="${templetLink.id }">
+									<input type="hidden" name="templet"  value="${param.templetid }"/>
+                                    <div id="nameDiv" class="control-group">
+                                        <label class="control-label" style="width:160px">链接分类名称</label>
+                                        <div class="controls" style="margin-left: 190px;">
+                                            <input type="text" name="name" id="name" style="width:160px" value="${templetLink.name }"/>
+      <span  style="color:Red;">*</span>
+      <span class="help-inline" id="nameHelp"></span>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">链接分类类型</label>
+                                        <div class="controls" style="margin-left: 190px;">
+											<select name="type" style="width:70px" >
+											<option value="<%=Link.TYPE_DOWN  %>" ${templetLink.type == "1" ?"selected":"" }>下拉</option>
+											<option value="<%=Link.TYPE_IMG %>" ${templetLink.type == "2" ?"selected":"" }>图片</option>
+											<option value="<%=Link.TYPE_TEXT %>" ${templetLink.type == "3" ?"selected":"" }>文字</option>
+											</select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="pagemarkDiv" class="control-group" >
+                                        <label class="control-label" style="width:160px">页面标识</label>
+                                        <div class="controls" style="margin-left: 190px;">
+								<INPUT rel="tooltip" data-placement="top" title="用于唯一区分此栏目在页面中的位置" id=pagemark type="text" maxLength=50 type=text name=pagemark  style="width:160px" value="${templetLink.pagemark }">
+      <span class="help-inline" id="pagemarkHelp"></span>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">有效</label>
+                                        <div class="controls" style="margin-left: 190px;">
+											<label style="float:left"><input type="radio" name="isok" value="1" checked/>是</label>
+											<label style="float:left"><input type="radio" name="isok" value="0" ${"0"==templetLink.isok?"checked":"" }/>否</label>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">排序</label>
+                                        <div class="controls" style="margin-left: 190px;">
+                                            <input type="text" name="ordernum" id="ordernum" style="width:160px"   value="${templetLink.ordernum }"
+                                          oninput=if(!isInt(value))value=''   onpropertychange=if(!isInt(value))execCommand('undo')  onkeyup=if(!isInt(value))execCommand('undo') onafterpaste=if(!isInt(value))execCommand('undo') />
+                                        </div>
+                                    </div>
+                                </form>
+							</div>
+<%@include file="/include/bsie_foot.jsp" %>
+<script src="${pageContext.request.contextPath}/static/common/js/check.js"></script>
+<script src="${pageContext.request.contextPath}/static/common/js/checkLoginName.js"></script>
+<script src="${pageContext.request.contextPath}/static/admin/cms/js/templetLink.js"></script>
+</body></html>

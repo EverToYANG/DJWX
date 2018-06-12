@@ -1,0 +1,39 @@
+<%@ page language="java" pageEncoding="UTF-8"%>
+<%@page import="java.net.URLEncoder"%>
+<%@page import="java.util.List"%>
+<%@page import="java.io.File"%>
+<%@page import="com.gsccs.cms.bass.utils.FileUtil"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%
+if(request.getAttribute("folders")!=null){
+	List<File> folders=(List<File>)request.getAttribute("folders");
+	if(folders!=null && folders.size()>0){
+		for(int i=0;i<folders.size();i++){
+			%>
+			
+<tr treeItemLevel="${level }">
+	<td>
+	
+	<c:forEach begin="1" end="${level}" var="i">
+	<img align="absmiddle" src="${pageContext.request.contextPath}/static/tree/image/empty.gif" />
+	</c:forEach>
+	<%
+	if(FileUtil.hasSonFolder(folders.get(i))){
+		%>
+	<img align="absmiddle" style="cursor:pointer" onClick="displayChildren(this);" isAjax="true" isOpen="false" id="${currFolderPath}/<%=folders.get(i).getName() %>" src="${pageContext.request.contextPath}/static/tree/image/plus.gif" />
+		<%
+	}else{
+		%>
+	<img align="absmiddle" src="${pageContext.request.contextPath}/static/tree/image/empty.gif" />
+		<%
+	}
+	%>
+	<img align="absmiddle" border="0" src="${pageContext.request.contextPath}/static/tree/image/folder.gif" />&nbsp;
+	<a href="#" onclick="folderSelect('${currFolderPath}/<%=folders.get(i).getName() %>')"><%=folders.get(i).getName() %></a>
+	</td>
+</tr>
+<%
+		}
+	}
+}
+%>

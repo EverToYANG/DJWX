@@ -1,0 +1,62 @@
+package com.gsccs.cms.freemarker.directive;
+
+import java.io.IOException;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.bass.base.BaseDirective;
+import com.gsccs.cms.core.model.Job;
+import com.gsccs.cms.core.service.JobService;
+
+import freemarker.core.Environment;
+import freemarker.ext.beans.BeanModel;
+import freemarker.ext.beans.BeansWrapper;
+import freemarker.template.TemplateDirectiveBody;
+import freemarker.template.TemplateDirectiveModel;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateModel;
+
+/**
+ * 提取指定id的职位
+ * 参数 id 职位id cache 是否使用缓存，默认为false
+ * 
+ * 返回值 job 职位对象
+ * 
+ * 示例 <@job id="03d86aaa-0b64-44a4-a1ff-e154591a8379" ; job> ${job.name!""}
+ * </@job>
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+
+@Service("jobDirective")
+public class JobDirective extends BaseDirective implements
+		TemplateDirectiveModel {
+
+	@Resource
+	private JobService jobService;
+
+	public void execute(Environment env, Map params, TemplateModel[] loopVars,
+			TemplateDirectiveBody body) throws TemplateException, IOException {
+		if (body != null) {
+			// 设置循环变量
+			if (loopVars != null && loopVars.length > 0) {
+				// 查询
+				String id = getParam(params, "id");
+				boolean cache = "true".equals(getParam(params, "cache")) ? true
+						: false;
+				Job job = jobService.findById(id, cache);
+				if (job == null) {
+					job = new Job();
+				}
+				loopVars[0] = new BeanModel(job, new BeansWrapper());
+				body.render(env.getOut());
+			}
+		}
+	}
+
+}

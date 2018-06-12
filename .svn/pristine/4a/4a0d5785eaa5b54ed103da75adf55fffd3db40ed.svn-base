@@ -1,0 +1,107 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.Date;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.MemberBaseController;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.core.service.ContentService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.module.model.Collect;
+import com.gsccs.cms.module.service.CollectService;
+
+/**
+ * 收藏相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebCollectController")
+@RequestMapping("/web")
+public class WebCollectController extends MemberBaseController {
+	
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private CollectService collectService;
+	@Resource
+	private ContentService contentService;
+	@Resource
+	private ChannelService channelService;
+
+	/**
+	 * ajax收藏
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/storeAjax.htm")
+	public String storeAjax(Collect store, ModelMap map,
+			HttpServletResponse response) {
+		String msg = "";
+		if (getLoginMember() != null) {
+			if (store != null && StringUtils.isNotEmpty(store.getObjid())
+					&& StringUtils.isNotEmpty(store.getObjtype())) {
+				try {
+					// 查询是否已收藏
+					store.setMemberid(getLoginMember().getId());
+					if (collectService.count(store) > 0) {
+						msg = "您已收藏";
+					} else {
+						// 查询收藏对象
+						boolean haveObj = false;
+						if ("info".equals(store.getObjtype())) {
+							Content info = contentService.findById(store
+									.getObjid());
+							if (info != null) {
+								haveObj = true;
+								store.setObjtitle(info.getTitle());
+							}
+						}
+						if (haveObj) {
+							// 保存收藏数据
+							if (StringUtils.isNotEmpty(store.getSiteid())) {
+								Site site = siteService.findById(store
+										.getSiteid());
+								if (site != null) {
+									store.setSitename(site.getName());
+								}
+							}
+							if (StringUtils.isNotEmpty(store.getChannelid())) {
+								Channel channel = channelService.findById(store
+										.getChannelid());
+								if (channel != null) {
+									store.setChannelname(channel.getName());
+								}
+							}
+							store.setStoretime(new Date());
+							collectService.insert(store);
+							msg = "收藏成功";
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					msg = "收藏失败";
+				}
+			} else {
+				msg = "请传递objid和objtype参数";
+			}
+		} else {
+			msg = "请先登陆会员";
+		}
+		ResponseUtil.writeUTF(response, msg);
+		return null;
+	}
+
+}

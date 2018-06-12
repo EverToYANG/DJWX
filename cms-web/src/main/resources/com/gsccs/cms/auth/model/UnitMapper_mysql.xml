@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gsccs.cms.auth.dao.UnitMapper">
+	<cache type="org.mybatis.caches.ehcache.EhcacheCache" />
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.auth.model.Unit">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="parId" jdbcType="VARCHAR" property="parid" />
+		<result column="isOk" jdbcType="VARCHAR" property="isok" />
+		<result column="corpid" jdbcType="VARCHAR" property="corpid" />
+		<result column="orderNum" jdbcType="INTEGER" property="ordernum" />
+		<!--  -->
+		<result column="corptitle" jdbcType="VARCHAR" property="corptitle" />
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" prefixOverrides="and" suffix=")">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach close=")" collection="criterion.value" item="listItem"
+										open="(" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" prefixOverrides="and" suffix=")">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach close=")" collection="criterion.value" item="listItem"
+										open="(" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	
+	<sql id="Base_Column_List">
+		id, name, parId, isOk,corpid, orderNum
+	</sql>
+	
+	<sql id="selectByExampleSql">
+		select distinct a.*,b.title as corptitle
+		from sys_unit a
+		left join cms_wx_app b on a.corpid = b.id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</sql>
+	<select useCache="false" id="selectByExample"
+		parameterType="com.gsccs.cms.auth.model.UnitExample" resultMap="BaseResultMap">
+		<include refid="selectByExampleSql" />
+	</select>
+	<select useCache="true" id="selectByExampleCache"
+		parameterType="com.gsccs.cms.auth.model.UnitExample" resultMap="BaseResultMap">
+		<include refid="selectByExampleSql" />
+	</select>
+
+	<select useCache="false" id="selectPageByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.auth.model.UnitExample">
+		SELECT *
+		FROM sys_unit
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</select>
+
+	<select useCache="false" id="findByUser"
+		parameterType="com.gsccs.cms.auth.model.UnitExample" resultMap="BaseResultMap">
+		select
+		* from sys_unit unit left join sys_unit_user unit_user on
+		unit.id=unit_user.unit where unit_user.users='${userId}' and
+		unit.isOk='1'
+	</select>
+	<select useCache="false" id="selectByPrimaryKey" parameterType="java.lang.Long"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from sys_unit
+		where id = #{id,jdbcType=BIGINT}
+	</select>
+
+	<select useCache="false" id="selectUnitByparid" parameterType="java.lang.Long"
+		resultMap="BaseResultMap">
+		select distinct a.*,b.title as corptitle
+		from sys_unit a
+		left join cms_wx_app b on a.corpid = b.id
+		where a.parid = #{parid,jdbcType=BIGINT}
+	</select>
+
+
+	<select useCache="false" id="selectUnitByCorpid" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from sys_unit
+		where corpid = #{corpid,jdbcType=VARCHAR}
+	</select>
+
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from
+		sys_unit
+		where id = #{id,jdbcType=BIGINT}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.auth.model.UnitExample">
+		delete from sys_unit
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.gsccs.cms.auth.model.Unit">
+		insert into sys_unit (id,
+		name, parId,
+		isOk,corpid, orderNum)
+		values (#{id,jdbcType=BIGINT},
+		#{name,jdbcType=VARCHAR},
+		#{parid,jdbcType=BIGINT},
+		#{isok,jdbcType=VARCHAR}, 
+		#{corpid,jdbcType=VARCHAR},
+		#{ordernum,jdbcType=INTEGER})
+	</insert>
+
+	<select useCache="false" id="countByExample"
+		parameterType="com.gsccs.cms.auth.model.UnitExample" resultType="java.lang.Integer">
+		select count(*) from sys_unit
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	
+	
+	
+	<update id="updatePar" parameterType="com.gsccs.cms.auth.model.Unit">
+		update sys_unit
+		<set>
+			<if test="parid != null">
+				parId = #{parid,jdbcType=BIGINT},
+			</if>
+		</set>
+		where id = #{id,jdbcType=BIGINT}
+	</update>
+	
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.auth.model.Unit">
+		update sys_unit
+		<set>
+			<if test="name != null">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="parid != null">
+				parId = #{parid,jdbcType=VARCHAR},
+			</if>
+			<if test="isok != null">
+				isOk = #{isok,jdbcType=CHAR},
+			</if>
+			<if test="corpid != null">
+				corpid = #{corpid,jdbcType=CHAR},
+			</if>
+			<if test="ordernum != null">
+				orderNum = #{ordernum,jdbcType=INTEGER},
+			</if>
+		</set>
+		where id = #{id,jdbcType=BIGINT}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.auth.model.Unit">
+		update sys_unit
+		set name = #{name,jdbcType=VARCHAR},
+		parId = #{parid,jdbcType=BIGINT},
+		isOk = #{isok,jdbcType=VARCHAR},
+		corpid = #{corpid,jdbcType=VARCHAR},
+		orderNum = #{ordernum,jdbcType=INTEGER}
+		where id =
+		#{id,jdbcType=BIGINT}
+	</update>
+	<sql id="Example_Clause">
+		<foreach collection="oredCriteria" item="criteria" separator="or">
+			<if test="criteria.valid">
+				<trim>
+					<foreach collection="criteria.criteria" item="criterion">
+						<choose>
+							<when test="criterion.noValue">
+								and ${criterion.condition}
+							</when>
+							<when test="criterion.singleValue">
+								and ${criterion.condition} #{criterion.value}
+							</when>
+							<when test="criterion.betweenValue">
+								and ${criterion.condition} #{criterion.value} and
+								#{criterion.secondValue}
+							</when>
+							<when test="criterion.listValue">
+								and ${criterion.condition}
+								<foreach close=")" collection="criterion.value" item="listItem"
+									open="(" separator=",">
+									#{listItem}
+								</foreach>
+							</when>
+						</choose>
+					</foreach>
+				</trim>
+			</if>
+		</foreach>
+	</sql>
+</mapper>

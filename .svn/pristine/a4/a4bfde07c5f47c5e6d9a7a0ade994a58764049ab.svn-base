@@ -1,0 +1,121 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib prefix="fs" uri="/fs-tags" %>
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<%@include file="/include/bsie_head.jsp" %>
+
+  </head>
+
+<body>
+	<%@include file="/include/loading.jsp" %>
+          <div class="container-fluid" >
+      <div class="row-fluid">
+
+<div class="widget-box">
+							<div class="widget-title">
+								<span class="icon">
+									<i class="icon-edit"></i>
+								</span>
+								<h5>个人资料</h5>
+							</div>
+							<div class="widget-content nopadding">
+							
+									<div class="widget-content nopadding">
+								<form class="form-horizontal" method="post" enctype="multipart/form-data" action="profileDo.do" name="form" id="form"  onsubmit="return formCheck();">
+                                   <input type="hidden" name="id" id="id" value="${user.id }">
+                                    
+                                    <div id="loginnameDiv" class="control-group">
+                                        <label class="control-label" style="width:160px">登录名</label>
+                                        <div class="controls" style="margin-left: 190px;">
+                                           ${loginMember.loginname }
+                                        </div>
+                                    </div>
+                                    <div id="nameDiv" class="control-group">
+                                        <label class="control-label" style="width:160px">真实姓名</label>
+                                        <div class="controls" style="margin-left: 190px;">
+								<INPUT  id=name maxLength=50 type=text name=name value="${loginMember.name }">
+      <span  style="color:Red;">*</span>
+      <span class="help-inline" id="nameHelp"></span>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">性别</label>
+                                        <div class="controls" style="margin-left: 190px;">
+											<label style="float:left"><input type="radio" name="sex" value="1" checked/>男</label>
+											<label style="float:left"><input type="radio" name="sex" value="0" ${"0"==loginMember.sex?"checked":"" }/>女</label>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">出生日期</label>
+                                        <div class="controls" style="margin-left: 190px;">
+                                        <input name="birthday" id="birthday" type="text" size="14" readonly value="${loginMember.birthdayStr }"  onClick="WdatePicker({skin:'default',dateFmt:'yyyy-MM-dd',maxDate:'%y-%M-%d'})"/>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">联系电话</label>
+                                        <div class="controls" style="margin-left: 190px;">
+								<INPUT  maxLength=50 type=text name=tel value="${loginMember.tel }"></div>
+                                    </div>
+                                    <div class="control-group">
+                                        <label class="control-label" style="width:160px">手机</label>
+                                        <div class="controls" style="margin-left: 190px;">
+								<INPUT  maxLength=50 type=text name=mobilephone value="${loginMember.mobilephone }"></div>
+                                    </div>
+                                    <div id="emailDiv" class="control-group">
+                                        <label class="control-label" style="width:160px">电子邮箱</label>
+                                        <div class="controls" style="margin-left: 190px;">
+								<INPUT id="email"
+									maxLength=50 type=text name=email value="${loginMember.email }">
+      <span class="help-inline" id="emailHelp"></span>
+                                        </div>
+                                    </div>
+                                    <div  class="control-group">
+                                        <label class="control-label" style="width:160px">头像</label>
+                                        <div class="controls" style="margin-left: 190px;">
+								<input type="hidden" id="oldImg" name="oldImg" value="${loginMember.img }"/>
+							<c:if test='${loginMember.img!=null && loginMember.img != "" && loginMember.img != "null"}'>
+							<span id="oldImgSpan">
+							<a href="${pageContext.request.contextPath}${loginMember.img }?date=<%=UUID.randomUUID() %>" target="_blank"  title="点击查看大图" rel="tooltip" data-placement="top">
+							<img src="${pageContext.request.contextPath}${loginMember.img }?date=<%=UUID.randomUUID() %>" style="width:200px" />
+							</a>
+							<a href="javascript:delImg()" class="btn">删除原有头像</a>
+							<br/>
+							</span>
+							</c:if>
+									<input type="file" name="imgfile"  id="imgfile">
+                                        </div>
+                                    </div>
+                                    <div id="introDiv" class="control-group">
+                                        <label class="control-label" style="width:160px">简介</label>
+                                        <div class="controls" style="margin-left: 190px;">
+                                            <textarea   id=intro name=intro cols="40"  rows="3">${loginMember.intro }</textarea>
+      <span class="help-inline" id="introHelp"></span>
+                                        </div>
+                                    </div>
+                                    <div class="control-group">
+                                        <div class="controls" style="margin-left: 190px;">
+											<input type="submit"   class="btn btn-primary" value="保 存" />
+                                        </div>
+                                    </div>
+                                </form>
+							</div>
+	<%@include file="/include/foot.jsp" %>
+<script src="${pageContext.request.contextPath}/static/common/js/check.js"></script>
+<script src="${pageContext.request.contextPath}/static/common/js/checkLoginName.js"></script>
+<script src="${pageContext.request.contextPath}/member/js/profile.js"></script>
+<script src="${pageContext.request.contextPath}/static/My97DatePicker/WdatePicker.js"></script>
+							
+						</div>
+      </div><!--/row-->
+          
+          
+        </div><!--/span-->
+
+
+</body></html>

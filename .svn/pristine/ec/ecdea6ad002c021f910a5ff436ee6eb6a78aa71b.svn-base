@@ -1,0 +1,97 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="fs" uri="/fs-tags"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="">
+<meta name="author" content="">
+
+<%@include file="/include/bsie_head.jsp"%>
+
+</head>
+
+<body>
+	<%@include file="/include/loading.jsp"%>
+	<jsp:include page="/head.do" flush="true" />
+	<div class="container-fluid">
+		<div class="row-fluid">
+
+			<div class="widget-box">
+				<div class="widget-title">
+					<span class="icon"> <i class="icon-edit"></i>
+					</span>
+					<h5>静态化</h5>
+				</div>
+				<div class="widget-content nopadding">
+
+					<div class="widget-content nopadding">
+						<form class="form-horizontal" method="post" action="infoMakehtml.do" name="form" id="form">
+							<input type="hidden" name="pageFuncId" id="pageFuncId" value="${param.pageFuncId }" /> <input type="hidden" name="id" value="${info.id }" />
+
+
+							<div class="control-group">
+								<div class="controls" style="margin-left: 190px;">操作成功，请选择需要静态化的内容。</div>
+							</div>
+							<div class="control-group">
+								<div class="controls" style="margin-left: 190px;">
+									<input type="checkbox" name="htmlChannel" value="1" checked />所属栏目页面静态化
+								</div>
+							</div>
+							<c:if test='${oldchannelid !=null && oldchannelid!="" && info.channel != oldchannelid}'>
+								<div class="control-group">
+									<div class="controls" style="margin-left: 190px;">
+										<input type="hidden" name="oldchannelid" value="${oldchannelid }" /> <input type="checkbox" name="htmlChannelOld" value="1" checked />原所属栏目页面静态化
+									</div>
+								</div>
+							</c:if>
+							<div class="control-group">
+								<div class="controls" style="margin-left: 190px;">
+									<input type="checkbox" name="htmlChannelPar" value="1" checked />所属栏目的所有父栏目页面静态化
+								</div>
+							</div>
+							<div class="control-group">
+								<div class="controls" style="margin-left: 190px;">
+									<input type="checkbox" name="htmlIndex" value="1" checked />站点首页静态化
+								</div>
+							</div>
+
+
+							<div class="control-group">
+								<div class="controls" style="margin-left: 190px;">
+									<input type="submit" class="btn btn-primary" value="立即静态化" />&nbsp;
+									<c:if test='${"channel"==type}'>
+										<input type="button" value="不，我要继续添加信息" onclick="location.href='infoEdit.do?isShowHead=${param.isShowHead }&channelid=${info.channel }&pageFuncId=${pageFuncId }'" class="btn" />
+									</c:if>
+									<c:if test='${"channel"!=type}'>
+										<input type="button" value="不，我要继续添加信息" onclick="location.href='infoEdit.do?isShowHead=${param.isShowHead }&pageFuncId=${pageFuncId }'" class="btn" />
+									</c:if>
+								</div>
+							</div>
+						</form>
+					</div>
+					<%@include file="/include/foot.jsp"%>
+					<script src="${pageContext.request.contextPath}/static/common/js/check.js"></script>
+					<script src="${pageContext.request.contextPath}/static/common/js/checkLoginName.js"></script>
+					<script src="${pageContext.request.contextPath}/static/admin/cms/js/channel.js"></script>
+
+					<script type="text/javascript" charset="utf-8" src="${pageContext.request.contextPath}/static/editor/ueditor/ueditor.config.js.jsp"></script>
+					<script type="text/javascript" charset="utf-8" src="${pageContext.request.contextPath}/static/editor/ueditor/ueditor.all.min.js"> </script>
+					<!--建议手动加在语言，避免在ie下有时因为加载语言失败导致编辑器加载失败-->
+					<!--这里加载的语言文件会覆盖你在配置项目里添加的语言类型，比如你在配置项目里配置的是英文，这里加载的中文，那最后就是中文-->
+					<script type="text/javascript" charset="utf-8" src="${pageContext.request.contextPath}/static/editor/ueditor/lang/zh-cn/zh-cn.js"></script>
+					<script type="text/javascript">
+    //实例化编辑器
+    var ue = UE.getEditor('editor');
+    </script>
+				</div>
+			</div>
+			<!--/row-->
+
+
+		</div>
+		<!--/span-->
+</body>
+</html>

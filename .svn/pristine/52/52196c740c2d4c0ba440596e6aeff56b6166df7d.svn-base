@@ -1,0 +1,216 @@
+package com.gsccs.cms.controller.core;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Templet;
+import com.gsccs.cms.core.model.TempletLink;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.TempletLinkService;
+import com.gsccs.cms.core.service.TempletService;
+
+/**
+ * 
+ * 模板链接分类相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller
+@RequestMapping("/cms")
+public class TempletLinkController extends CmsBaseController {
+	@Resource
+	private TempletService templetService;
+	@Resource
+	private TempletLinkService templetLinkService;
+	@Resource
+	private SiteService siteService;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetLink.do")
+	public String templetLink(String id, String pageFuncId,
+			@RequestParam(defaultValue = "") String order, ModelMap map,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			Templet templet = templetService.findById(id);
+			if (templet != null) {
+				TempletLink templetLink = new TempletLink();
+				templetLink.setTemplet(id);
+				templetLink.setIsClass("1");
+				if (order.trim().length() == 0) {
+					order = " ordernum ";
+				}
+				map.put("templetLinkList",
+						templetLinkService.findAll(templetLink, order));
+			}
+		}
+		return "cms/templetLink";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetLinkEdit.do")
+	public String templetLinkEdit(String id, ModelMap map,
+			HttpServletResponse response){
+		if (StringUtils.isNotEmpty(id)) {
+			map.put("templetLink", templetLinkService.findById(id));
+		}
+		return "cms/templetLinkEdit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	
+	@RequestMapping("/templetLinkEditDo.do")
+	public String templetLinkEditDo(TempletLink templetLink, ModelMap map,
+			HttpServletResponse response){
+		String oper = "添加";
+		try {
+			if (StringUtils.isNotEmpty(templetLink.getId())) {
+				TempletLink oldlink = templetLinkService.findById(templetLink
+						.getId());
+				if (oldlink != null) {
+					// 如果原来有和现在的pagemark不同则判断新的pagemark是否存在
+					if (templetLink.getPagemark() != null
+							&& templetLink.getPagemark().trim().length() > 0
+							&& oldlink.getPagemark() != null
+							&& !oldlink.getPagemark().equals(
+									templetLink.getPagemark())) {
+						if (templetLinkService.hasPagemark(
+								templetLink.getTemplet(),
+								templetLink.getType(), true,
+								templetLink.getPagemark())) {
+							map.put("msg", "此页面标识已存在!");
+							map.put("isBack", true);
+							return "admin/msg";
+						}
+					}
+					oldlink.setTemplet(templetLink.getTemplet());
+					oldlink.setType(templetLink.getType());
+					oldlink.setName(templetLink.getName());
+					oldlink.setOrdernum(templetLink.getOrdernum());
+					oldlink.setIsok(templetLink.getIsok());
+					oldlink.setImg(templetLink.getImg());
+					oldlink.setPagemark(templetLink.getPagemark());
+					oper = "修改";
+					templetLinkService.update(oldlink);
+				}
+			} else {
+				// 添加
+				// 判断页面标识是否已存在
+				if (templetLink.getPagemark() != null
+						&& templetLink.getPagemark().trim().length() > 0
+						&& templetLinkService.hasPagemark(
+								templetLink.getTemplet(),
+								templetLink.getType(), true,
+								templetLink.getPagemark())) {
+					map.put("msg", "此页面标识已存在!");
+					map.put("isBack", true);
+					return "admin/msg";
+				}
+				templetLinkService.add(templetLink);
+			}
+			msg = oper + "模板链接分类(" + templetLink.getName() + ")成功!";
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = oper + "模板链接分类(" + templetLink.getName() + ")失败:"
+					+ e.toString() + "!";
+		}
+		operlogService.log(getLoginName(), msg, request);
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	
+	@RequestMapping("/templetLinkDel.do")
+	public String templetLinkDel(String pageFuncId, String ids,
+			String templetid, ModelMap map, HttpServletResponse response)
+			{
+		if (ids != null && ids.trim().length() > 0) {
+			StringBuilder sb = new StringBuilder();
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				TempletLink templetLink = null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							templetLink = templetLinkService.findById(idArr[i]);
+							if (templetLink != null) {
+								templetLinkService.delClass(idArr[i]);
+								sb.append(idArr[i] + ";");
+								msg = "删除模板链接分类(" + templetLink.getName()
+										+ ")成功!";
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+							msg = "删除模板链接分类(" + templetLink.getName() + ")失败:"
+									+ e.toString() + "!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "templetLink.do?pageFuncId=" + pageFuncId
+				+ "&id=" + templetid);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 从站点导入
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/templetLinkImportSite.do")
+	public String templetLinkImportSite(String siteid, String templetid,
+			ModelMap map, HttpServletResponse response){
+		if (StringUtils.isNotEmpty(siteid) && StringUtils.isNotEmpty(templetid)) {
+			try {
+				Site site = siteService.findById(siteid);
+				Templet templet = templetService.findById(templetid);
+				templetLinkService.importSite(templet, site);
+				msg = "导入成功";
+			} catch (Exception e) {
+				msg = "导入失败:" + e.getMessage();
+			}
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+}

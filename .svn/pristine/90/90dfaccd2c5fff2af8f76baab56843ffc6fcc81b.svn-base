@@ -1,0 +1,75 @@
+package com.gsccs.cms.member.service;
+
+import java.util.List;
+
+import com.gsccs.cms.member.model.PartyMember;
+import com.gsccs.cms.member.model.PartyMemberExample.Criteria;
+
+/**
+ * 党员服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public interface PartyMemberService {
+
+	/**
+	 * 分页查询
+	 */
+	public List<PartyMember> find(PartyMember member, String order,
+			int currPage, int pageSize);
+
+	/**
+	 * 查询
+	 */
+	public List<PartyMember> find(PartyMember member, String order);
+
+	/**
+	 * 统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int count(PartyMember member);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public PartyMember findById(String id);
+
+	/**
+	 * 更新
+	 * 
+	 * @param question
+	 */
+	public void update(PartyMember member);
+
+	/**
+	 * 添加
+	 * 
+	 * @param 
+	 * @return
+	 */
+	public String add(PartyMember member);
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void del(String id);
+
+	/**
+	 * 判断会员是否存在
+	 * 
+	 * @param member
+	 * @return
+	 */
+	public boolean have(PartyMember member);
+
+}

@@ -1,0 +1,126 @@
+package com.gsccs.cms.bass.jobs;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.bass.utils.ZipTools;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.util.CmsConst;
+
+/**
+ * 站点备份
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Component
+public class DataBackupJob {
+	
+	private static Logger logger = Logger.getLogger("DataBackup");
+	
+	private String dbUserName;
+	private String dbPassword;
+	private String dbName;
+	private String backupPath;
+	
+	@Resource
+	private ConfigService configService;
+	@Resource
+	private SiteService siteService;
+	
+	public void work() {
+		dbBackup();
+		siteBackup();
+	}
+	
+	//数据库备份
+	private void dbBackup(){
+		String MYSQL_BACK_NAME = dbName + "_v_";
+		DateFormat format = new SimpleDateFormat("yyyyMMdd");
+		MYSQL_BACK_NAME = MYSQL_BACK_NAME+format.format(new Date())+".sql";
+		String dbPath = backupPath+File.separator+"db_bakscript"+File.separator;
+		String backcmd = "mysqldump -u"+dbUserName+" -p"+dbPassword+" "+dbName+" > "+dbPath +MYSQL_BACK_NAME+"";
+		try {
+			Runtime rt = Runtime.getRuntime();
+			rt.exec("sh " + backcmd);
+			logger.info("数据库备份完成");
+		} catch (IOException e) {
+			//e.printStackTrace();
+			logger.info("数据库备份失败!"+e.getMessage());
+		}
+	}
+	
+	//站点备份
+	private void siteBackup(){
+		Config sitePathConfig = configService.findByCode(CmsConst.SITE_ROOT_PATH_CODE);
+		String rootPath = sitePathConfig.getCodeval();
+		
+		String sitePath = "";
+		String siteBakfile = backupPath;
+		DateFormat format = new SimpleDateFormat("yyyyMMdd");
+		//所有站点列表
+		List<Site> siteList = siteService.selectByParId("");
+		if (null != siteList){
+			for (Site site:siteList){
+				sitePath = rootPath+File.separator+site.getSourcepath()+File.separator;
+				siteBakfile = siteBakfile+site.getId()+"_"+format.format(new Date())+".zip";
+				try {
+					ZipTools.zip(sitePath, siteBakfile);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
+	}
+
+	public String getDbUserName() {
+		return dbUserName;
+	}
+
+	public void setDbUserName(String dbUserName) {
+		this.dbUserName = dbUserName;
+	}
+
+	public String getDbPassword() {
+		return dbPassword;
+	}
+
+	public void setDbPassword(String dbPassword) {
+		this.dbPassword = dbPassword;
+	}
+
+	public String getDbName() {
+		return dbName;
+	}
+
+	public void setDbName(String dbName) {
+		this.dbName = dbName;
+	}
+
+	public String getBackupPath() {
+		return backupPath;
+	}
+
+	public void setBackupPath(String backupPath) {
+		this.backupPath = backupPath;
+	}
+	
+	
+	
+
+}

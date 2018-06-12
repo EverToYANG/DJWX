@@ -1,0 +1,232 @@
+package com.gsccs.cms.bass.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.web.bind.ServletRequestDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.model.Roles;
+import com.gsccs.cms.auth.model.Unit;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.ConfigService;
+import com.gsccs.cms.auth.service.RoleService;
+import com.gsccs.cms.auth.service.UnitService;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.utils.StringEscapeEditor;
+import com.gsccs.cms.bass.utils.SysUtil;
+
+/**
+ * 控制器父类
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public class BaseController {
+
+	@Resource
+	protected HttpServletRequest request;
+	@Resource
+	protected HttpSession session;
+	@Resource
+	protected ConfigService configService;
+	@Resource
+	protected RoleService roleService;
+	@Resource
+	protected UnitService unitService;
+	@Resource
+	protected UserService userService;
+
+	protected String msg;
+
+	@InitBinder
+	public void initBinder(ServletRequestDataBinder binder) {
+		/**
+		 * 自动转换日期类型的字段格式
+		 */
+		// binder.registerCustomEditor(Date.class, new CustomDateEditor(new
+		// SimpleDateFormat("yyyy-MM-dd"), true));
+
+		/**
+		 * 防止XSS攻击
+		 */
+		binder.registerCustomEditor(String.class, new
+		StringEscapeEditor(true, false));
+	}
+
+	public ServletContext getApplication() {
+		return SysUtil.wac.getServletContext();
+	}
+
+	public String getBasePath() {
+		String path = request.getContextPath();
+		String basePath = request.getScheme() + "://" + request.getServerName()
+				+ ":" + request.getServerPort() + path + "/";
+		return basePath;
+	}
+
+	/**
+	 * 获取登录用户所属角色
+	 * 
+	 * @return
+	 */
+	public List<Roles> getLoginRoles() {
+		Users user = getLoginUser();
+		List<Roles> roles = roleService.findByUser(user.getId());
+		return roles;
+	}
+
+	/**
+	 * 获取登录用户所属角色组成的sql语句 例:'','',''
+	 * 
+	 * @return
+	 */
+	public String getLoginRoleIdsSql() {
+		List<Roles> list = getLoginRoles();
+		StringBuilder sb = new StringBuilder();
+		if (list != null && list.size() > 0) {
+			for (int i = 0; i < list.size(); i++) {
+				if (i > 0) {
+					sb.append(",");
+				}
+				sb.append("'" + list.get(i).getId() + "'");
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * 获取登录用户所属单位
+	 * 
+	 * @return
+	 */
+	public List<Unit> getLoginUnits() {
+
+		Subject subject = SecurityUtils.getSubject();
+		String username = (String) subject.getPrincipal();
+		Users user = userService.findByLoginName(username);
+		// 先判断session是否存在
+		if (session.getAttribute("loginUnits") != null) {
+			return (List<Unit>) session.getAttribute("loginUnits");
+		} else {
+			// 不存在则重新提取
+			List<Unit> list = unitService.findByUser(user.getId());
+			session.setAttribute("loginUnits", list);
+			return list;
+		}
+	}
+
+	/**
+	 * 获取登录用户所属单位组成的sql语句 例:'','',''
+	 * 
+	 * @return
+	 */
+	public String getLoginUnitIdsSql(Users user) {
+		List<Unit> list = getLoginUnits();
+		StringBuilder sb = new StringBuilder();
+		if (list != null && list.size() > 0) {
+			for (int i = 0; i < list.size(); i++) {
+				if (i > 0) {
+					sb.append(",");
+				}
+				sb.append("'" + list.get(i).getId() + "'");
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * 获取配置
+	 * 
+	 * @return
+	 */
+	public Map<String, Object> getConfig() {
+		if (getApplication().getAttribute("config") != null) {
+			return (Map<String, Object>) getApplication()
+					.getAttribute("config");
+		} else {
+			// 重新生成
+			return setConfig();
+		}
+	}
+
+	/**
+	 * 获取配置值
+	 * 
+	 * @return
+	 */
+	public String getConfigVal(String name) {
+		Map<String, Object> config = getConfig();
+		if (config != null && config.get(name) != null) {
+			return config.get(name).toString();
+		}
+		return "";
+	}
+
+	/**
+	 * 设置配置
+	 * 
+	 * @return
+	 */
+	public Map<String, Object> setConfig() {
+		List<Config> configList = configService.find();
+		Map<String, Object> config = new HashMap<String, Object>();
+		if (configList != null && configList.size() > 0) {
+			for (int i = 0; i < configList.size(); i++) {
+				config.put(configList.get(i).getCode(), configList.get(i)
+						.getCode());
+			}
+		}
+		getApplication().setAttribute("config", config);
+		return config;
+	}
+
+	
+	public Users getLoginUser() {
+		Subject subject = SecurityUtils.getSubject();
+		String username = (String) subject.getPrincipal();
+		Users user = userService.findByLoginName(username);
+		session.setAttribute(AuthConst.CURRENT_USER, user);
+		return user;
+	}
+
+	public String getContextPath() {
+		return request.getContextPath() + "/";
+	}
+
+	public String getContextPathNo() {
+		return request.getContextPath();
+	}
+
+	public HttpServletRequest getRequest() {
+		return request;
+	}
+
+	public void setRequest(HttpServletRequest request) {
+		this.request = request;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getLoginName() {
+		return getLoginUser().getName();
+	}
+
+}

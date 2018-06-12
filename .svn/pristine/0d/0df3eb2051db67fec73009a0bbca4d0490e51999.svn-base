@@ -1,0 +1,112 @@
+//添加属性
+function editAttr(id){
+	openWindow('编辑属性','attributeEdit.do?id='+id,500,500,'false');
+}
+
+//删除属性
+function delAttr(id){
+	if(isCheck()){
+		var confirm = $.scojs_confirm({
+		content: "确定删除操作么?此操作将同时删除该属性下面的参数并且无法回退!",
+		action: function() {
+				location.href="attrDel.do?pageFuncId="+$("#pageFuncId").val()+"&ids="+getCheckValue();
+			}
+		});
+		confirm.show();
+		$("#errorDiv").fadeOut("slow"); 
+	}else{
+		$("#errorDiv").fadeIn("slow"); 
+		$("#errorInfo").html("请选择数据"); 
+	}
+}
+
+//属性参数列表
+function attrParam(attrId){
+	location.href = "attrParam.do?attrId="+attrId;
+}
+
+//编辑属性参数
+function attrParamEdit(id,attrId){
+	openWindow('编辑属性参数','attrParamEdit.do?id='+id+'&attrId='+attrId,500,300,'false');
+}
+
+
+//删除属性参数
+function delAttrParam(id){
+	if(null !=id && id.length >0){
+		var confirm = $.scojs_confirm({
+		content: "确定删除操作么?此操作将无法回退!",
+		action: function() {
+				location.href="attrParamDelDo.do?pageFuncId="+$("#pageFuncId").val()+"&ids="+id;
+			}
+		});
+		confirm.show();
+		$("#errorDiv").fadeOut("slow"); 
+	}else{
+		$("#errorDiv").fadeIn("slow"); 
+		$("#errorInfo").html("请选择数据"); 
+	}
+}
+
+function attrValFormCheck(){
+	
+}
+//表单验证
+function formCheck(){
+	var isCheck=true;
+	if($.trim($("#name").val())==""){
+		$("#nameHelp").html("必须填写");
+		$("#nameDiv").addClass("error");
+		$("#name").focus();
+		isCheck=false;
+	}else{
+		$("#nameHelp").html("");
+		$("#nameDiv").removeClass("error");
+	}
+	return isCheck;
+}
+
+//编辑
+function edit(){
+	if(isCheckOne()){
+		location.href='brandsEdit.do?id='+getCheckOneValue()+"&pageFuncId="+$("#pageFuncId").val();
+	}else{
+		$("#errorDiv").fadeIn("slow"); 
+		$("#errorInfo").html("请选择一条数据"); 
+	}
+}
+
+
+//删除
+function del(){
+	if(isCheck()){
+		var confirm = $.scojs_confirm({
+		content: "确定删除操作么?此操作将同时删除子栏目并且无法回退!",
+		action: function() {
+				location.href="categoryDel.do?pageFuncId="+$("#pageFuncId").val()+"&ids="+getCheckValue();
+			}
+		});
+		confirm.show();
+		$("#errorDiv").fadeOut("slow"); 
+	}else{
+		$("#errorDiv").fadeIn("slow"); 
+		$("#errorInfo").html("请选择数据"); 
+	}
+}
+
+
+function attrFormCheck(){
+	
+	var isCheck=true;
+	if($.trim($("#attrName").val())==""){
+		$("#attrNameHelp").html("必须选择");
+		$("#attrNameDiv").addClass("error");
+		$("#attrName").focus();
+		isCheck=false;
+	}else{
+		$("#attrNameHelp").html("");
+		$("#attrNameDiv").removeClass("error");
+	}
+	
+	return isCheck;
+}

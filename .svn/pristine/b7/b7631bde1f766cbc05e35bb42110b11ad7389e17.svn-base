@@ -1,0 +1,96 @@
+package com.gsccs.cms.controller.weixin;
+
+import io.github.elkan1788.mpsdk4j.mvc.WechatWebSupport;
+import io.github.elkan1788.mpsdk4j.vo.MPAccount;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.gsccs.cms.weixin.model.WxApp;
+import com.gsccs.cms.weixin.service.WxAppService;
+import com.gsccs.weixin.service.MenuApi;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月16日
+ */
+
+@Controller
+@RequestMapping("/api")
+public class WeiXinController extends WechatWebSupport {
+	
+	@Autowired
+	private MenuApi menuApi;
+	@Autowired
+	private WxAppService wxAppService;
+	
+
+	@Override
+	public void init() {
+		/*
+		 * MPAccount mpAct = new MPAccount(); WxApp param = new WxApp();
+		 * List<WxApp> wxApps = wxAppService.find(param, ""); for (WxApp wxApp :
+		 * wxApps) { // 添加微信号 WechatKernel _wk=new WechatKernel();
+		 * mpAct.setAppId(wxApp.getAppId());
+		 * mpAct.setAppSecret(wxApp.getSecret());
+		 * mpAct.setToken(wxApp.getToken());
+		 * System.out.println("mpAct="+mpAct.toString()); _wk.setMpAct(mpAct);
+		 * // 配置消息处理器 _wk.setWechatHandler(new WeiXinHandler());
+		 * System.out.println("_wk="+_wk.toString()); }
+		 */
+
+		/*MPAccount mpact = new MPAccount();
+		mpact.setAppId("wx1562950d23bf4c3a");
+		mpact.setAppSecret("4958673f24f21120f4f9fad788bfccd3 ");
+		mpact.setToken("MyToken");
+		_wk.setMpAct(mpact);
+		_wk.setWechatHandler(new WeiXinHandler());*/
+
+	}
+
+	@RequestMapping(value = "/{appid}")
+	public void wxAPPAuth(@PathVariable("appid") String appid,
+			HttpServletRequest req, HttpServletResponse resp) {
+		try{
+			System.out.println("认证appID:"+appid);
+			MPAccount mpAct = new MPAccount();
+			WxApp wxApp = wxAppService.findById(appid);
+			// 添加微信号
+			mpAct.setAppId(appid);
+			System.out.println("认证Secret:"+wxApp.getSecret());
+			mpAct.setAppSecret(wxApp.getSecret());
+			mpAct.setToken(wxApp.getToken());
+			_wk.setMpAct(mpAct);
+			// 配置消息处理器
+			_wk.setWechatHandler(new WeiXinHandler());
+			this.interact(req, resp);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	
+	//测试获取菜单
+	@RequestMapping(value = "/getMenu")
+	@ResponseBody
+	public void getMenu(){
+		WxApp wxApp = new WxApp();
+/*		WxCfg.setAppId("wx5378bb816fde866b");
+		WxCfg.setSecret("19cf6586c2807778fed85a8ce50edfe9");
+		WxCfg.setToken("__my__token__");*/
+		
+		wxApp.setAppId("wx6a970917e2756c35");
+		wxApp.setSecret("ff83ae48a13314477d82a1c5d29da29b");
+		wxApp.setToken("zxcv4321");
+		
+		menuApi.getMenu(wxApp);
+		}
+	
+}

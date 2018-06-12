@@ -1,0 +1,306 @@
+package com.gsccs.cms.controller.exam;
+
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.exam.domain.Message;
+import com.gsccs.cms.exam.domain.QuestionFilter;
+import com.gsccs.cms.exam.model.Field;
+import com.gsccs.cms.exam.model.KnowledgePoint;
+import com.gsccs.cms.exam.model.Question;
+import com.gsccs.cms.exam.model.QuestionQueryResult;
+import com.gsccs.cms.exam.model.QuestionTag;
+import com.gsccs.cms.exam.model.Tag;
+import com.gsccs.cms.exam.service.ExamService;
+import com.gsccs.cms.exam.service.QuestionService;
+import com.gsccs.cms.exam.util.xml.Object2Xml;
+import com.gsccs.cms.exam.utils.FileUploadUtil;
+import com.gsccs.cms.exam.utils.Page;
+import com.gsccs.cms.exam.utils.PagingUtil;
+import com.gsccs.cms.exam.utils.QuestionAdapter;
+
+/**
+ * 知识点管理
+ * 
+ * @author think
+ * 
+ */
+@Controller
+@RequestMapping("/point")
+public class PointController {
+
+	@Autowired
+	private QuestionService questionService;
+	@Autowired
+	private ExamService examService;
+
+	@RequestMapping(value = "/{fieldId}", method = RequestMethod.GET)
+	public @ResponseBody
+	Message getPointByFieldId(@PathVariable int fieldId) {
+		Message message = new Message();
+		HashMap<Integer, String> pointMap = new HashMap<Integer, String>();
+		List<KnowledgePoint> pointList = questionService
+				.getKnowledgePointByFieldId(fieldId, null);
+		for (KnowledgePoint point : pointList) {
+			pointMap.put(point.getPointId(), point.getPointName());
+		}
+		message.setObject(pointMap);
+		return message;
+	}
+
+	
+	@RequestMapping(value = "/field-list-{index}", method = RequestMethod.GET)
+	public String fieldListPage(Model model, @PathVariable("index") int index) {
+
+		Page<Field> page = new Page<Field>();
+		page.setPageNo(index);
+		page.setPageSize(8);
+		List<Field> fieldList = questionService.getAllField(page);
+		String pageStr = PagingUtil.getPageBtnlink(index, page.getTotalPage());
+		model.addAttribute("fieldList", fieldList);
+		model.addAttribute("pageStr", pageStr);
+		return "course/field_list";
+	}
+
+	/**
+	 * 知识分类列表
+	 * 
+	 * @param model
+	 * @param fieldId
+	 * @param index
+	 * @return
+	 */
+	@RequestMapping(value = "/list.do", method = RequestMethod.GET)
+	public String knowledgePointPage(ModelMap map,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = " ") String order,
+			@RequestParam(defaultValue = "0") int fieldId,
+			HttpServletRequest request, HttpServletResponse response) {
+
+		Page<KnowledgePoint> page = new Page<KnowledgePoint>();
+		page.setPageNo(currPage);
+		page.setPageSize(pageSize);
+
+		List<Field> fieldList = questionService.getAllField(null);
+
+		List<KnowledgePoint> pointList = questionService
+				.getKnowledgePointByFieldId(fieldId, page);
+
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(10);
+		pager.setOutStrBootstrap("exam/point.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", pointList);
+		map.put("order", order);
+
+		map.put("fieldList", fieldList);
+		map.put("fieldId", fieldId);
+		return "course/point_list";
+	}
+
+	@RequestMapping(value = "/form", method = RequestMethod.GET)
+	public String pointForm(Model model) {
+		List<Field> fieldList = questionService.getAllField(null);
+		model.addAttribute("fieldList", fieldList);
+		return "course/point_form";
+	}
+
+	
+	@RequestMapping(value = "/save", method = RequestMethod.POST)
+	public @ResponseBody
+	Message addPoint(@RequestBody KnowledgePoint point) {
+
+		Message message = new Message();
+		try {
+			questionService.addKnowledgePoint(point);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+			e.printStackTrace();
+		}
+
+		return message;
+	}
+
+	@RequestMapping(value = "/del-{pointId}", method = RequestMethod.GET)
+	public @ResponseBody
+	Message deleteKnowledgePoint(Model model,
+			@PathVariable("pointId") int pointId) {
+		// TO.DO 严欢完善下
+		List<Integer> idList = new ArrayList<Integer>();
+		idList.add(pointId);
+		questionService.deleteKnowledgePointByIdList(idList);
+		return new Message();
+	}
+
+	@RequestMapping(value = "/field-del-{fieldId}", method = RequestMethod.GET)
+	public @ResponseBody
+	Message deleteField(Model model, @PathVariable("fieldId") int fieldId) {
+		List<Integer> idList = new ArrayList<Integer>();
+		idList.add(fieldId);
+		questionService.deleteFieldByIdList(idList);
+		return new Message();
+	}
+
+	@RequestMapping(value = "/field-add", method = RequestMethod.POST)
+	public @ResponseBody
+	Message addField(@RequestBody Field field) {
+		Message message = new Message();
+		try {
+			questionService.addField(field);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+			e.printStackTrace();
+		}
+		return message;
+	}
+
+	@RequestMapping(value = "/field-add", method = RequestMethod.GET)
+	public String addFieldPage(Model model) {
+
+		return "course/field-add";
+	}
+
+	@RequestMapping(value = "/teacher/tag-list-{index}", method = RequestMethod.GET)
+	public String tagListPage(Model model, @PathVariable("index") int index) {
+
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+
+		Page<Tag> page = new Page<Tag>();
+		page.setPageNo(index);
+		page.setPageSize(8);
+		List<Tag> tagList = questionService.getTagByUserId(userid, page);
+		String pageStr = PagingUtil.getPageBtnlink(index, page.getTotalPage());
+		model.addAttribute("tagList", tagList);
+		model.addAttribute("pageStr", pageStr);
+		return "teacher/tag-list";
+	}
+
+	@RequestMapping(value = "/teacher/add-tag", method = RequestMethod.GET)
+	public String addTagPage(Model model) {
+
+		return "teacher/add-tag";
+	}
+
+	@RequestMapping(value = "/teacher/tag-add", method = RequestMethod.POST)
+	public @ResponseBody
+	Message addTag(@RequestBody Tag tag) {
+
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+
+		tag.setCreator(userid);
+		Message message = new Message();
+		try {
+			questionService.addTag(tag);
+		} catch (Exception e) {
+			message.setResult(e.getClass().getName());
+			e.printStackTrace();
+		}
+		return message;
+	}
+
+	@RequestMapping(value = "/teacher/question-tag/{questionId}", method = RequestMethod.GET)
+	public @ResponseBody
+	Message getQuestionTag(@PathVariable("questionId") int questionId) {
+		Message message = new Message();
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+
+		List<QuestionTag> tagList = questionService
+				.getQuestionTagByQuestionIdAndUserId(questionId, userid, null);
+		message.setObject(tagList);
+		return message;
+	}
+
+	@RequestMapping(value = "/teacher/add-question-tag", method = RequestMethod.POST)
+	public @ResponseBody
+	Message addQuestionTag(@RequestBody int questionId,
+			@RequestBody List<QuestionTag> questionTagList) {
+		Message message = new Message();
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+		try {
+			questionService.addQuestionTag(questionId, userid, questionTagList);
+		} catch (Exception e) {
+			e.printStackTrace();
+			message.setResult(e.getClass().getName());
+		}
+		return message;
+	}
+
+	@RequestMapping(value = "/upload-uploadify-img", method = RequestMethod.POST)
+	public @ResponseBody
+	String uploadImg(HttpServletRequest request, HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+
+		List<String> filePathList = new ArrayList<String>();
+		try {
+			filePathList = FileUploadUtil.uploadImg(request, response, userid);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+		if (filePathList.size() == 0) {
+			return "系统错误";
+		}
+
+		return filePathList.get(0);
+	}
+
+	@RequestMapping(value = "/upload-uploadify", method = RequestMethod.POST)
+	public @ResponseBody
+	String uploadFile(HttpServletRequest request, HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		String userid = (String) subject.getPrincipal();
+
+		List<String> filePathList = new ArrayList<String>();
+		try {
+			filePathList = FileUploadUtil.uploadFile(request, response, userid);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+		if (filePathList.size() == 0) {
+			return "系统错误";
+		}
+
+		return filePathList.get(0);
+	}
+
+}

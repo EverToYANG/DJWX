@@ -1,0 +1,28 @@
+package com.gsccs.cms.controller.weixin;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.jfinal.weixin.demo.MenuService;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月12日
+ */
+
+
+@Controller
+@RequestMapping("/wx")
+public class MenuController {
+	
+	@RequestMapping("/getMenu")
+	public void getMenu(){
+		MenuService MenuService=new MenuService();
+		System.out.println(MenuService.getMenu("wxbf18695b430712ed"));
+	}
+
+}
+

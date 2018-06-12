@@ -1,0 +1,68 @@
+package com.gsccs.cms.module.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.module.model.Guestbook;
+import com.gsccs.cms.module.model.GuestbookExample;
+
+public interface GuestbookMapper {
+    
+    int countByExample(GuestbookExample example);
+    int countByExampleCache(GuestbookExample example);
+    
+    List<Guestbook> guestbookUpdateYear(GuestbookExample example);
+    List<Guestbook> guestbookUpdateYearPage(GuestbookExample example);
+    List<Guestbook> guestbookUpdateMonth(GuestbookExample example);
+    List<Guestbook> guestbookUpdateMonthPage(GuestbookExample example);
+    List<Guestbook> guestbookUpdateDay(GuestbookExample example);
+    List<Guestbook> guestbookUpdateDayPage(GuestbookExample example);
+    List<Guestbook> guestbookUpdateWeek(GuestbookExample example);
+
+    int guestbookUpdateYearCount(GuestbookExample example);
+    int guestbookUpdateYearSum(GuestbookExample example);
+    int guestbookUpdateMonthCount(GuestbookExample example);
+    int guestbookUpdateMonthSum(GuestbookExample example);
+    int guestbookUpdateDayCount(GuestbookExample example);
+    int guestbookUpdateDaySum(GuestbookExample example);
+    int guestbookUpdateWeekSum(GuestbookExample example);
+    
+
+    List<Guestbook> sysSiteGuestbookPage(GuestbookExample example);
+    List<Guestbook> sysSiteGuestbook(GuestbookExample example);
+    int sysSiteGuestbookCount(GuestbookExample example);
+    int sysSiteGuestbookSum(GuestbookExample example);
+
+    
+    int deleteByExample(GuestbookExample example);
+
+    
+    int deleteByPrimaryKey(String id);
+
+    
+    int insert(Guestbook record);
+
+    
+    int insertSelective(Guestbook record);
+
+    
+    List<Guestbook> selectByExample(GuestbookExample example);
+    List<Guestbook> selectPageByExample(GuestbookExample example);
+    List<Guestbook> selectPageByExampleCache(GuestbookExample example);
+
+    
+    Guestbook selectByPrimaryKey(String id);
+
+    
+    int updateByExampleSelective(@Param("record") Guestbook record, @Param("example") GuestbookExample example);
+
+    
+    int updateByExample(@Param("record") Guestbook record, @Param("example") GuestbookExample example);
+
+    
+    int updateByPrimaryKeySelective(Guestbook record);
+
+    
+    int updateByPrimaryKey(Guestbook record);
+}

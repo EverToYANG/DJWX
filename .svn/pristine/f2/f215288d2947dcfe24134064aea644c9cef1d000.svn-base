@@ -1,0 +1,72 @@
+package com.gsccs.cms.module.service;
+
+import java.util.List;
+
+import com.gsccs.cms.module.model.VoteItem;
+
+/**
+ * 
+ * 网上调查选项
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+public interface VoteItemService {
+
+	/**
+	 * 查询批定网上调查下选项
+	 * 
+	 * @param questidid
+	 * @return
+	 */
+	public List<VoteItem> findByQuestion(String questidid, String isok,
+			boolean cache);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public VoteItem findById(String id, boolean cache);
+
+	/**
+	 * 更新
+	 * 
+	 * @param answer
+	 */
+	public void update(VoteItem answer);
+
+	/**
+	 * 选择
+	 * 
+	 * @param id
+	 */
+	public void selectnum(String id);
+
+	/**
+	 * 添加
+	 * 
+	 * @param answer
+	 * @return
+	 */
+	public String add(VoteItem answer);
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void del(String id);
+
+	/**
+	 * 统计选择次数
+	 * 
+	 * @param questidid
+	 * @param isok
+	 * @param cache
+	 * @return
+	 */
+	public int countSelectnum(String questidid, String isok, boolean cache);
+}

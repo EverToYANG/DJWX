@@ -1,0 +1,96 @@
+package com.gsccs.cms.member.service;
+
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.MemberExample.Criteria;
+
+/**
+ * 会员相关服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public interface MemberService {
+
+	/**
+	 * 分页查询
+	 */
+	public List<Member> find(Member member,String order,int currPage,int pageSize);
+	/**
+	 * 查询
+	 */
+	public List<Member> find(Member member,String order);
+	/**
+	 * 统计
+	 * @param info
+	 * @return
+	 */
+	public int count(Member member);
+	/**
+	 * 处理查询条件
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(Member member,Criteria criteria);
+
+	/**
+	 * 根据id查询
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public Member findById(String id);
+	/**
+	 * 更新
+	 * @param question
+	 */
+	public void update(Member member);
+	/**
+	 * 添加
+	 * @param question
+	 * @return
+	 */
+	public String add(Member member);
+	/**
+	 * 删除 
+	 * @param id
+	 */
+	public void del(String id);
+
+	/**
+	 * 判断会员是否存在
+	 * @param member
+	 * @return
+	 */
+	public boolean have(Member member);
+	/**
+	 * 按登录名查询
+	 * @param member
+	 * @return
+	 */
+	public Member findByLoginname(Member member);
+	/**
+	 * 按登录名查询
+	 * @param member
+	 * @return
+	 */
+	public Member findByLoginname(String loginname);
+	/**
+	 * 启用/禁用
+	 * @param id
+	 * @param isok
+	 */
+	public void isok(String id,String isok);
+
+	/**
+	 * 检查登录信息是否正确
+	 * @param loginname
+	 * @param pwd
+	 * @return
+	 */
+	public String checkLogin(HttpSession session,Member member);
+}

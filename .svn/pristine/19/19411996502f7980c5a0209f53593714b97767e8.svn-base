@@ -1,0 +1,45 @@
+package com.gsccs.cms.module.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.module.model.Applyopen;
+import com.gsccs.cms.module.model.ApplyopenExample;
+
+public interface ApplyopenMapper {
+
+	int countByExample(ApplyopenExample example);
+
+	int countByExampleCache(ApplyopenExample example);
+
+	List<Applyopen> selectPageByExample(ApplyopenExample example);
+
+	List<Applyopen> selectPageByExampleCache(ApplyopenExample example);
+
+	Applyopen selectByQuerycode(String querycode);
+
+	Applyopen selectByQuerycodeCache(String querycode);
+
+	int deleteByExample(ApplyopenExample example);
+
+	int deleteByPrimaryKey(String id);
+
+	int insert(Applyopen record);
+
+	int insertSelective(Applyopen record);
+
+	List<Applyopen> selectByExample(ApplyopenExample example);
+
+	Applyopen selectByPrimaryKey(String id);
+
+	int updateByExampleSelective(@Param("record") Applyopen record,
+			@Param("example") ApplyopenExample example);
+
+	int updateByExample(@Param("record") Applyopen record,
+			@Param("example") ApplyopenExample example);
+
+	int updateByPrimaryKeySelective(Applyopen record);
+
+	int updateByPrimaryKey(Applyopen record);
+}

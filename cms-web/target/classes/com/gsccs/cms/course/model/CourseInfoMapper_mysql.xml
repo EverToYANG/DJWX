@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.course.dao.CourseArticleMapper">
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.course.model.CourseArticle">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="courseid" property="courseid" jdbcType="INTEGER" />
+		<result column="articleid" property="articleid" jdbcType="BIGINT" />
+		<result column="ordernum" property="ordernum" jdbcType="INTEGER" />
+		<!--  -->
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="channel" property="channel" jdbcType="BIGINT" />
+		<result column="site" property="site" jdbcType="BIGINT" />
+		<result column="addtime" property="addtime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		id, articleid, courseid,ordernum
+	</sql>
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.course.model.CourseArticleExample">
+		select distinct * from(
+			SELECT a.*,b.title,b.channel,b.site,b.addtime
+			FROM course_article a,cms_article b
+			where a.articleid = b.id
+		) as aa
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from course_article
+		where id = #{id,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from
+		course_article
+		where id = #{id,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.course.model.CourseArticleExample">
+		delete from course_article
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.gsccs.cms.course.model.CourseArticle">
+		insert into course_article
+		(id,courseid,articleid, ordernum)
+		values (
+		#{id,jdbcType=VARCHAR},
+		#{courseid,jdbcType=VARCHAR},
+		#{articleid,jdbcType=VARCHAR},
+		#{ordernum,jdbcType=INTEGER})
+	</insert>
+
+	<select id="countByExample" parameterType="com.gsccs.cms.course.model.CourseArticleExample"
+		resultType="java.lang.Integer">
+		select count(*) from course_article
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+
+	<update id="updateByExampleSelective" parameterType="map">
+		update course_article
+		<set>
+			<if test="record.id != null">
+				id = #{record.id,jdbcType=VARCHAR},
+			</if>
+			<if test="record.courseid != null">
+				courseid = #{record.courseid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.articleid != null">
+				articleid = #{record.articleid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.ordernum != null">
+				ordernum = #{record.ordernum,jdbcType=INTEGER},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update course_article
+		set id = #{record.id,jdbcType=VARCHAR},
+		courseid= #{record.courseid,jdbcType=VARCHAR},
+		articleid = #{record.articleid,jdbcType=VARCHAR},
+		ordernum = #{record.ordernum,jdbcType=INTEGER}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.course.model.CourseArticle">
+		update course_article
+		<set>
+			<if test="courseid != null">
+				courseid = #{courseid,jdbcType=INTEGER},
+			</if>
+			<if test="articleid != null">
+				articleid = #{articleid,jdbcType=BIGINT},
+			</if>
+			<if test="ordernum != null">
+				ordernum = #{ordernum,jdbcType=INTEGER},
+			</if>
+		</set>
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.course.model.CourseArticle">
+		update
+		course_article
+		set
+		courseid = #{courseid,jdbcType=INTEGER},
+		articleid = #{articleid,jdbcType=BIGINT},
+		ordernum = #{ordernum,jdbcType=INTEGER}
+		where id =
+		#{id,jdbcType=INTEGER}
+	</update>
+
+	<select id="selectPageByExample" parameterType="com.gsccs.cms.course.model.CourseArticleExample"
+		resultMap="BaseResultMap">
+		select * from(
+			SELECT a.*,b.title,b.channel,b.site,b.addtime
+			FROM course_article a,cms_article b
+			where a.articleid = b.id
+		) as aa
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</select>
+	<sql id="Example_Clause">
+		<foreach collection="oredCriteria" item="criteria" separator="or">
+			<if test="criteria.valid">
+				<trim>
+					<foreach collection="criteria.criteria" item="criterion">
+						<choose>
+							<when test="criterion.noValue">
+								and ${criterion.condition}
+							</when>
+							<when test="criterion.singleValue">
+								and ${criterion.condition} #{criterion.value}
+							</when>
+							<when test="criterion.betweenValue">
+								and ${criterion.condition} #{criterion.value} and
+								#{criterion.secondValue}
+							</when>
+							<when test="criterion.listValue">
+								and ${criterion.condition}
+								<foreach close=")" collection="criterion.value" item="listItem"
+									open="(" separator=",">
+									#{listItem}
+								</foreach>
+							</when>
+						</choose>
+					</foreach>
+				</trim>
+			</if>
+		</foreach>
+	</sql>
+</mapper>

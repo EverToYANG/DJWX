@@ -1,0 +1,78 @@
+package com.gsccs.cms.controller.web;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.FreeMarkerUtil;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.module.model.Applyopen;
+import com.gsccs.cms.module.service.ApplyopenService;
+
+import freemarker.template.TemplateModelException;
+
+/**
+ * 
+ * 依申请公开前台处理
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebApplyopenController")
+public class WebApplyopenController extends CmsBaseController {
+
+	@Resource
+	private ApplyopenService applyopenService;
+	@Resource
+	private SiteService siteService;
+
+	/**
+	 * 保存
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws TemplateModelException
+	 */
+	@RequestMapping("/applyopenSave.htm")
+	public String applyopenSave(Applyopen applyopen, String siteid,
+			String templetPath, ModelMap map, HttpServletResponse response) throws TemplateModelException, IOException {
+		if (applyopen != null) {
+			Site site = siteService.findById(siteid);
+			if (site != null && site.getTemplet() != null
+					&& site.getTemplet().trim().length() > 0) {
+				applyopen.setAddtime(new Date());
+				applyopen.setIp(request.getRemoteAddr());
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+				applyopen.setQuerycode(sdf.format(new Date())
+						+ (int) (Math.random() * 1000));
+				applyopen.setState("0");
+				applyopenService.insert(applyopen);
+				msg = "感谢您的申请，我们会尽快回复，您可以通过查询码" + applyopen.getQuerycode()
+						+ "查询申请信息！";
+			}
+			// 生成静态页面
+			Map<String, Object> data = new HashMap<String, Object>();
+			setData(data, site);
+			data.put("msg", msg);
+			templetPath = "templet/" + site.getTemplet().trim() + "/"
+					+ templetPath;
+			response.setCharacterEncoding("UTF-8");
+			FreeMarkerUtil.createWriter(getApplication(), data, templetPath,
+					response.getWriter());
+		}
+		return null;
+	}
+
+}

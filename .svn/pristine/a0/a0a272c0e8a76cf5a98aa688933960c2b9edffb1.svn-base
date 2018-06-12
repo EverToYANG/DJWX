@@ -1,0 +1,65 @@
+package com.gsccs.cms.controller.web;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.core.service.SiteService;
+
+/**
+ * 栏目的相关操作
+ *
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebChannelController")
+public class WebChannelController extends BaseController{
+
+	@Resource
+	private ChannelService channelService;
+	@Resource
+	private SiteService siteService;
+	
+	
+	/**
+	 * 预览
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/channelPreview.htm")
+	public String channelPreview(String id,ModelMap map,HttpServletResponse response){
+		try {
+			if (StringUtils.isNotEmpty(id)) {
+				Channel channel=channelService.findById(id);
+				if (channel!=null) {
+					if (channel.getUrl()!=null && channel.getUrl().trim().length()>0) {
+						response.sendRedirect(channel.getUrl());
+					}else {
+						Site site=siteService.findById(channel.getSite());
+						if (site!=null && site.getSourcepath()!=null) {
+							channel.setSitepath(site.getSourcepath()+"/");
+							response.sendRedirect("site/"+channel.getPageurl());
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg="预览栏目失败:"+e.getMessage();
+			map.put("msg", msg);
+			return "msg";
+		}
+		return null;
+	}
+}

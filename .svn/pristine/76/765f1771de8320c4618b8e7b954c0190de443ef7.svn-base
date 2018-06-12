@@ -1,0 +1,44 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib prefix="fs" uri="/fs-tags" %>
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<%@include file="/include/bsie_head.jsp" %>
+
+  </head>
+
+<body>
+<input type="hidden" id="pageFuncId" value="${param.pageFuncId }">
+	<%@include file="/include/loading.jsp" %>
+          <div >
+      <div class="row-fluid">
+<div class="widget-box">
+							<div class="widget-content nopadding">
+								<form class="form-horizontal" enctype="multipart/form-data" method="post" action="templetSiteFolderEditDo.do" onsubmit="return folderEditForm();" name="form" id="form"  />
+                                   <input type="hidden" name="currFolder" value="${param.currFolder }">
+<input type="hidden" id="filePaths" name="filePaths" value="${param.filePaths }">
+                                    <div id="fileNameDiv" class="control-group">
+                                        <label class="control-label" style="width:160px">文件夹名称</label>
+                                        <div class="controls" style="margin-left: 190px;">
+                                           <INPUT  id=fileName  
+									maxLength=50 type=text name=fileName value="${fileName }"  style="width:160px">
+      <span  style="color:Red;">*</span>
+      <span class="help-inline" id="fileNameHelp"></span>
+                                        </div>
+                                    </div>
+						</div>
+      </div><!--/row-->
+          
+          
+        </div><!--/span-->
+
+	<%@include file="/include/foot.jsp" %>
+
+            
+            <script src="${pageContext.request.contextPath}/static/admin/cms/js/templetSiteFileSon.js"></script>
+</body></html>

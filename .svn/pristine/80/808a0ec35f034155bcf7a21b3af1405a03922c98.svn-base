@@ -1,0 +1,124 @@
+@charset "utf-8";
+/* CSS Document */
+
+body{ font-size:14px; color:#404040; font-family:"微软雅黑","Arial Black", Gadget, sans-serif; margin:auto 0px;}
+
+table { border-collapse: collapse; border-spacing: 0; margin:0px; padding:0px;}
+*{ margin:0; padding:0;}
+ul { list-style:none;}
+li { list-style-image:none; list-style-position:outside; list-style-type:none; vertical-align:bottom;/*IE6*/}
+h2 {
+    display: block;
+    font-size: 1.5em;
+    -webkit-margin-before: 0.83em;
+    -webkit-margin-after: 0.83em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    font-weight: bold;
+}
+
+
+
+
+.main{width:96%; margin-left:auto; margin-right:auto;}
+.tit{position:absolute; text-align:center; bottom:15px; width:100%; color:#fff;
+
+    display: block;
+    font-size: 1.5em;
+    -webkit-margin-before: 0.83em;
+    -webkit-margin-after: 0.83em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    font-weight: bold;
+}
+.more{width:100%; text-align:center; color:#959595; margin:15px 0px;}
+/*----村居公开登录----*/
+.cjgk{width:100%; margin-top:20px;}
+.cjgk table tr{ height:62px;}
+.text1{ width:95%; height:24px; line-height:34px; padding:5px;}
+.text2{ width:96%; margin-top:5px; height:34px; font-family:"微软雅黑"; line-height:34px; padding:5px;}
+.text3{ width:96%; margin-top:5px; height:34px; font-family:"微软雅黑"; line-height:34px; padding:5px; margin-left:2%;}
+.cjgk-hq{ width:80px; height:36px; background:#ffce54; border-bottom:2px solid #f6bb42; border-radius: 4px; color:#7b4d11; font-size:14px; font-family:"微软雅黑"; text-align:center; line-height:36px; display:inline-block;}
+.cjgk-bt{ width:98%; height:40px; background:#6cd9fe; border:1px solid #59c4e7; border-radius: 4px; text-align:center; line-height:40px; color:#fff; font-size:20px; margin:20px 0px; margin-left:1%; display:inline-block;}
+/*----村居公开列表----*/
+.cjgk-list{ width:100%; background:#fff; margin-top:15px; border-bottom:2px solid #e1e1e1; padding:10px 0px;}
+.cjgk-list-con{ width:96%; margin-left:auto; margin-right:auto; line-height:30px;}
+/*----村居公开详情----*/
+.cjgk-con1{ width:100%; background:#fff; border-bottom:2px solid #e1e1e1; padding:10px 0px; margin-top:15px;}
+.cjgk-con1-con{ width:96%; margin-left:auto; margin-right:auto; line-height:30px;}
+.cjgk-con2{ width:100%; background:#fff; border-bottom:2px solid #e1e1e1; padding:10px 0px; margin-top:15px;}
+.cjgk-con2-con{ width:96%; margin-left:auto; margin-right:auto; line-height:30px;}
+.cjgk-con2-tit{ width:100%; height:32px; border-bottom:1px solid #e1e1e1; color:#4ab3e1;}
+/*----惠民政策列表----*/
+.hmzc-search{ width:100%; margin-top:10px;}
+.hmzc-search tr{ height:48px;}
+.hmzc-bt{ width:98%; height:40px; background:#6cd9fe; border:1px solid #59c4e7; border-radius: 4px; text-align:center; line-height:40px; color:#fff; font-size:20px; margin:10px 0px; margin-left:1%; display:inline-block;}
+.hmzc-list{ width:100%;}
+.hmzc-list tr{ height:70px; width:96%; border-bottom:1px solid #e1e1e1; line-height:30px;}
+.hmzc-list td span{ color:#959595;}
+
+.cw{ width:50px; height:50px; background:#c49990; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.czjr{ width:50px; height:32px; background:#d5ca6f; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.dw{ width:50px; height:50px; background:#e3495e; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.fw{ width:50px; height:50px; background:#f3a847; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.ga{ width:50px; height:50px; background:#4b7cbe; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.ggfw{ width:50px; height:32px; background:#ebd149; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.ghjs{ width:50px; height:32px; background:#8ebf99; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.gssw{ width:50px; height:32px; background:#ea6363; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.jt{ width:50px; height:50px; background:#89d3d7; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.mzjz{ width:50px; height:32px; background:#fb845b; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.nlsl{ width:50px; height:32px; background:#58c895; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.qt{ width:50px; height:50px; background:#d2b8da; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.rlsb{ width:50px; height:32px; background:#71b9e7; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.szhb{ width:50px; height:32px; background:#97cc33; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.whjy{ width:50px; height:32px; background:#9ba9d7; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.wsjs{ width:50px; height:32px; background:#f68db8; border-radius:45px; text-align:center; color:#fff; line-height:16px; padding:9px 0px;}
+.zf{ width:50px; height:50px; background:#d1b993; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+.zw{ width:50px; height:50px; background:#50b340; border-radius:45px; text-align:center; color:#fff; line-height:20px; line-height:50px;}
+
+
+/*----惠民政策详情----*/
+.hmzc-tit{ width:98%; border-bottom:1px solid #e1e1e1; display:inline-block; margin-top:20px;}
+.hmzc-tit div h3{ line-height:40px; border-bottom:1px solid #e1e1e1; width:100%; display:inline-block;
+    font-size: 1.17em;
+}
+.hmzc-tit div span{ line-height:22px; color:#959595;}
+.hmzc-con{ width:98%; margin-top:20px; line-height:24px;
+    margin-left: 15pt ; font-size:15px;
+}
+
+/*----事项查询----*/
+.sxcx-chaxun{ width:100%; background:#fff; border-bottom:2px solid #e1e1e1; padding:20px 0px; margin-top:10px;}
+.sxcx-chaxun table{ margin-left:auto; margin-right:auto;}
+.sxcx-chaxun td{ height:60px;}
+.sxcx-bt{ width:96%; height:40px; background:#6cd9fe; border:1px solid #59c4e7; border-radius: 4px; margin-left:2%; display:inline-block; color:#fff; font-size:20px; line-height:40px; text-align:center;}
+.sxcx-shijian{ width:100%; background:#fff; border-bottom:2px solid #e1e1e1; padding:10px 0px; margin-top:15px;}
+.sxcx-shijian table{ margin-left:auto; margin-right:auto; line-height:30px;}
+.sxcx-shijian-bt{ border:1px solid #4bb4d6; width:60px; height:22px; display:inline-block; text-align:center; border-radius:5px;line-height:22px; margin-left:15px;}
+/*----办理事件----*/
+.shouli-tit{ width:80%; background:url(../img/tb-05.png)  no-repeat; height:36px; padding-left:44px; line-height:36px; margin-top:15px;}
+.blsj{ width:100%; background:#fff; border:1px solid #e1e1e1; padding:10px 0px; border-radius:5px; margin-top:5px;}
+.shouli-con{ width:100%; margin-left:auto; margin-right:auto; line-height:30px;}
+.banli-tit{ width:80%; background:url(../img/tb-06.png)  no-repeat; height:36px; padding-left:44px; line-height:36px; margin-top:15px;}
+.banli-con{ width:92%; margin-left:auto; margin-right:auto; line-height:30px;}
+.banli-shijian{ width:100%; border-bottom:1px solid #e1e1e1; display:inline-block; padding:10px 0px;}
+.banzheng-tit{ width:80%; background:url(../img/tb-11.png)  no-repeat; height:36px; padding-left:44px; line-height:36px; margin-top:15px;}
+.banzheng-con{ width:92%; margin-left:auto; margin-right:auto; line-height:30px;}
+.banzheng-shijian{ width:100%; border-bottom:1px solid #e1e1e1; display:inline-block; padding:10px 0px;}
+.fankui-tit{ width:80%; background:url(../img/tb-07.png)  no-repeat; height:36px; padding-left:44px; line-height:36px; margin-top:15px;}
+.fankui-con{ width:100%; margin-left:auto; margin-right:auto; line-height:30px;}
+.pingjia-tit{ width:80%; background:url(../img/tb-08.png)  no-repeat; height:36px; padding-left:44px; line-height:36px; margin-top:15px;}
+.pingjia-con{ width:100%; margin-left:auto; margin-right:auto; line-height:30px;}
+/*----民事代办----*/
+.msdb-diqu{ width:100%; margin-top:15px;}
+.msdb-list{ width:100%; margin-top:20px;}
+.msdb-list li{ width:100%; height:38px; border-bottom:1px dotted #e1e1e1; line-height:38px;}
+.msdb-con{ width:100%; margin-top:15px;}
+.msdb-con h3{ text-align:center;}
+.msdb-tj{ width:100%; margin-left:auto; margin-right:auto; background:#fff; border-bottom:2px solid #e1e1e1; padding:10px 0px; margin-top:15px;}
+.msdb-tj-con{ width:96%; margin-right:auto; margin-left:auto; line-height:30px;}
+.msdb-tj-tit{ background:url(../img/tb-09.png) no-repeat; height:32px; padding-left:36px; border-bottom:1px solid #e1e1e1;}
+.msdb-cl{ width:100%; margin-left:auto; margin-right:auto; background:#fff; border-bottom:2px solid #e1e1e1; padding:10px 0px; margin-top:15px;}
+.msdb-cl-con{ width:96%; margin-right:auto; margin-left:auto; line-height:30px;}
+.msdb-cl-tit{ background:url(../img/tb-10.png) no-repeat; height:32px; padding-left:36px; border-bottom:1px solid #e1e1e1;}
+.msdb-bt{ width:96%; height:40px; background:#6cd9fe; border:1px solid #59c4e7; border-radius: 4px; text-align:center; line-height:40px; color:#fff; font-size:20px; margin:20px 0px; display:inline-block; margin-left:2%;}

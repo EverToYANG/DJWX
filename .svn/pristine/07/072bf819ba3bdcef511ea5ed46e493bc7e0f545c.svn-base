@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.course.dao.LearnlogMapper">
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.course.model.Learnlog">
+		<id column="id" property="id" jdbcType="VARCHAR" />
+		<result column="memberid" property="memberid" jdbcType="VARCHAR" />
+		<result column="courseid" property="courseid" jdbcType="INTEGER" />
+		<result column="logtime" property="logtime" jdbcType="TIMESTAMP" />
+		
+		<result column="membername" property="membername" jdbcType="VARCHAR" />
+		<result column="coursename" property="coursename" jdbcType="VARCHAR" />
+		
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		id, memberid,membername, courseid, logtime
+	</sql>
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.course.model.LearnlogExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from cms_course_log
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	
+	<sql id="selectPageByExampleSql">
+		select aa.*
+		from (
+			SELECT a.*,b.name as membername,c.name as coursename
+			FROM cms_course_log a,cms_member b,cms_course c
+			where a.memberid = b.id
+			and a.courseid = c.id
+		) as aa
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		order by logtime desc
+		limit ${skip},${pageSize}
+	</sql>
+	
+	<select id="selectPageByExample" parameterType="com.gsccs.cms.course.model.LearnlogExample"
+		resultMap="BaseResultMap">
+		<include refid="selectPageByExampleSql" />
+	</select>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from cms_course_log
+		where id = #{id,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from cms_course_log
+		where id = #{id,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.course.model.LearnlogExample">
+		delete from cms_course_log
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" parameterType="com.gsccs.cms.course.model.Learnlog">
+		insert into cms_course_log (id, memberid,membername, courseid,
+		logtime)
+		values (#{id,jdbcType=VARCHAR},
+		#{memberid,jdbcType=VARCHAR},#{membername,jdbcType=VARCHAR},
+		#{courseid,jdbcType=VARCHAR},
+		#{logtime,jdbcType=TIMESTAMP})
+	</insert>
+
+	<select id="countByExample" parameterType="com.gsccs.cms.course.model.LearnlogExample"
+		resultType="java.lang.Integer">
+		select count(*) from cms_course_log
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<update id="updateByExampleSelective" parameterType="map">
+		update cms_course_log
+		<set>
+			<if test="record.id != null">
+				id = #{record.id,jdbcType=VARCHAR},
+			</if>
+			<if test="record.memberid != null">
+				memberid = #{record.memberid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.membername != null">
+				membername = #{record.membername,jdbcType=VARCHAR},
+			</if>
+			<if test="record.courseid != null">
+				courseid = #{record.courseid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.logtime != null">
+				logtime = #{record.logtime,jdbcType=TIMESTAMP},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update cms_course_log
+		set id = #{record.id,jdbcType=VARCHAR},
+		memberid = #{record.memberid,jdbcType=VARCHAR},
+		membername = #{record.membername,jdbcType=VARCHAR},
+		courseid = #{record.courseid,jdbcType=VARCHAR},
+		logtime = #{record.logtime,jdbcType=TIMESTAMP}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.course.model.Learnlog">
+		update cms_course_log
+		<set>
+			<if test="memberid != null">
+				memberid = #{memberid,jdbcType=VARCHAR},
+			</if>
+			<if test="membername != null">
+				membername = #{membername,jdbcType=VARCHAR},
+			</if>
+			<if test="courseid != null">
+				courseid = #{courseid,jdbcType=VARCHAR},
+			</if>
+			<if test="logtime != null">
+				logtime = #{logtime,jdbcType=TIMESTAMP},
+			</if>
+		</set>
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.course.model.Learnlog">
+		update cms_course_log
+		set memberid = #{memberid,jdbcType=VARCHAR},
+		membername = #{membername,jdbcType=VARCHAR},
+		courseid = #{courseid,jdbcType=VARCHAR},
+		logtime = #{logtime,jdbcType=TIMESTAMP}
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+
+	<sql id="Example_Clause">
+		<foreach collection="oredCriteria" item="criteria" separator="or">
+			<if test="criteria.valid">
+				<trim>
+					<foreach collection="criteria.criteria" item="criterion">
+						<choose>
+							<when test="criterion.noValue">
+								and ${criterion.condition}
+							</when>
+							<when test="criterion.singleValue">
+								and ${criterion.condition} #{criterion.value}
+							</when>
+							<when test="criterion.betweenValue">
+								and ${criterion.condition} #{criterion.value} and
+								#{criterion.secondValue}
+							</when>
+							<when test="criterion.listValue">
+								and ${criterion.condition}
+								<foreach close=")" collection="criterion.value" item="listItem"
+									open="(" separator=",">
+									#{listItem}
+								</foreach>
+							</when>
+						</choose>
+					</foreach>
+				</trim>
+			</if>
+		</foreach>
+	</sql>
+</mapper>

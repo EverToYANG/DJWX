@@ -1,0 +1,49 @@
+package com.gsccs.cms.freemarker.directive;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.bass.base.BaseDirective;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.SiteService;
+
+import freemarker.core.Environment;
+import freemarker.ext.beans.BeanModel;
+import freemarker.ext.beans.BeansWrapper;
+import freemarker.template.TemplateDirectiveBody;
+import freemarker.template.TemplateDirectiveModel;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateModel;
+
+@Service("siteHostConfDirective")
+public class SiteHostConfDirective extends BaseDirective implements TemplateDirectiveModel{
+
+	@Resource
+	private SiteService siteService;
+	
+	@Override
+	public void execute(Environment env, Map params, TemplateModel[] loopVars,
+			TemplateDirectiveBody body) throws TemplateException, IOException {
+		
+		// 获取参数
+		// siteid
+		String siteid = getParam(params, "siteid");
+		Writer out = env.getOut();
+		 
+		if(body !=null ){
+			
+			if (loopVars != null && loopVars.length > 0) {
+				Site site = siteService.findById(siteid);
+				loopVars[0] = new BeanModel(site, new BeansWrapper());
+				body.render(env.getOut());
+			}
+		}
+		
+	}
+
+}

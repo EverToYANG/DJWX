@@ -1,0 +1,106 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.bass.utils.EscapeUnescape;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.ContentSign;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.model.Visit;
+import com.gsccs.cms.core.service.ContentService;
+import com.gsccs.cms.core.service.ContentSignService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.core.service.VisitService;
+
+/**
+ * 关于信息的相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebInfoController")
+@RequestMapping("/web")
+public class WebInfoController extends BaseController {
+	
+	@Resource
+	private ContentService contentService;
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private ContentSignService infoSignService;
+	@Resource
+	private UserService userService;
+	@Resource
+	private VisitService visitService;
+
+	
+	/**
+	 * ajax点击
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/clickDo.htm")
+	public String info_ajaxClick(String id, String siteid,ModelMap map,HttpServletRequest request,
+			HttpServletResponse response) {
+		int clicknum = 0;
+		Visit visit = null;
+		if (StringUtils.isNotEmpty(id)) {
+			Content info = contentService.findClickById(id);
+			if (info != null) {
+				info.setClicknum((info.getClicknum() != null ? info
+						.getClicknum() : 0) + 1);
+				visit = new Visit();
+				visit.setSiteid(info.getSite());
+				visit.setChannelid(info.getChannel());
+				visit.setInfoid(info.getId());
+				if (!"1".equals(info.getIshot())
+						&& StringUtils.isNotEmpty(getConfigVal("infoHotNum"))) {
+					try {
+						// 如果点击大于信息热点配置则设置为热点
+						if (info.getClicknum() > Integer.parseInt(getConfigVal(
+								"infoHotNum").trim())) {
+							info.setIshot("1");
+						}
+					} catch (Exception e) {
+					}
+				}
+				contentService.click(info);
+				clicknum = info.getClicknum();
+			}
+		}else{
+			visit = new Visit();
+			if (StringUtils.isNotEmpty(siteid)) {
+				visit.setSiteid(siteid);
+			}
+			clicknum = visitService.count(visit, true);
+		}
+		
+		if (visit != null) {
+			// 添加访问记录
+			visit.setAddtime(new Date());
+			visit.setIp(request.getRemoteAddr());
+			visitService.add(visit);
+		}
+		
+		ResponseUtil.writeUTF(response, "" + clicknum);
+		return null;
+	}
+
+}

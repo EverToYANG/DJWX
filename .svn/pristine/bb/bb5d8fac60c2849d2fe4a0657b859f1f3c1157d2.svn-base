@@ -1,0 +1,35 @@
+package com.jfinal.weixin.demo;
+
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.jfinal.weixin.sdk.api.MenuApi;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月12日
+ */
+
+public class MenuService {
+
+	// 根据appid获取菜单
+	public ApiResult getMenu(String appId) {
+		// 绑定当前appid
+		ApiConfigKit.setThreadLocalAppId(appId);
+		return MenuApi.getMenu();
+	}
+
+	// 根据appid jsonStr创建菜单
+	public ApiResult createMenu(String appId, String jsonStr) {
+		// 绑定当前appid
+		ApiConfigKit.setThreadLocalAppId(appId);
+		return MenuApi.createMenu(jsonStr);
+	}
+
+	// 根据appid 删除菜单
+	public ApiResult deleteMenu(String appId) {
+		// 绑定当前appid
+		ApiConfigKit.setThreadLocalAppId(appId);
+		return MenuApi.deleteMenu();
+	}
+}

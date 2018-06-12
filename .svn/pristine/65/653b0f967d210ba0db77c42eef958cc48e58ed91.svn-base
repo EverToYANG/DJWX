@@ -1,0 +1,90 @@
+package com.gsccs.cms.controller.weixin;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.github.elkan1788.mpsdk4j.core.WechatKernel;
+import io.github.elkan1788.mpsdk4j.vo.MPAccount;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月21日
+ */
+	
+	public class WxMsgReceiver {
+
+		private static final Logger log = LoggerFactory.getLogger( WxMsgReceiver.class );
+
+		/*
+		 * 微信公众号信息
+		 */
+		private MPAccount               mpAct;
+
+		/*
+		 * 微信消息处理器
+		 */
+		private WeiXinHandler           wxHandler;
+
+		/**
+		 * 验证服务器地址的有效性<br>
+		 * 微信
+		 *
+		 * @param req
+		 * @return
+		 */
+		public String checkURL( HttpServletRequest req ) throws Exception {
+			WechatKernel wxBase = initWxBase( req );
+
+		    String reply = wxBase.check();
+			if (reply.isEmpty()) {
+			    reply = "error";
+			    log.error( "微信接入验证URL时失败!!!" );
+			    log.error( "SHA1签名echoStr值: {}", reply );
+			}
+			return reply;
+		}
+
+		/**
+		 * 业务消息交互
+		 *
+		 * @param req
+		 * @return
+		 */
+		public String interact( HttpServletRequest req ) throws Exception {
+			WechatKernel wxBase = initWxBase( req );
+
+		    try {
+		        return wxBase.handle(null);
+		    } catch (Exception e) {
+		        log.error( "解析微信消息时出现异常!!!" );
+		        log.error( e.getLocalizedMessage(), e );
+		        throw e;
+		    }
+		}
+
+		private WechatKernel initWxBase( HttpServletRequest req ) {
+			WechatKernel wxBase = new WechatKernel();
+		    wxBase.setMpAct( mpAct );
+		    wxBase.setWechatHandler( wxHandler );
+		    return wxBase;
+		}
+
+		public MPAccount getMpAct() {
+		    return mpAct;
+		}
+
+		public void setMpAct( MPAccount mpAct ) {
+		    this.mpAct = mpAct;
+		}
+
+		public WeiXinHandler getWxHandler() {
+		    return wxHandler;
+		}
+
+		public void setWxHandler( WeiXinHandler wxHandler ) {
+		    this.wxHandler = wxHandler;
+		}
+		}

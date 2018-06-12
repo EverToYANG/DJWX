@@ -1,0 +1,311 @@
+package com.gsccs.cms.core.service;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.ContentExample.Criteria;
+
+import freemarker.template.TemplateException;
+
+/**
+ * 内容服务接口
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+public interface ContentService {
+
+	
+	/**
+	 * 分页查询
+	 * 
+	 * @param info
+	 * @param order
+	 * @param currPage
+	 * @param pageSize
+	 * @param loginAdmin
+	 * @return
+	 */
+	public List<Content> find(Content info, String order, int currPage,
+			int pageSize);
+
+	/**
+	 * 查询所有
+	 * 
+	 * @param info
+	 * @param order
+	 * @return
+	 */
+	public List<Content> findAll(Content info, String order);
+
+	/**
+	 * 统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int count(Content info);
+
+	/**
+	 * 处理查询条件
+	 * 
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(Content info, Criteria criteria);
+
+	/**
+	 * 添加
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public String insert(Content info);
+
+	/**
+	 * 更新
+	 * 
+	 * @param info
+	 */
+	public void update(Content info);
+
+	/**
+	 * 点击
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public void click(Content info);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public Content findById(String id);
+
+	/**
+	 * 根据indexnum查询
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public Content findByIndexnum(int indexnum);
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public Content findClickById(String id);
+
+	public void del(String id);
+
+	/**
+	 * 工作量统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> workload(Content info, int currPage, int pageSize);
+
+	/**
+	 * 工作量统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> workload(Content info);
+
+	/**
+	 * 工作量统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int workloadCount(Content info);
+
+	/**
+	 * 工作量合计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int workloadSum(Content info);
+
+	/**
+	 * 站点内容统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> siteStat(Content info, int currPage, int pageSize);
+
+	/**
+	 * 站点内容统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> siteStat(Content info);
+
+	/**
+	 * 站点内容统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int siteStatCount(Content info);
+
+	/**
+	 * 站点内容合计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int siteStatSum(Content info);
+
+	/**
+	 * 栏目信息统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> channelStat(Content info);
+
+	/**
+	 * 栏目信息统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int channelStatCount(Content info);
+
+	/**
+	 * 栏目信息合计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int channelStatSum(Content info);
+
+	/**
+	 * 信息更新统计 年
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateYear(Content info);
+
+	/**
+	 * 信息更新统计 年
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateYear(Content info, int currPage, int pageSize);
+
+	/**
+	 * 信息更新统计 年
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateYearCount(Content info);
+
+	/**
+	 * 信息更新合计 年
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateYearSum(Content info);
+
+	/**
+	 * 信息更新统计 月
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateMonth(Content info);
+
+	/**
+	 * 信息更新统计 月
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateMonth(Content info, int currPage,
+			int pageSize);
+
+	/**
+	 * 信息更新统计 月
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateMonthCount(Content info);
+
+	/**
+	 * 信息更新合计 月
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateMonthSum(Content info);
+
+	/**
+	 * 信息更新统计 日
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateDay(Content info);
+
+	/**
+	 * 信息更新统计 日
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateDay(Content info, int currPage, int pageSize);
+
+	/**
+	 * 信息更新统计 日
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateDayCount(Content info);
+
+	/**
+	 * 信息更新合计 日
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateDaySum(Content info);
+
+	/**
+	 * 信息更新合计 周
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int infoUpdateWeekSum(Content info);
+
+	/**
+	 * 信息更新统计 周
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public List<Content> infoUpdateWeek(Content info);
+
+}

@@ -1,0 +1,155 @@
+package com.gsccs.cms.controller.weixin;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.weixin.model.WxMenu;
+import com.gsccs.weixin.service.MenuApi;
+
+import io.github.elkan1788.mpsdk4j.vo.api.Menu;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月22日
+ */
+@Controller
+@RequestMapping("/cms")
+public class WXMenuController extends CmsBaseController {
+
+	@Resource
+	private com.gsccs.cms.weixin.service.WxMenuService wxMenuService;
+	@Resource
+	private MenuApi menuApi;
+	@Resource
+	private com.gsccs.cms.weixin.service.WxAppService wxAppService;
+
+	// 获取列表
+	@RequestMapping("/mpMenu.do")
+	public String getMenuList(ModelMap map, HttpServletRequest request, HttpServletResponse response) {
+		
+		//获取所有一级栏目
+		List<WxMenu> wxOneMenus = wxMenuService.find(getManageSite().getId(), "order_num");
+		//拼成数据结构为(WxMenu,List<WxMenu>)的List
+		List<WxMenus> wxMenusList = new ArrayList<>();
+		for(WxMenu wxMenu:wxOneMenus){
+			WxMenus wxMenus=new WxMenus();
+			BeanUtils.copyProperties(wxMenu, wxMenus);
+			List<WxMenu> subMenu=wxMenuService.find(getManageSite().getId(), wxMenu.getId(), "order_num");
+			wxMenus.setSubMenu(subMenu);
+			wxMenusList.add(wxMenus);
+		}
+		map.put("list", wxMenusList);
+		return "weixin/menu_list";
+	}
+
+	// 编辑
+	@RequestMapping("/menuEdit.do")
+	public String edit(String id,String type, String parId, String title, String url, ModelMap map, HttpServletRequest request, HttpServletResponse response) {
+		WxMenu model=new WxMenu();
+		if("addSon"==type){
+			model.setParId(id);
+		}else{
+		model.setParId(parId);
+		if (StringUtils.isEmpty(id)) {
+
+		} else {
+			model = wxMenuService.findById(id);
+		}
+		}
+		map.put("model", model);
+		return "weixin/menu_edit";
+	}
+
+	// 保存
+	@RequestMapping("/menuSave.do")
+	public String save(ModelMap map,WxMenu model, HttpServletRequest request, HttpServletResponse response){
+		if(StringUtils.isEmpty(model.getId())){
+			model.setId(UUID.randomUUID().toString());
+			model.setAppId(getManageSite().getId());
+			wxMenuService.add(model);
+		}else{
+			wxMenuService.update(model);
+		}
+		msg="恭喜您，操作成功！";
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	// 删除
+	@RequestMapping("/menuDel.do")
+	public String del(String id,ModelMap map, HttpServletRequest request, HttpServletResponse response) {
+		if(StringUtils.isNotEmpty(id)){
+			wxMenuService.del(id);
+			msg="恭喜您，操作成功！";
+		}else{
+			msg="删除失败！";
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "mpMenu.do");
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+	
+	//获取子菜单
+	@RequestMapping("/menuSon.do")
+	public String getMenuSon(String id,ModelMap map, HttpServletRequest request, HttpServletResponse response){
+		if(StringUtils.isNotEmpty(id)){
+			List<WxMenu> wxMenus = wxMenuService.find(getManageSite().getId(), id,"order_num");
+			map.put("list", wxMenus);
+		}
+		return "weixin/menu_son";
+	}
+
+	// 发布
+	@RequestMapping("/menuSend.do")
+	public String send(ModelMap map, HttpServletRequest request, HttpServletResponse response) {
+		//获取一级菜单
+		List<WxMenu> wxMenus = wxMenuService.find(getManageSite().getId(), "order_num");
+		Menu[] menus=new Menu[3];
+			for(int i=0;i<3;i++){
+			//获取子菜单
+			List<WxMenu> wxSonMenus = wxMenuService.find(getManageSite().getId(),wxMenus.get(i).getId(), "order_num");
+			//拼装menuApi参数
+			List<Menu> sonMenus=new ArrayList<>();
+			for(WxMenu wxmenu:wxSonMenus){
+				Menu menuson=new Menu();
+				menuson.setName(wxmenu.getName());
+				menuson.setType("view");
+				menuson.setUrl(wxmenu.getUrl());
+				sonMenus.add(menuson);
+			}
+			Menu menu=new Menu();
+			menu.setName(wxMenus.get(i).getName());
+			menu.setSubButtons(sonMenus);
+			menus[2-i]=menu;
+		}
+		menuApi.delMenu(wxAppService.findById(getManageSite().getId()));
+		boolean isSuccess=menuApi.createMenu(wxAppService.findById(getManageSite().getId()), menus);
+		if(isSuccess){
+		msg="恭喜您，发布成功！";
+		}
+		else{
+			msg="发布失败!";
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+}

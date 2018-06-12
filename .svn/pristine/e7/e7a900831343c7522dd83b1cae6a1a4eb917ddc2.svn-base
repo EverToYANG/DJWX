@@ -1,0 +1,140 @@
+package com.gsccs.cms.course.service;
+
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.course.dao.LearnlogMapper;
+import com.gsccs.cms.course.model.Learnlog;
+import com.gsccs.cms.course.model.LearnlogExample;
+import com.gsccs.cms.course.model.LearnlogExample.Criteria;
+
+/**
+ * 日志相关服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Service
+public class LearnlogServiceImpl implements LearnlogService {
+
+	@Resource
+	private LearnlogMapper learnlogMapper;
+
+	/**
+	 * 分页查询
+	 */
+	public List<Learnlog> find(Learnlog Learnlog, String order, int currPage,
+			int pageSize) {
+		LearnlogExample example = new LearnlogExample();
+		Criteria criteria = example.createCriteria();
+		proSearchParam(Learnlog, criteria);
+		if (order != null && order.trim().length() > 0) {
+			example.setOrderByClause(order);
+		}
+		example.setCurrPage(currPage);
+		example.setPageSize(pageSize);
+		return learnlogMapper.selectPageByExample(example);
+	}
+
+	/**
+	 * 查询
+	 */
+	public List<Learnlog> find(Learnlog Learnlog, String order) {
+		LearnlogExample example = new LearnlogExample();
+		Criteria criteria = example.createCriteria();
+		proSearchParam(Learnlog, criteria);
+		if (order != null && order.trim().length() > 0) {
+			example.setOrderByClause(order);
+		}
+		return learnlogMapper.selectByExample(example);
+	}
+
+	/**
+	 * 统计
+	 * 
+	 * @param info
+	 * @return
+	 */
+	public int count(Learnlog creditlog) {
+		LearnlogExample example = new LearnlogExample();
+		Criteria criteria = example.createCriteria();
+		proSearchParam(creditlog, criteria);
+		return learnlogMapper.countByExample(example);
+	}
+
+	/**
+	 * 处理查询条件
+	 * 
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(Learnlog Learnlog, Criteria criteria) {
+		if (Learnlog != null) {
+			if (Learnlog.getCourseid() != null) {
+				criteria.andCourseidEqualTo(Learnlog.getCourseid());
+			}
+			if (Learnlog.getMemberid() != null
+					&& Learnlog.getMemberid().trim().length() > 0) {
+				criteria.andMemberidEqualTo(Learnlog.getMemberid().trim());
+			}
+			if (Learnlog.getMembername() != null
+					&& Learnlog.getMembername().trim().length() > 0) {
+				criteria.andMembernameLike("%"
+						+ Learnlog.getMembername().trim() + "%");
+			}
+		}
+	}
+
+	/**
+	 * 根据id查询
+	 * 
+	 * @param id
+	 * @param cache
+	 * @return
+	 */
+	public Learnlog findById(String id) {
+		return learnlogMapper.selectByPrimaryKey(id);
+	}
+
+	/**
+	 * 更新
+	 * 
+	 * @param question
+	 */
+	public void update(Learnlog Learnlog) {
+		learnlogMapper.updateByPrimaryKeySelective(Learnlog);
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param question
+	 * @return
+	 */
+	public String add(Learnlog Learnlog) {
+		Learnlog.setId(UUID.randomUUID().toString());
+		learnlogMapper.insert(Learnlog);
+		return Learnlog.getId();
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void del(String id) {
+		learnlogMapper.deleteByPrimaryKey(id);
+	}
+
+	public LearnlogMapper getLearnlogMapper() {
+		return learnlogMapper;
+	}
+
+	public void setLearnlogMapper(LearnlogMapper learnlogMapper) {
+		this.learnlogMapper = learnlogMapper;
+	}
+}

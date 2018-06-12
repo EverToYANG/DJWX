@@ -1,0 +1,112 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseFeed;
+import com.gsccs.cms.course.model.CourseInfo;
+import com.gsccs.cms.course.model.CourseVote;
+import com.gsccs.cms.course.service.CourseService;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.PartyMember;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.member.service.PartyMemberService;
+import com.gsccs.cms.module.service.VoteService;
+
+/**
+ * 网上学习
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller("WebCourseController")
+@RequestMapping("/web")
+public class WebCourseController extends CmsBaseController{
+	
+	@Resource
+	private VoteService voteService;
+	@Resource
+	private CourseService couseService;
+	@Resource
+	private PartyMemberService partyMemberService;
+	
+	/**
+	 * 党课列表页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/courseList.html")
+	public String courseList(Course param,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = "") String order,
+			ModelMap map) {
+		List<Course> courseList = couseService.find(param,order,page,pageSize);
+		map.put("courseList", courseList);
+		return "web/courseList";
+	}
+	
+	
+	/**
+	 * 党课详细页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/course.html")
+	public String course(Integer id,ModelMap map) {
+		Course course = couseService.getCourse(id);
+		List<CourseInfo> infoList = couseService.findInfoList(id);
+		List<CourseVote> voteList = couseService.findVoteList(id);
+		
+		List<CourseFeed> feedList = couseService.findFeedList(null,id);
+		if (null != feedList && feedList.size() > 0) {
+			for (CourseFeed guestbook : feedList) {
+				List<CourseFeed> replyList = couseService.findByParid(
+						guestbook.getId());
+				guestbook.setReplyList(replyList);
+			}
+		}
+		
+		PartyMember memberParam = new PartyMember();
+		memberParam.setUnitid(course.getUnitid());
+		List<PartyMember> memberList = partyMemberService.find(memberParam, "");
+		
+		map.put("course", course);
+		map.put("infoList", infoList);
+		map.put("voteList", voteList);
+		map.put("feedList", feedList);
+		map.put("memberList", memberList);
+		return "web/course";
+	}
+	
+	
+	/**
+	 * 学习反馈
+	 * @return
+	 */
+	@RequestMapping("/fed.html")
+	public String courseFed(CourseFeed courseFed, ModelMap map,
+			HttpServletRequest request,HttpServletResponse response) {
+		String msg="";
+		if (null != courseFed){
+			couseService.addCourseFed(courseFed);
+			msg = "提交成功，感谢参与！";
+		}else{
+			msg = "提交成功，数据有误！";
+		}
+		ResponseUtil.writeUTF(response, msg);
+		return null;
+	}
+
+}

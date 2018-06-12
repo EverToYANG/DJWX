@@ -1,0 +1,101 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@page import="java.net.URLEncoder"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="fs" uri="/fs-tags"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="">
+<meta name="author" content="">
+
+<%@include file="/include/bsie_head.jsp"%>
+
+</head>
+
+<body>
+	<input type="hidden" id="pageFuncId" value="${param.pageFuncId }">
+	<%@include file="/include/loading.jsp"%>
+	<jsp:include page="/head.do" flush="true" />
+
+	<div class="container-fluid">
+		<div class="row-fluid">
+			<div class="widget-box">
+				<div class="widget-title">
+					<span class="icon"> <i class="icon-th"></i>
+					</span>
+					<h5>模板文件管理(${templet.name })</h5>
+					<div class="buttons">
+						<a href="#" onclick="history.back();" class="btn btn-mini"><i class="icon-arrow-left"></i> 返回模板列表</a> <a href="#" onclick="location.reload();" class="btn btn-mini"><i class="icon-refresh"></i> 刷 新</a>
+					</div>
+				</div>
+				<div class="widget-content nopadding">
+					<table width="99%" align="center" valign="top">
+						<tr>
+							<td width="25%" valign="top">
+								<div class="widget-box">
+									<div class="widget-title">
+										<span class="icon"> <i class="icon-th"></i>
+										</span>
+										<h5>文件目录</h5>
+										<div class="buttons">
+											<a href="#" onclick="location.reload();" class="btn btn-mini"><i class="icon-refresh"></i> 刷 新</a>
+										</div>
+									</div>
+									<div class="widget-content nopadding">
+
+										<table class="table table-bordered table-striped table-hover">
+											<tbody>
+												<tr treeItemLevel="1">
+
+													<td><c:if test='${"1" == rootHasSon}'>
+															<img align="absmiddle" style="cursor: pointer" onClick="displayChildren(this);" isAjax="true" isOpen="false" id="${templet.id }" src="${pageContext.request.contextPath}/static/tree/image/plus.gif" />
+														</c:if> 
+														<c:if test='${"1" != rootHasSon}'>
+															<img align="absmiddle" src="${pageContext.request.contextPath}/static/tree/image/empty.gif" />
+														</c:if> 
+														<img align="absmiddle" border="0" src="${pageContext.request.contextPath}/static/tree/image/folder.gif" />&nbsp;
+														<!-- modify x.d zhang @20140619 
+														<a href="#" onclick="folderSelect('<%=URLEncoder.encode(request.getRealPath("/").replace("\\", "/")+"/templet/","utf-8")%>${templet.id }')">根目录</a>
+														-->
+														<a href="#" onclick="folderSelect('${templet.id }')">根目录</a>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+								<!--/row-->
+							</td>
+							<td valign="top"><iframe width="100%" height="0" name="fileFrame" src="" id="fileFrame" framespacing="0" border="false" frameborder="0"></iframe></td>
+						</tr>
+					</table>
+
+				</div>
+			</div>
+		</div>
+		<!--/row-->
+	</div>
+	<!--/span-->
+
+	<%@include file="/include/foot.jsp"%>
+	<script src="${pageContext.request.contextPath}/static/tree/bootstraptree.js"></script>
+	<script>
+            basePath="${pageContext.request.contextPath}";
+			ajaxUrl="${pageContext.request.contextPath}/cms/templetFolderSon.do";
+			ajaxPara="";
+			$(function(){ 
+				$("#fileFrame").load(function(){ 
+					var height=$(this).contents().find("body").height();
+					if(height<500){
+						height=500;
+					}
+					$(this).height(height); 
+				}); 
+			}); 
+            </script>
+
+	<script src="${pageContext.request.contextPath}/static/admin/cms/js/templetFileManage.js"></script>
+</body>
+</html>

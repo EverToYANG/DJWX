@@ -1,0 +1,373 @@
+package com.gsccs.cms.controller.core;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.RoleChannelService;
+import com.gsccs.cms.core.service.SiteService;
+
+/**
+ * 静态化的操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+
+@Controller
+@RequestMapping("/cms")
+public class HtmlController extends CmsBaseController {
+
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private RoleChannelService roleChannelService;
+
+	/**
+	 * 首页静态化页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlIndexConfirm.do")
+	public String htmlIndexConfirm(ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		return "cms/htmlIndexConfirm";
+	}
+
+	/**
+	 * 首页静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlIndex.do")
+	public String htmlIndex(ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		try {
+			Site site = getManageSite();
+			if (site != null) {
+				// 生成首页
+				siteService.html(site.getId(), getApplication(),
+						getContextPath(), request, getLoginName());
+			}
+			msg = "首页静态化处理成功!";
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = "首页静态化处理失败，原因:"
+					+ e.getMessage().replace("<", "&lt;").replace(">", "&gt;")
+							.replace("\n", "<br/>");
+		}
+		map.put("msg", msg);
+		map.put("isBack", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 栏目页静态化页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlChannel.do")
+	public String htmlChannel(@CurrentUser Users user, ModelMap map,
+			HttpServletResponse response) {
+		Site site = getManageSite();
+		if (site != null) {
+			// 栏目管理页面
+			// 获取一级栏目
+			List<Channel> channelList = channelService.findByPar(site.getId(),
+					"par");
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("channelList", channelList);
+		}
+
+		return "cms/htmlChannel";
+	}
+
+	/**
+	 * 下级数据
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlChannelSon.do")
+	public String channelSon(@CurrentUser Users user, String pid,
+			String plevel, ModelMap map, HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(pid) && StringUtils.isNotEmpty(plevel)) {
+			// 提取子
+			List<Channel> channelList = channelService.findByPar("", pid);
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("channelList", channelList);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "cms/htmlChannelSon";
+	}
+
+	/**
+	 * 栏目页静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlChannelDo.do")
+	public String htmlChannelDo(@CurrentUser Users user, String createType,
+			String[] ids, String pagenum, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		try {
+			Site site = getManageSite();
+			int page = 0;
+			try {
+				page = Integer.parseInt(pagenum);
+			} catch (Exception e) {
+			}
+
+			System.out.println("栏目页静态化:" + createType);
+			if ("channels".equals(createType)) {
+				// 生成所选栏目
+				if (ids != null && ids.length > 0) {
+					for (int i = 0; i < ids.length; i++) {
+						Channel channel = channelService.findById(ids[i]);
+						if (channel != null) {
+							// 生成栏目页
+							channelService.html(site, channel,
+									getApplication(), request, getLoginName(),
+									page);
+						}
+					}
+				}
+			} else if ("all".equals(createType)) {
+				List<Channel> channelList = null;
+				// 生成所有
+				if (!isSysAdmin()) {
+					channelList = channelService.findByRolesWithBLOBs(
+							site.getId(), getLoginRoleIdsSql());
+				} else {
+					channelList = channelService.findByParWithBLOBs(
+							site.getId(), "");
+				}
+				if (channelList != null && channelList.size() > 0) {
+					for (int i = 0; i < channelList.size(); i++) {
+						Channel channel = channelList.get(i);
+						if (channel != null) {
+							// 生成栏目页
+							channelService.html(site, channel,
+									getApplication(), request, getLoginName(),
+									page);
+						}
+					}
+				}
+			}
+			msg = "栏目页静态化处理成功!";
+		} catch (Exception e) {
+			e.printStackTrace();
+			msg = "栏目页静态化处理失败，原因:"
+					+ e.toString().replace("<", "&lt;").replace(">", "&gt;")
+							.replace("\n", "<br/>");
+		}
+		map.put("msg", msg);
+		map.put("isBack", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 信息页静态化页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlInfo.do")
+	public String htmlInfo(@CurrentUser Users user, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		Site site = getManageSite();
+		if (site != null) {
+			// 栏目管理页面
+			// 获取一级栏目
+			List<Channel> channelList = channelService.findByPar(site.getId(),
+					"par");
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("channelList", channelList);
+		}
+		return "cms/htmlInfo";
+	}
+
+	/**
+	 * 信息页静态化
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlInfoDo.do")
+	public String htmlInfoDo(@CurrentUser Users user, Content info,
+			String createType, String[] ids, String pagenum, ModelMap map,
+			HttpServletResponse response) {
+		try {
+			boolean ishtml = false;
+			Site site = getManageSite();
+			List<Content> infoList = null;
+			if ("channels".equals(createType)) {
+				// 生成所选栏目
+				if (ids != null && ids.length > 0) {
+					info.setChannels(ids);
+					ishtml = true;
+				}
+			} else if ("all".equals(createType)) {
+				// 生成所有
+				if (!isSysAdmin()) {
+					List<Channel> channelList = channelService.findByRoles(
+							site.getId(), getLoginRoleIdsSql());
+					String[] channelArr = new String[channelList.size()];
+					if (channelList != null && channelList.size() > 0) {
+						Channel channel;
+						for (int i = 0; i < channelList.size(); i++) {
+							channel = channelList.get(i);
+							if (channel != null) {
+								channelArr[i] = channel.getId();
+							}
+						}
+					}
+					info.setChannels(channelArr);
+				}
+				ishtml = true;
+			}
+			if (ishtml) {
+				info.setSite(site.getId());
+				infoList = contentService.findAll(info, "");
+				if (infoList != null && infoList.size() > 0) {
+					for (int i = 0; i < infoList.size(); i++) {
+						if (infoList.get(i) != null) {
+							// 生成静态页面
+							contentService.html(infoList.get(i).getId(),
+									getApplication(), getContextPath(),
+									request, getLoginName());
+						}
+					}
+				}
+			}
+			msg = "信息页静态化处理成功!";
+		} catch (Exception e) {
+			msg = "信息页静态化处理失败，原因:"
+					+ e.toString().replace("<", "&lt;").replace(">", "&gt;")
+							.replace("\n", "<br/>");
+		}
+		map.put("msg", msg);
+		map.put("isBack", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 产品页静态化页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/htmlGoods.do")
+	public String htmlGoods(@CurrentUser Users user,ModelMap map, HttpServletResponse response)
+			throws AuthException, SiteCheckException {
+		Site site = getManageSite();
+		if (site != null) {
+			// 栏目管理页面
+			// 获取一级栏目
+			List<Channel> channelList = channelService.findByPar(site.getId(),
+					"par");
+			// 设置是否有子栏目
+			if (channelList != null && channelList.size() > 0) {
+				for (int i = 0; i < channelList.size(); i++) {
+					if (channelService.hasChildren(channelList.get(i).getId())) {
+						channelList.get(i).setHasChildren("true");
+					}
+					if (!isSysAdmin() && !isSiteAdmin()) {
+						// 如果是普通管理员则设置是否有权限管理
+						if (roleChannelService.haves(getLoginRoleIdsSql(),
+								channelList.get(i).getId())) {
+							channelList.get(i).setHaveChannelRole("true");
+						}
+					}
+				}
+			}
+			map.put("channelList", channelList);
+		}
+		return "cms/htmlGoods";
+	}
+
+	
+
+	/**
+	 * 日期型数据转换，将页面上的表示日期限的字符串，转换为Date型
+	 * **/
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		dateFormat.setLenient(true);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, true));
+
+	}
+}

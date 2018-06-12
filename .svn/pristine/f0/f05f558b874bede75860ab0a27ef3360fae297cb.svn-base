@@ -1,0 +1,129 @@
+package com.gsccs.cms.bass.jobs;
+
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
+
+import com.gsccs.cms.bass.utils.DateUtil;
+import com.gsccs.cms.bass.utils.SysUtil;
+import com.gsccs.cms.core.model.Htmlquartz;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.core.service.HtmlquartzService;
+import com.gsccs.cms.core.service.SiteService;
+
+import freemarker.template.TemplateException;
+
+/**
+ * 站点静态化任务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Component
+public class HtmlJob {
+
+	@Resource
+	private HtmlquartzService htmlquartzService;
+	@Resource
+	private ChannelService channelService;
+	@Resource
+	private SiteService siteService;
+
+	public void work() {
+
+		// 查询所有没有下次执行时间的任务
+		Htmlquartz htmlquartz = new Htmlquartz();
+		htmlquartz.setSql(" nextexetime is null ");
+		List<Htmlquartz> list = htmlquartzService.findAll(htmlquartz);
+		if (list != null && list.size() > 0) {
+			for (Htmlquartz htmlquartz2 : list) {
+				// 计算下次执行时间
+				setNextexetime(htmlquartz2);
+			}
+		}
+		// 查询所有有下次执行时间并且小于当前时间的任务
+		htmlquartz = new Htmlquartz();
+		htmlquartz.setSql(" nextexetime is not null and nextexetime<='"
+				+ DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss") + "' ");
+		list = htmlquartzService.findAll(htmlquartz);
+		if (list != null && list.size() > 0) {
+			for (Htmlquartz htmlquartz2 : list) {
+				// 执行任务
+				if (StringUtils.isNotEmpty(htmlquartz2.getChannelid())) {
+					// 栏目静态化
+					try {
+						channelService.html(htmlquartz2.getSiteid(),
+								htmlquartz2.getChannelid(),
+								SysUtil.wac.getServletContext());
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (TemplateException e) {
+						e.printStackTrace();
+					}
+				} else if (StringUtils.isNotEmpty(htmlquartz2.getSiteid())) {
+					try {
+						siteService.html(htmlquartz2.getSiteid(),
+								SysUtil.wac.getServletContext());
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (TemplateException e) {
+						e.printStackTrace();
+					}
+				}
+				// 记录最后一次执行时间
+				htmlquartz2.setLastexetime(new Date());
+				// 计算下次执行时间
+				setNextexetime(htmlquartz2);
+			}
+		}
+	}
+
+	/**
+	 * 计算下次执行时间
+	 * 
+	 * @param htmlquartz
+	 */
+	public void setNextexetime(Htmlquartz htmlquartz) {
+		Date nextexetime = new Date();
+		if ("0".equals(htmlquartz.getType())) {
+			// 定时生成
+			// 生成今天应该执行的时间
+			nextexetime = DateUtil.parse(
+					DateUtil.format(new Date(), "yyyy-MM-dd") + " "
+							+ (htmlquartz.getExetimehour() > 9 ? "" : "0")
+							+ htmlquartz.getExetimehour() + ":"
+							+ (htmlquartz.getExetimemin() > 9 ? "" : "0")
+							+ htmlquartz.getExetimemin() + ":00",
+					"yyyy-MM-dd HH:mm:ss");
+			if (new Date().getTime() > nextexetime.getTime()) {
+				// 今天已过，生成明天应该执行的时间
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(nextexetime);
+				calendar.add(Calendar.DAY_OF_MONTH, 1);
+				nextexetime = calendar.getTime();
+			}
+		} else if ("1".equals(htmlquartz.getType())) {
+			// 间隔重复生成
+			Calendar calendar = Calendar.getInstance();
+			calendar.setTime(nextexetime);
+			if ("0".equals(htmlquartz.getIntervaltype())) {
+				// 小时
+				calendar.add(Calendar.HOUR, 1);
+			} else if ("1".equals(htmlquartz.getIntervaltype())) {
+				// 分钟
+				calendar.add(Calendar.MINUTE, 1);
+			}
+			nextexetime = calendar.getTime();
+		}
+		// 更新到数据库
+		htmlquartz.setNextexetime(nextexetime);
+		htmlquartzService.update(htmlquartz);
+	}
+}

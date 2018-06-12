@@ -1,0 +1,15 @@
+package com.gsccs.cms.core.service;
+
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.gsccs.cms.core.model.Site;
+
+import freemarker.template.TemplateException;
+
+public interface NginxConfService {
+
+	public void nginxConf(Site site)
+			throws IOException, TemplateException ;
+}

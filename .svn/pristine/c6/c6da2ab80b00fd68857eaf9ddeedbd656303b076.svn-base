@@ -1,0 +1,114 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="fs" uri="/fs-tags"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>系统管理中心</title>
+<meta name="description" content="">
+<meta name="author" content="">
+
+<%@include file="/include/bsie_head.jsp"%>
+
+</head>
+
+<body>
+	<%@include file="/include/loading.jsp"%>
+	<jsp:include page="/head.do" flush="true" />
+	<div class="container-fluid" >
+		<div class="row-fluid">
+			<div class="widget-box collapsible">
+				<div class="widget-title">
+					<span class="icon"> <i class="icon-search"></i>
+					</span>
+					<h5>用户搜索</h5>
+					<div class="buttons">
+						<a href="#collapseOne" data-toggle="collapse" class="btn btn-mini"><i class="icon-retweet"></i>展开/关闭</a>
+					</div>
+				</div>
+				<div class="collapse in" id="collapseOne">
+					<div class="widget-content">
+						<form class="form-search" action="billingStatic.do">
+							<input type="hidden" id="pageFuncId" name="pageFuncId" value="${param.pageFuncId }" /> 
+							<input type="hidden" name="export" id="export" value="" /> 
+							统计周期: <label><input type="radio" name="statType" value="year" ${(statType=="year")?"checked":"" } />年</label> 
+							<label><input type="radio" name="statType" value="month" ${(statType=="month")?"checked":"" } />月</label> 
+							<label><input type="radio" name="statType" value="day" ${(statType==null || statType=="" || statType=="day")?"checked":"" } />日</label> 
+							<%-- <label><input type="radio" name="statType" value="week" ${(statType=="week")?"checked":"" } />星期</label>  --%>
+							时间范围： <input name="starttime" id="starttime" class="input-medium search-query Wdate" type="text"
+								size="24" value="${visit.starttimeStr }" onClick="WdatePicker({skin:'default',dateFmt:'yyyy-MM-dd HH:mm:ss'})" /> 至 <input name="endtime" id="endtime" class="input-medium search-query Wdate" type="text" size="24" value="${visit.endtimeStr }" onClick="WdatePicker({skin:'default',dateFmt:'yyyy-MM-dd HH:mm:ss'})" /> 
+							每页显示条数： <select name="pageSize" id="pageSize" style="width: 70px">
+								<option selected="selected" value="10">10</option>
+								<option value="30" ${"30"==param.pageSize?"selected":"" }>30</option>
+								<option value="50" ${"50"==param.pageSize?"selected":"" }>50</option>
+							</select>
+							<button type="button" class="btn" onclick="$('#export').val('');this.form.submit();">
+								<i class="icon-search"></i> 搜 索
+							</button>
+						</form>
+					</div>
+				</div>
+			</div>
+			<div class="widget-box">
+				<div class="widget-title">
+					<span class="icon"> <i class="icon-th"></i>
+					</span>
+					<h5>用户</h5>
+					<div class="buttons">
+						<a href="#" onclick="location.reload();" class="btn btn-mini"><i class="icon-refresh"></i> 刷 新</a>
+					</div>
+				</div>
+				<div class="widget-content nopadding">
+
+					<table class="table table-bordered table-striped with-check table-hover">
+						<thead>
+							<tr>
+								<th><input type="checkbox" id="title-table-checkbox" name="title-table-checkbox" /></th>
+								<th><fs:order colName="企业客户名称" col="unitNames" /></th>
+								<th><fs:order colName="订单额" col="loginname" /></th>
+								<th><fs:order colName="订单创建时间" col="name" /></th>
+							</tr>
+						</thead>
+						<tbody>
+							<c:forEach var="bean" items="${list}" varStatus="status">
+								<tr>
+									<td><input type="checkbox" name="ids" id="ids${bean.id }" show="${bean.loginname}" value="${bean.id }" /></td>
+									<td>${bean.unitNames }</td>
+									<td>${bean.loginname }</td>
+									<td>${bean.name }</td>
+									<td id="rolenames${bean.id }">${bean.roleNames }</td>
+									<td>${bean.addTimeStr }</td>
+									<td>${bean.lastestlogintimeStr }</td>
+									<td>${bean.loginNum }</td>
+									<td id="state${bean.id }">${bean.isokStr }</td>
+								</tr>
+							</c:forEach>
+						</tbody>
+					</table>
+					<div id="errorDiv" class="alert alert-error hide">
+						<span id="errorInfo"></span>
+					</div>
+				</div>
+
+				<div class="navbar">
+					<div class="navbar-inner">${pageStr }</div>
+				</div>
+			</div>
+		</div>
+		<!--/row-->
+
+
+	</div>
+	<!--/span-->
+
+	<%@include file="/include/foot.jsp" %>
+	<script src="${pageContext.request.contextPath}/static/My97DatePicker/WdatePicker.js"></script>
+	<script src="${pageContext.request.contextPath}/static/js/checkAll.js"></script>
+	<script src="${pageContext.request.contextPath}/static/admin/saas/js/order.js"></script>
+	<script src="${pageContext.request.contextPath}/static/js/sco.modal.js"></script>
+	<script src="${pageContext.request.contextPath}/static/js/sco.confirm.js"></script>
+
+</body>
+</html>

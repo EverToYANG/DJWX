@@ -1,0 +1,75 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>管理中心</title>
+<meta name="description" content="">
+<meta name="author" content="">
+<%@include file="/include/bsie_head.jsp"%>
+<%@include file="/include/bsie_foot.jsp"%>
+<%@include file="/include/openWindow.jsp"%>
+<script src="${pageContext.request.contextPath}/static/admin/cms/js/selectSite.js"></script>
+
+<link href="${pageContext.request.contextPath}/static/skin/style/main_css.css" rel="stylesheet" type="text/css" />
+<link href="${pageContext.request.contextPath}/static/skin/style/zTreeStyle.css" rel="stylesheet" type="text/css">
+
+
+
+	<script type="text/javascript">
+	var ctx = "${pageContext.request.contextPath}";
+	var gisMapId="1212";
+	$(document).ready(function() {
+		loadMenu(gisMapId);
+	});
+	function loadMenu(gisMapId) {
+		$.ajax({
+			type:"POST",
+			url:"/cms/gis/gisMap_json.do?gisMapId="+gisMapId,
+			dataType : "json",
+			success:function(data){
+				if(data != null){
+					var str = JSON.stringify(data);
+					alert(str);
+				}
+			}
+		}); 
+	}
+	
+	</script>
+
+  </head>
+
+<body>
+	<%@include file="/include/loading.jsp" %>
+	<jsp:include page="/head.do" flush="true" />
+      <div class="container-fluid" >
+      <div class="row-fluid">
+
+		<div class="widget-box">
+			<div class="widget-title">
+				<span class="icon">
+					<i class="icon-edit"></i>
+				</span>
+				<h5>地图编辑</h5>
+			</div>
+			<div class="widget-content nopadding">
+							
+				<div class="widget-content nopadding">
+					
+					</div>
+	
+				</div>
+      		</div>
+          
+          
+        </div>
+		<%@include file="/include/foot.jsp" %>
+		<script src="${pageContext.request.contextPath}/static/common/js/check.js"></script>
+		<script src="${pageContext.request.contextPath}/static/common/js/checkLoginName.js"></script>
+		<script language="javascript" type="text/javascript" src="${pageContext.request.contextPath}/static/My97DatePicker/WdatePicker.js" defer="defer"></script>
+ </body>
+
+</html>

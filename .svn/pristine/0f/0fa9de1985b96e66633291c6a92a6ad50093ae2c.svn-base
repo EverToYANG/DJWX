@@ -1,0 +1,177 @@
+$(function() {
+	// 商品属性SKU
+	$('.sku-group .sku-item input')
+			.live(
+					'click',
+					function() {
+						var click_true = $(this).prop("checked");
+						var click_value = $(this).data("skuname");
+						var li_cur_index = $(this).parents('.sku-group')
+								.index();
+
+						// 总共的sku组数
+						var len = $('.sku-list').length;
+						// 定义一个数组S
+						var s = new Array();
+						// 二维数组
+						for (var i = 0; i < len; i++) {
+							s[i] = new Array();
+							$($('.sku-list')[i]).find("input:checked").each(
+									function(index) {
+										s[i][index] = $(this).data('skuname');
+									});
+						}
+
+						for (var i = 0; i < s.length; i++) {
+							if (s[i].length == 0) {
+								s.splice(i, 1);
+							}
+						}
+
+						window.row = function(doubleArrays) {
+							var len = doubleArrays.length;
+							if (len >= 2) {
+								var arr1 = doubleArrays[0];
+								var arr2 = doubleArrays[1];
+								var len1 = doubleArrays[0].length;
+								var len2 = doubleArrays[1].length;
+								var newlen = len1 * len2;
+								var temp = new Array(newlen);
+								var index = 0;
+								for (var i = 0; i < len1; i++) {
+									for (var j = 0; j < len2; j++) {
+										temp[index] = arr1[i] + "_" + arr2[j];
+										index++;
+									}
+								}
+								var newArray = new Array(len - 1);
+								newArray[0] = temp;
+								if (len > 2) {
+									var _count = 1;
+									for (var i = 2; i < len; i++) {
+										newArray[_count] = doubleArrays[i];
+										_count++;
+									}
+								}
+								// console.log(newArray);
+								return window.row(newArray);
+							} else {
+								return doubleArrays[0];
+							}
+						}
+
+						var slen = s.length;
+						if (slen == len) {
+							$('.J_MapRow_All_table').show()
+							var rows = window.row(s);
+							var html = "";
+							for (var i = 0; i < rows.length; i++) {
+								
+								var Jmap = rows[i].replace(/:/g, "-");
+								html += '<tr class="J_MapRow" id="J_Map_'
+										+ Jmap + '">';
+
+								split_array = rows[i].split("_");
+								var post_name = "";
+								for (var j = 0; j < split_array.length; j++) {
+									
+									var sku_name = $(
+											'#prop_'
+													+ split_array[j].replace(
+															":", "-")).data(
+											'title');
+									var sku_id = $(
+											'#prop_'
+													+ split_array[j].replace(
+															/:/g, "-")).data(
+											'skuname').replace(/:/g, "-");
+									
+									var attr_name = $('#attr_'+sku_id.split("-")[0]).data('attrname');
+									
+									post_name += attr_name+":"+sku_name + '_';
+									// console.log(split_array)
+									html += '	<td>' + '		<span class="J_Map_'
+											+ sku_id + '">' + sku_name
+											+ '</span>' + '	</td>';
+								}
+
+								html += '	<td class="price">'
+										+ '<input type="hidden" name="skus[' + Jmap + '].title" value="' + post_name + '">'
+										+ '<input data-id="'
+										+ Jmap
+										+ '" id="J_SkuField_price_'
+										+ Jmap
+										+ '" class="J_MapPrice text" data-type="price" type="text" name="skus['
+										+ Jmap
+										+ '].price" value="">'
+										+ '	</td>'
+										+ '	<td class="quantity">'
+										+ '		<input maxlength="9" data-id="'
+										+ Jmap
+										+ '" id="J_SkuField_quantity_'
+										+ Jmap
+										+ '" class="J_MapQuantity text" data-type="quantity" name="skus['
+										+ Jmap
+										+ '].num" type="text" value="">'
+										+ '	</td>'
+										/*
+										 * + ' <td class="tsc">' + ' <input
+										 * data-id="' + Jmap + '"
+										 * class="J_MapProductid text"
+										 * data-type="tsc" type="text"
+										 * name="sku[' + Jmap + '][sn]"
+										 * value="">' + ' <input type="hidden"
+										 *  
+										 * value="' + post_name + '">' + ' </td>' + '<td class="j-add-price">' + '
+										 * <input type="button" class="btn"
+										 * data-id="' + Jmap + '" value="设置会员价"
+										 * />' + ' </td>'
+										 */
+										+ '</tr>';
+
+								if (click_true) {
+									if (!$('#J_Map_' + Jmap).html()) {
+										// console.log('#J_Map_'+Jmap)
+										if ($('.J_MapRow_All').find(
+												'tr[id^=J_Map_'
+														+ split_array[0]
+																.replace(/:/g,
+																		"-")
+														+ ']').html()) {
+											$('.J_MapRow_All')
+													.find(
+															'tr[id^=J_Map_'
+																	+ split_array[0]
+																			.replace(
+																					/:/g,
+																					"-")
+																	+ ']')
+													.last().after(html);
+										} else {
+											$('.J_MapRow_All').append(html);
+										}
+
+									}
+								} else {
+									$('.J_MapRow_All').find(
+											'tr[id*='
+													+ click_value.replace(/:/g,
+															"-") + ']').next(
+											".add-price-set").remove();
+									$('.J_MapRow_All').find(
+											'tr[id*='
+													+ click_value.replace(/:/g,
+															"-") + ']')
+											.remove();
+								}
+
+								html = '';
+
+							}
+
+						} else {
+							$('.J_MapRow_All').html('');
+							$('.J_MapRow_All_table').hide();
+						}
+					});
+});

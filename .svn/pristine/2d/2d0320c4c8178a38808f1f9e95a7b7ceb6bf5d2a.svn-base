@@ -1,0 +1,11 @@
+function jsonTest() {
+	if (isCheckOne()) {
+		location.href = "mapEdit.do";
+		$("#errorDiv").fadeOut("slow");
+	} else {
+		$("#errorDiv").fadeIn("slow");
+		$("#errorInfo").html("请选择一条数据");
+	}
+}
+
+

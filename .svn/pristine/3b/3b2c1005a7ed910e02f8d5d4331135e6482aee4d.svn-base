@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.member.dao.PartyMemberMapper" >
+  <resultMap id="BaseResultMap" type="com.gsccs.cms.member.model.PartyMember" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="grouptype" property="grouptype" jdbcType="INTEGER" />
+    <result column="groupid" property="groupid" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="CHAR" />
+    <result column="birthday" property="birthday" jdbcType="TIMESTAMP" />
+    <result column="idcode" property="idcode" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="isOk" property="isok" jdbcType="CHAR" />
+    <result column="jointime" property="jointime" jdbcType="TIMESTAMP" />
+    <result column="intro" property="intro" jdbcType="VARCHAR" />
+    <result column="unitid" property="unitid" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="img" property="img" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, grouptype, groupid, name, sex, birthday, idcode, phone, email, 
+    isOk, lastLoginTime, jointime, intro, unitid, status, img
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.gsccs.cms.member.model.PartyMemberExample" >
+  SELECT m.*,g.name groupname,g.color groupcolor
+    FROM cms_member_party m left join cms_member_partygroup g on g.id=m.groupid
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  
+  <sql id="selectPageByExampleSql">
+  SELECT m.*,g.name unitname
+    FROM cms_member_party m left join sys_unit g on g.id=m.unitid
+    <if test="_parameter != null">
+       <include refid="Example_Where_Clause" />
+    </if>
+    
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if> 
+    limit ${skip},${pageSize}
+  </sql>
+  <select  id="selectPageByExample" parameterType="com.gsccs.cms.member.model.PartyMemberExample" resultMap="BaseResultMap">
+    <include refid="selectPageByExampleSql" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from cms_member_party
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from cms_member_party
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.gsccs.cms.member.model.PartyMemberExample" >
+    delete from cms_member_party
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.gsccs.cms.member.model.Member" >
+    insert into cms_member_party (id, grouptype, groupid, 
+      wxopenid, name, wxappid, 
+      sex, birthday, idcode, 
+      phone, email, isOk, 
+      lastLoginTime, jointime, intro, 
+      unitid, status, img
+      )
+    values (#{id,jdbcType=VARCHAR}, #{grouptype,jdbcType=INTEGER}, #{groupid,jdbcType=VARCHAR}, 
+      #{wxopenid,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{wxappid,jdbcType=VARCHAR}, 
+      #{sex,jdbcType=CHAR}, #{birthday,jdbcType=TIMESTAMP}, #{idcode,jdbcType=VARCHAR}, 
+      #{phone,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{isok,jdbcType=CHAR}, 
+      #{jointime,jdbcType=TIMESTAMP}, #{intro,jdbcType=VARCHAR}, 
+      #{unitid,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, #{img,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.gsccs.cms.member.model.Member" >
+    insert into cms_member_party
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="grouptype != null" >
+        grouptype,
+      </if>
+      <if test="groupid != null" >
+        groupid,
+      </if>
+      <if test="wxopenid != null" >
+        wxopenid,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="wxappid != null" >
+        wxappid,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="birthday != null" >
+        birthday,
+      </if>
+      <if test="idcode != null" >
+        idcode,
+      </if>
+      <if test="phone != null" >
+        phone,
+      </if>
+      <if test="email != null" >
+        email,
+      </if>
+      <if test="isok != null" >
+        isOk,
+      </if>
+      
+      <if test="jointime != null" >
+        jointime,
+      </if>
+      <if test="intro != null" >
+        intro,
+      </if>
+      <if test="unitid != null" >
+        unitid,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="img != null" >
+        img,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="grouptype != null" >
+        #{grouptype,jdbcType=INTEGER},
+      </if>
+      <if test="groupid != null" >
+        #{groupid,jdbcType=VARCHAR},
+      </if>
+      <if test="wxopenid != null" >
+        #{wxopenid,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="wxappid != null" >
+        #{wxappid,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=CHAR},
+      </if>
+      <if test="birthday != null" >
+        #{birthday,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idcode != null" >
+        #{idcode,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null" >
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="isok != null" >
+        #{isok,jdbcType=CHAR},
+      </if>
+      <if test="lastlogintime != null" >
+        #{lastlogintime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="jointime != null" >
+        #{jointime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="intro != null" >
+        #{intro,jdbcType=VARCHAR},
+      </if>
+      <if test="unitid != null" >
+        #{unitid,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="img != null" >
+        #{img,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.gsccs.cms.member.model.PartyMemberExample" resultType="java.lang.Integer" >
+    select count(*) from cms_member_party m
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update cms_member_party
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=VARCHAR},
+      </if>
+      <if test="record.grouptype != null" >
+        grouptype = #{record.grouptype,jdbcType=INTEGER},
+      </if>
+      <if test="record.groupid != null" >
+        groupid = #{record.groupid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxopenid != null" >
+        wxopenid = #{record.wxopenid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.name != null" >
+        name = #{record.name,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wxappid != null" >
+        wxappid = #{record.wxappid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sex != null" >
+        sex = #{record.sex,jdbcType=CHAR},
+      </if>
+      <if test="record.birthday != null" >
+        birthday = #{record.birthday,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.idcode != null" >
+        idcode = #{record.idcode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.phone != null" >
+        phone = #{record.phone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.email != null" >
+        email = #{record.email,jdbcType=VARCHAR},
+      </if>
+      <if test="record.isok != null" >
+        isOk = #{record.isok,jdbcType=CHAR},
+      </if>
+      
+      <if test="record.jointime != null" >
+        jointime = #{record.jointime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.intro != null" >
+        intro = #{record.intro,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitid != null" >
+        unitid = #{record.unitid,jdbcType=INTEGER},
+      </if>
+      <if test="record.status != null" >
+        status = #{record.status,jdbcType=INTEGER},
+      </if>
+      <if test="record.img != null" >
+        img = #{record.img,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update cms_member_party
+    set id = #{record.id,jdbcType=VARCHAR},
+      grouptype = #{record.grouptype,jdbcType=INTEGER},
+      groupid = #{record.groupid,jdbcType=VARCHAR},
+      wxopenid = #{record.wxopenid,jdbcType=VARCHAR},
+      name = #{record.name,jdbcType=VARCHAR},
+      wxappid = #{record.wxappid,jdbcType=VARCHAR},
+      sex = #{record.sex,jdbcType=CHAR},
+      birthday = #{record.birthday,jdbcType=TIMESTAMP},
+      idcode = #{record.idcode,jdbcType=VARCHAR},
+      phone = #{record.phone,jdbcType=VARCHAR},
+      email = #{record.email,jdbcType=VARCHAR},
+      isOk = #{record.isok,jdbcType=CHAR},
+      jointime = #{record.jointime,jdbcType=TIMESTAMP},
+      intro = #{record.intro,jdbcType=VARCHAR},
+      unitid = #{record.unitid,jdbcType=INTEGER},
+      status = #{record.status,jdbcType=INTEGER},
+      img = #{record.img,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.member.model.Member" >
+    update cms_member_party
+    <set >
+      <if test="grouptype != null" >
+        grouptype = #{grouptype,jdbcType=INTEGER},
+      </if>
+      <if test="groupid != null" >
+        groupid = #{groupid,jdbcType=VARCHAR},
+      </if>
+      <if test="wxopenid != null" >
+        wxopenid = #{wxopenid,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="wxappid != null" >
+        wxappid = #{wxappid,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=CHAR},
+      </if>
+      <if test="birthday != null" >
+        birthday = #{birthday,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idcode != null" >
+        idcode = #{idcode,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null" >
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="isok != null" >
+        isOk = #{isok,jdbcType=CHAR},
+      </if>
+     
+      <if test="jointime != null" >
+        jointime = #{jointime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="intro != null" >
+        intro = #{intro,jdbcType=VARCHAR},
+      </if>
+      <if test="unitid != null" >
+        unitid = #{unitid,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="img != null" >
+        img = #{img,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.gsccs.cms.member.model.Member" >
+    update cms_member_party
+    set grouptype = #{grouptype,jdbcType=INTEGER},
+      groupid = #{groupid,jdbcType=VARCHAR},
+      name = #{name,jdbcType=VARCHAR},
+      wxappid = #{wxappid,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=CHAR},
+      birthday = #{birthday,jdbcType=TIMESTAMP},
+      idcode = #{idcode,jdbcType=VARCHAR},
+      phone = #{phone,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      isOk = #{isok,jdbcType=CHAR},
+      jointime = #{jointime,jdbcType=TIMESTAMP},
+      intro = #{intro,jdbcType=VARCHAR},
+      unitid = #{unitid,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      img = #{img,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <sql id="Example_Clause">
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim >
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+  </sql>
+</mapper>

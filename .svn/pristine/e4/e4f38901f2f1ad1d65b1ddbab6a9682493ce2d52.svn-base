@@ -1,0 +1,54 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>平川区兴平路街道办事处 </title>
+<meta name="HandheldFriendly" content="true">
+<meta name="MobileOptimized" content="width">
+<meta name="viewport" id="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" sizes="72x72" href="javascript:void(0)/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="114x114" href="javascript:void(0)/apple-touch-icon-retina.png">
+<link rel="stylesheet" type="text/css" href="/${site.sourcepath}/resources/css/m.css?38444" />
+<script src="/${site.sourcepath}/resources/js/jquery.min.js"></script>
+</head>
+<body>
+<a name=top></a>
+<div id="header" class="header-box">
+  <div id="topHeader" class="header clearfix">
+    <div id="mainBack" class="back_icon_control"> 
+    <span class="icon-arrow-left"></span>
+    <a class="back_icon_info" href="javascript:void(0)javascript:window.history.go(-1);">返回</a> </div>
+    <div class="tit with-desc">
+      <div class="name">${currChannel.name}</div>
+    </div>
+  </div>
+</div>
+<div id="logo" class="clearfix" style="margin-top:69px;">
+    <div class="logo"><img src="/${site.sourcepath}/resources/images/666.jpg" width="100%"></div>
+</div>
+<div class="newsview">
+  <!--资讯标题-->
+  <div class="tit">
+    <h1>${currInfo.title}</h1>
+  </div>
+  <!--资讯标题-->
+  <!--相关信息-->
+  <div class="info">
+    <a class="cdred" href="javascript:void(0)" target="_blank">${currInfo.source}</a>  <span>${currInfo.addtimeStr}</span>
+  </div>
+  <!--相关信息-->
+  <!--资讯正文-->
+  <div id="content">
+ 		${currInfo.content}
+  </div>
+
+<div class="bg" style="height:100px; text-align:center; padding-top:30px;">
+    <a href=#top><img src="/${site.sourcepath}/resources/images/top.gif" width="" alt=""></a>
+</div>
+
+</body>
+</html>

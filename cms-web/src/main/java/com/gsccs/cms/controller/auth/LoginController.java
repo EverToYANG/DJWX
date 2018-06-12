@@ -1,0 +1,116 @@
+package com.gsccs.cms.controller.auth;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.LockedAccountException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.session.UnknownSessionException;
+import org.apache.shiro.subject.Subject;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.google.code.kaptcha.Constants;
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.OperlogService;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.shiro.IncorrectCaptchaException;
+import com.gsccs.cms.auth.shiro.UserPwdCaptchaToken;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.auth.utils.AuthConst;
+import com.gsccs.cms.bass.controller.BaseController;
+
+/**
+ * 登录处理
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+public class LoginController extends BaseController {
+
+	private Logger logger = Logger.getLogger(LoginController.class);
+	@Resource
+	private UserService userService;
+	@Resource
+	private OperlogService operlogService;
+
+	// 验证码校验
+	protected void doCaptchaValidate(HttpServletRequest request,
+			UserPwdCaptchaToken token) {
+		String captcha = (String) request.getSession().getAttribute(
+				Constants.KAPTCHA_SESSION_KEY);
+		if (StringUtils.isEmpty(token.getCaptcha())
+				|| !token.getCaptcha().equalsIgnoreCase(captcha)) {
+			throw new IncorrectCaptchaException("验证码错误！");
+		}
+	}
+
+	
+	@RequestMapping(value = "/login.do", method = RequestMethod.POST)
+	public String login(String username,String password,String rememberMe, String captcha,
+			RedirectAttributes reAttributes) {
+		String msg="";
+		try {
+			Subject subject = SecurityUtils.getSubject();
+			UserPwdCaptchaToken token = new UserPwdCaptchaToken(username,
+					password, captcha);
+			if ("true".equals(rememberMe)) {
+				token.setRememberMe(true);
+			}
+			doCaptchaValidate((HttpServletRequest) request, token);
+			subject.login(token);
+		} catch (UnknownSessionException use) {
+			msg = AuthConst.UNKNOWN_SESSION_EXCEPTION;
+		} catch (UnknownAccountException ex) {
+			msg = AuthConst.UNKNOWN_ACCOUNT_EXCEPTION;
+		} catch (IncorrectCredentialsException ice) {
+			msg = AuthConst.INCORRECT_CREDENTIALS_EXCEPTION;
+		} catch (LockedAccountException lae) {
+			msg = AuthConst.LOCKED_ACCOUNT_EXCEPTION;
+		} catch (IncorrectCaptchaException e) {
+			msg = AuthConst.INCORRECT_CAPTCHA_EXCEPTION;
+		} catch (AuthenticationException ae) {
+			msg = AuthConst.AUTHENTICATION_EXCEPTION;
+		} catch (Exception e) {
+			msg = AuthConst.UNKNOWN_EXCEPTION;
+		}
+		if (StringUtils.isEmpty(msg)) {
+			operlogService.log(username, "登录系统成功。", request);
+			return "redirect:/index";
+		} else {
+			operlogService.log(username, "登录系统失败:" + msg, request);
+			reAttributes.addAttribute("error", msg);
+			return "redirect:/login.jsp";
+		}
+	}
+
+
+	
+	
+	@RequestMapping("/logout.do")
+	public String logout(@CurrentUser Users user, HttpServletResponse response) {
+		Subject subject = SecurityUtils.getSubject();
+		Session session = subject.getSession();
+		operlogService.log(user.getLoginname(), "退出系统", request);
+		session.removeAttribute("loginAdmin");
+		session.removeAttribute("loginUnits");
+		session.removeAttribute("loginRoles");
+		session.removeAttribute("funcs");
+		session.removeAttribute("operButtons");
+		session.removeAttribute(AuthConst.CURRENT_USER);
+		session.removeAttribute(AuthConst.SHIRO_USER);
+		subject.logout();
+		return "redirect:/login.jsp";
+	}
+}

@@ -1,0 +1,71 @@
+package com.gsccs.cms.controller.weixin;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import io.github.elkan1788.mpsdk4j.mvc.WechatWebSupport;
+import io.github.elkan1788.mpsdk4j.vo.MPAccount;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月16日
+ */
+
+@Controller
+@RequestMapping("/mp")
+public class WeiXinController extends WechatWebSupport {
+
+	@Resource
+	private com.gsccs.cms.weixin.service.WxAppService wxAppService;
+
+	@Override
+	public void init() {
+		/*
+		 * MPAccount mpAct = new MPAccount(); WxApp param = new WxApp();
+		 * List<WxApp> wxApps = wxAppService.find(param, ""); for (WxApp wxApp :
+		 * wxApps) { // 添加微信号 WechatKernel _wk=new WechatKernel();
+		 * mpAct.setAppId(wxApp.getAppId());
+		 * mpAct.setAppSecret(wxApp.getSecret());
+		 * mpAct.setToken(wxApp.getToken());
+		 * System.out.println("mpAct="+mpAct.toString()); _wk.setMpAct(mpAct);
+		 * // 配置消息处理器 _wk.setWechatHandler(new WeiXinHandler());
+		 * System.out.println("_wk="+_wk.toString()); }
+		 */
+
+		MPAccount mpact = new MPAccount();
+		mpact.setAppId("wx1562950d23bf4c3a");
+		mpact.setAppSecret("4958673f24f21120f4f9fad788bfccd3 ");
+		mpact.setToken("MyToken");
+		_wk.setMpAct(mpact);
+		_wk.setWechatHandler(new WeiXinHandler());
+
+	}
+
+	@RequestMapping(value = "/core")
+	@ResponseBody
+	public void wxCore(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+		/* this.interact(req, resp); */
+	/*	String respmsg = "success";
+		if ("GET".equals(req.getMethod())) {
+			respmsg = req.getParameter("echostr");
+		} else {
+			init();
+			respmsg = _wk.handle(req.getInputStream());
+		}
+		// 输出回复消息
+		resp.setCharacterEncoding("UTF-8");
+		resp.setContentType("text/html");
+		resp.getWriter().print(respmsg);*/
+		this.interact(req, resp);
+		/*
+		 * if ("GET".equals(req.getMethod())) { wxMsgReceiver.checkURL(req); }
+		 * else{ init(); wxMsgReceiver.interact(req); }
+		 */
+	}
+}

@@ -1,0 +1,36 @@
+package com.gsccs.cms.auth.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.auth.model.Adminlink;
+import com.gsccs.cms.auth.model.AdminlinkExample;
+
+public interface AdminlinkMapper {
+	
+	
+    int countByExample(AdminlinkExample example);
+
+    int deleteByExample(AdminlinkExample example);
+
+    int deleteByPrimaryKey(String id);
+
+    int insert(Adminlink record);
+
+    int insertSelective(Adminlink record);
+
+    List<Adminlink> selectByExample(AdminlinkExample example);
+    List<Adminlink> selectByExampleCache(AdminlinkExample example);
+    List<Adminlink> selectPageByExample(AdminlinkExample example);
+
+    Adminlink selectByPrimaryKey(String id);
+
+    int updateByExampleSelective(@Param("record") Adminlink record, @Param("example") AdminlinkExample example);
+
+    int updateByExample(@Param("record") Adminlink record, @Param("example") AdminlinkExample example);
+
+    int updateByPrimaryKeySelective(Adminlink record);
+
+    int updateByPrimaryKey(Adminlink record);
+}

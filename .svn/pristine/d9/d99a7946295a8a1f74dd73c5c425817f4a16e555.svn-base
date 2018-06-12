@@ -1,0 +1,145 @@
+package com.gsccs.cms.core.service;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+
+import com.gsccs.cms.core.model.Site;
+
+import freemarker.template.TemplateException;
+
+/**
+ * 站点相关服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+public interface SiteService {
+	/**
+	 * 生成树
+	 * @return
+	 */
+	public String createTree(HttpServletRequest request,String selectids);
+	/**
+	 * 获取同级最大排序号
+	 * @param parid
+	 * @return
+	 */
+	public int maxNum(String parid);
+
+	/**
+	 * 分页查询
+	 */
+	public List<Site> find(Site site,String order,int currPage,int pageSize);
+	/**
+	 * 统计
+	 * @param site
+	 * @return
+	 */
+	public int count(Site site);
+
+	/**
+	 * 上升
+	 * @param site
+	 */
+	public void up(Site site);
+	/**
+	 * 下降
+	 * @param site
+	 */
+	public void down(Site site);
+	
+	/**
+	 * 查询是否有子数据
+	 * @param parId
+	 * @return
+	 */
+	public boolean hasChildren(String parId);
+	/**
+	 * 查询子站点
+	 * @param parid
+	 * @return
+	 */
+	public List<Site> selectByParId(String parid);
+	
+	public List<Site> selectByParId(String parid,Site site, String order, int currPage,
+			int pageSize);
+	/**
+	 * 查询第一个子站点
+	 * @param parid
+	 * @return
+	 */
+	public Site selectFirstByParId(String parid);
+	/**
+	 * 查询角色可管理站点
+	 * @param parid
+	 * @return
+	 */
+	public List<Site> selectByRoles(Site site,String roles);
+	
+	/**
+	 * 查询角色可管理站点
+	 * @param parid
+	 * @return
+	 */
+	public List<Site> selectByRoles(String roles);
+	
+	/**
+	 * 查询用户第一个可管理站点
+	 * @param parid
+	 * @return
+	 */
+	public Site selectFirstByRoles(String roles);
+	/**
+	 * 根据id查询
+	 * @param id
+	 * @return
+	 */
+	public Site findById(String id);
+	/**
+	 * 根据id查询
+	 * @param id
+	 * @return
+	 */
+	public Site findByDomain(String domain,boolean cache);
+	/**
+	 * 根据sourcepath查询
+	 * @param id
+	 * @return
+	 */
+	public Site findBySourcepath(String sourcepath);
+	
+	/**
+	 * 查询是否有此目录
+	 * @param path
+	 * @return
+	 */
+	public boolean haveSourcePath(String path);
+
+	/**
+	 * 更新
+	 * @param site
+	 */
+	public void update(Site site);
+	/**
+	 * 添加
+	 * @param site
+	 * @return
+	 */
+	public String insert(Site site);
+	/**
+	 * 删除
+	 * @param siteId
+	 * @throws TemplateException 
+	 * @throws IOException 
+	 */
+	public void del(String siteId,HttpServletRequest request);
+	/**
+	 * 递归删除
+	 * @param parId
+	 */
+	public void delPar(String parId,HttpServletRequest request);
+}

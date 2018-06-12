@@ -1,0 +1,171 @@
+package com.gsccs.cms.controller.weixin;
+
+import io.github.elkan1788.mpsdk4j.core.WechatHandler;
+import io.github.elkan1788.mpsdk4j.core.XmlMsgBuilder;
+import io.github.elkan1788.mpsdk4j.vo.event.BasicEvent;
+import io.github.elkan1788.mpsdk4j.vo.event.LocationEvent;
+import io.github.elkan1788.mpsdk4j.vo.event.MenuEvent;
+import io.github.elkan1788.mpsdk4j.vo.event.ScanCodeEvent;
+import io.github.elkan1788.mpsdk4j.vo.event.ScanEvent;
+import io.github.elkan1788.mpsdk4j.vo.event.SendLocationInfoEvent;
+import io.github.elkan1788.mpsdk4j.vo.event.SendPhotosEvent;
+import io.github.elkan1788.mpsdk4j.vo.message.BasicMsg;
+import io.github.elkan1788.mpsdk4j.vo.message.ImageMsg;
+import io.github.elkan1788.mpsdk4j.vo.message.LinkMsg;
+import io.github.elkan1788.mpsdk4j.vo.message.LocationMsg;
+import io.github.elkan1788.mpsdk4j.vo.message.TextMsg;
+import io.github.elkan1788.mpsdk4j.vo.message.VideoMsg;
+import io.github.elkan1788.mpsdk4j.vo.message.VoiceMsg;
+import io.github.elkan1788.mpsdk4j.vo.push.SentAllJobEvent;
+import io.github.elkan1788.mpsdk4j.vo.push.SentTmlJobEvent;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月17日
+ */
+
+public class WeiXinHandler implements WechatHandler{
+
+	@Override
+	public BasicMsg defMsg(BasicMsg bm) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg defEvent(BasicEvent be) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg text(TextMsg tm) {
+		System.out.println("文本处理方法");
+		System.out.println(tm.getContent());
+		System.out.println(tm.toString());
+		return tm;
+	}
+
+	@Override
+	public BasicMsg image(ImageMsg im) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg voice(VoiceMsg vom) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg video(VideoMsg vim) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg shortVideo(VideoMsg vim) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg location(LocationMsg lm) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg link(LinkMsg lm) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg eClick(MenuEvent me) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void eView(MenuEvent me) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BasicMsg eSub(BasicEvent be) {
+		
+		return null;
+	}
+
+	@Override
+	public void eUnSub(BasicEvent be) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BasicMsg eScan(ScanEvent se) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void eLocation(LocationEvent le) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BasicMsg eScanCodePush(ScanCodeEvent sce) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg eScanCodeWait(ScanCodeEvent sce) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg ePicSysPhoto(SendPhotosEvent spe) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg ePicPhotoOrAlbum(SendPhotosEvent spe) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg ePicWeixin(SendPhotosEvent spe) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicMsg eLocationSelect(SendLocationInfoEvent slie) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void eSentTmplJobFinish(SentTmlJobEvent stje) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void eSentAllJobFinish(SentAllJobEvent saje) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
+

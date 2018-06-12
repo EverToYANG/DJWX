@@ -1,0 +1,34 @@
+package com.gsccs.cms.search;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.solr.client.solrj.SolrServerException;
+
+import com.gsccs.cms.core.model.Content;
+
+public class SolrAppTest {
+
+	/**
+	 * @author x.d zhang
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		
+		SolrTestService testService = new SolrTestService();
+		try {
+			testService.addIndex();
+			List<Content> list = testService.searchInfoList("星", 0);
+
+			for (Content info : list) {
+				System.out.println(info.getTitle());
+			}
+
+		} catch (SolrServerException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+}

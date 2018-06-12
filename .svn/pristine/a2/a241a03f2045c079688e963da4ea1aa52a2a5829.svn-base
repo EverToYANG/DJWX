@@ -1,0 +1,222 @@
+package com.gsccs.cms.controller.module;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.model.Msg;
+import com.gsccs.cms.auth.service.MsgService;
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.member.service.MembergroupService;
+
+/**
+ * 站内信相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/message")
+public class MessageController extends BaseController {
+
+	@Resource
+	private MsgService msgService;
+	@Resource
+	private MembergroupService membergroupService;
+	@Resource
+	private MemberService memberService;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String msg(Msg msg, @RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = " addtime desc ") String order,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (msg == null) {
+			msg = new Msg();
+		}
+		List<Msg> msgList = msgService.find(msg, order, currPage, pageSize);
+		int totalCount = msgService.count(msg);
+		Pager pager = new Pager(request);
+		pager.appendParam("title");
+		pager.appendParam("membername");
+		pager.appendParam("tomembername");
+		pager.appendParam("content");
+		pager.appendParam("issys");
+		pager.appendParam("isread");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", msgList);
+		map.put("order", order);
+		return "module/msg_list";
+	}
+
+	/**
+	 * 站内信详细
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/view.do")
+	public String view(Msg msg, ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (msg != null && StringUtils.isNotEmpty(msg.getId())) {
+			msg = msgService.findById(msg.getId());
+			map.put("msg", msg);
+		}
+		return "module/msg_view";
+	}
+
+	/**
+	 * 发送
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/send.do")
+	public String msgSend(ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		map.put("membergroupList", membergroupService.find(null, " ordernum "));
+		return "module/msg_send";
+	}
+
+	/**
+	 * 发送
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/sendDo.do")
+	public String msgSendDo(Msg msg,
+			String tomembernames, String[] membergroups, String pageFuncId,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response){
+		String showMessage = "";
+		Member member;
+		map.put("forwardSeconds", 3);
+		// 收信人
+		if (StringUtils.isNotEmpty(tomembernames)) {
+			try {
+				String[] tomembers = tomembernames.split(";");
+				if (tomembers != null && tomembers.length > 0) {
+					for (int i = 0; i < tomembers.length; i++) {
+						member = memberService.findByWxOpenid(tomembers[i]);
+						if (member != null) {
+							Msg currMsg = new Msg();
+							currMsg.setTitle(msg.getTitle());
+							currMsg.setContent(msg.getContent());
+							currMsg.setAddtime(new Date());
+							currMsg.setIssys("1");
+							currMsg.setIsread("0");
+							currMsg.setUserid(getLoginUser().getId());
+							currMsg.setUsername(getLoginName());
+							currMsg.setTomemberid(member.getId());
+							currMsg.setTomembername(member.getName());
+							msgService.add(currMsg);
+						}
+					}
+				}
+				showMessage = "发送成功!";
+			} catch (Exception e) {
+				e.printStackTrace();
+				map.put("forwardSeconds", 0);
+				showMessage = "发送失败:" + e.getMessage();
+			}
+		}
+		// 收信会员组
+		if (membergroups != null && membergroups.length > 0) {
+			try {
+				List<String> groupids = new ArrayList<String>();
+				for (int i = 0; i < membergroups.length; i++) {
+					groupids.add(membergroups[i]);
+				}
+				member = new Member();
+				member.setGroupids(groupids);
+				List<Member> memberList = memberService.find(member, "");
+				if (memberList != null && memberList.size() > 0) {
+					for (int i = 0; i < memberList.size(); i++) {
+						Msg currMsg = new Msg();
+						currMsg.setTitle(msg.getTitle());
+						currMsg.setContent(msg.getContent());
+						currMsg.setAddtime(new Date());
+						currMsg.setIssys("1");
+						currMsg.setIsread("0");
+						currMsg.setUserid(getLoginUser().getId());
+						currMsg.setUsername(getLoginName());
+						currMsg.setTomemberid(memberList.get(i).getId());
+						currMsg.setTomembername(memberList.get(i)
+								.getName());
+						msgService.add(currMsg);
+					}
+				}
+				showMessage = "发送成功!";
+			} catch (Exception e) {
+				e.printStackTrace();
+				map.put("forwardSeconds", 0);
+				showMessage = "发送失败:" + e.getMessage();
+			}
+		}
+		map.put("msg", showMessage);
+		map.put("forwardUrl", "message/list.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+
+	@RequestMapping("/del.do")
+	public String msgDel(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						try {
+							msgService.del(idArr[i]);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "message/list.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+}

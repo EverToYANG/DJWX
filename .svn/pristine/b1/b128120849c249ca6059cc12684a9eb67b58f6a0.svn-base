@@ -1,0 +1,32 @@
+package com.gsccs.cms.course.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.course.dao.CourseUserMapper;
+import com.gsccs.cms.course.model.CourseUser;
+
+/**
+ * @author 刘杰
+ *
+ * @date 2016年9月22日
+ */
+
+@Service
+public class CourseUserServiceImpl implements CourseUserService {
+	
+	@Autowired
+	private CourseUserMapper courseUserMapper;
+
+	@Override
+	public int add(CourseUser courseUser) {
+		return courseUserMapper.insert(courseUser);
+	}
+
+	@Override
+	public int delById(String id) {
+		return courseUserMapper.deleteByPrimaryKey(id);
+	}
+
+}
+

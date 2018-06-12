@@ -1,0 +1,11 @@
+package com.gsccs.cms.bass.utils;
+
+public class OssConfig {
+	
+	public static final String ROOT_PATH="F:\\data";
+	
+	public static final String TEST_DOMAIN="http://zzb.pcwxdj.com";
+	private String DOMAIN = "http://dunhuangwenbohui.cn/wx";
+	
+	
+}

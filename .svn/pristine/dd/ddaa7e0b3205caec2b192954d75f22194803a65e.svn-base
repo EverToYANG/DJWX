@@ -1,0 +1,21 @@
+package com.gsccs.cms.search.service;
+
+import java.util.List;
+
+import com.gsccs.cms.core.model.Content;
+
+public interface QueryService {
+	
+	
+	/**
+	 * 检索信息内容
+	 * @param key
+	 * @param site
+	 * @param channel
+	 * @param startDate
+	 * @param endDate
+	 * @return
+	 */
+	public List<Content> searchContent(String key,String site,String channel,String startDate,String endDate,int start,int rows);
+
+}

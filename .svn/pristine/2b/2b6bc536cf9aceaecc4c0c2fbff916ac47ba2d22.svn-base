@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.module.dao.ConsultMapper">
+	<cache type="org.mybatis.caches.ehcache.EhcacheCache" />
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.module.model.Consult">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="siteid" property="siteid" jdbcType="VARCHAR" />
+		<result column="memberid" property="memberid" jdbcType="VARCHAR" />
+		<result column="iclassid" property="iclassid" jdbcType="VARCHAR" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="sex" property="sex" jdbcType="CHAR" />
+		<result column="email" property="email" jdbcType="VARCHAR" />
+		<result column="qq" property="qq" jdbcType="VARCHAR" />
+		<result column="tel" property="tel" jdbcType="VARCHAR" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="content" property="content" jdbcType="VARCHAR" />
+		<result column="addtime" property="addtime" jdbcType="TIMESTAMP" />
+		<result column="state" property="state" jdbcType="VARCHAR" />
+		<result column="parid" property="parid" jdbcType="VARCHAR" />
+		<result column="isshow" property="isshow" jdbcType="VARCHAR" />
+		<result column="albums" property="albums" jdbcType="VARCHAR" />
+		<result column="reusername" property="reusername" jdbcType="VARCHAR" />
+		<result column="ip" property="ip" jdbcType="VARCHAR" />
+		<result column="type" property="type" jdbcType="VARCHAR" />
+		<result column="datename" jdbcType="VARCHAR" property="datename" />
+		<result column="sitename" jdbcType="VARCHAR" property="sitename" />
+		<result column="countnum" property="countnum" jdbcType="INTEGER" />
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value}
+									and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		id, siteid, memberid, iclassid, name, sex, email, qq, tel,
+		title,
+		content, addtime,
+		state, parid, isshow, albums,ip,type
+	</sql>
+
+	<select useCache="false" id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.module.model.ConsultExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from cms_guestbook
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	<sql id="selectPageByExampleSql">
+		SELECT *
+		FROM cms_guestbook
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</sql>
+	<select useCache="false" id="selectPageByExample"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		<include refid="selectPageByExampleSql" />
+	</select>
+	<select useCache="true" id="selectPageByExampleCache"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		<include refid="selectPageByExampleSql" />
+	</select>
+	<select useCache="false" id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from cms_guestbook
+		where id = #{id,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from
+		cms_guestbook
+		where id = #{id,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.module.model.ConsultExample">
+		delete from cms_guestbook
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.gsccs.cms.module.model.Consult">
+		insert into cms_guestbook (id,
+		siteid, memberid,
+		iclassid, name, sex,
+		email, qq, tel, title,
+		content,
+		addtime, state,
+		parid, isshow, albums,
+		ip,type)
+		values
+		(#{id,jdbcType=VARCHAR}, #{siteid,jdbcType=VARCHAR},
+		#{memberid,jdbcType=VARCHAR},
+		#{iclassid,jdbcType=VARCHAR},
+		#{name,jdbcType=VARCHAR}, #{sex,jdbcType=CHAR},
+		#{email,jdbcType=VARCHAR}, #{qq,jdbcType=VARCHAR},
+		#{tel,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR},
+		#{content,jdbcType=VARCHAR}, #{addtime,jdbcType=TIMESTAMP},
+		#{state,jdbcType=VARCHAR},
+		#{parid,jdbcType=VARCHAR},
+		#{isshow,jdbcType=VARCHAR}, #{albums,jdbcType=VARCHAR},
+		#{ip,jdbcType=VARCHAR},#{type,jdbcType=VARCHAR})
+	</insert>
+
+	<sql id="countByExampleSql">
+		select count(*) from cms_guestbook
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</sql>
+	<select useCache="false" id="countByExample"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		<include refid="countByExampleSql" />
+	</select>
+	<select useCache="true" id="countByExampleCache"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		<include refid="countByExampleSql" />
+	</select>
+	<update id="updateByExampleSelective" parameterType="map">
+		update cms_guestbook
+		<set>
+			<if test="record.id != null">
+				id = #{record.id,jdbcType=VARCHAR},
+			</if>
+			<if test="record.siteid != null">
+				siteid = #{record.siteid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.memberid != null">
+				memberid = #{record.memberid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.iclassid != null">
+				iclassid = #{record.iclassid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.name != null">
+				name = #{record.name,jdbcType=VARCHAR},
+			</if>
+			<if test="record.sex != null">
+				sex = #{record.sex,jdbcType=CHAR},
+			</if>
+			<if test="record.email != null">
+				email = #{record.email,jdbcType=VARCHAR},
+			</if>
+			<if test="record.qq != null">
+				qq = #{record.qq,jdbcType=VARCHAR},
+			</if>
+			<if test="record.tel != null">
+				tel = #{record.tel,jdbcType=VARCHAR},
+			</if>
+			<if test="record.title != null">
+				title = #{record.title,jdbcType=VARCHAR},
+			</if>
+			<if test="record.content != null">
+				content = #{record.content,jdbcType=VARCHAR},
+			</if>
+			<if test="record.addtime != null">
+				addtime = #{record.addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="record.state != null">
+				state = #{record.state,jdbcType=VARCHAR},
+			</if>
+			<if test="record.parid != null">
+				parid = #{record.parid,jdbcType=VARCHAR},
+			</if>
+			<if test="record.isshow != null">
+				isshow = #{record.isshow,jdbcType=VARCHAR},
+			</if>
+			<if test="record.albums != null">
+				albums = #{record.albums,jdbcType=VARCHAR},
+			</if>
+			<if test="record.ip != null">
+				ip = #{record.ip,jdbcType=VARCHAR},
+			</if>
+			<if test="record.type != null">
+				ip = #{record.type,jdbcType=VARCHAR},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update cms_guestbook
+		set id = #{record.id,jdbcType=VARCHAR},
+		siteid =
+		#{record.siteid,jdbcType=VARCHAR},
+		memberid =
+		#{record.memberid,jdbcType=VARCHAR},
+		iclassid =
+		#{record.iclassid,jdbcType=VARCHAR},
+		name =
+		#{record.name,jdbcType=VARCHAR},
+		sex = #{record.sex,jdbcType=CHAR},
+		email = #{record.email,jdbcType=VARCHAR},
+		qq =
+		#{record.qq,jdbcType=VARCHAR},
+		tel = #{record.tel,jdbcType=VARCHAR},
+		title = #{record.title,jdbcType=VARCHAR},
+		content =
+		#{record.content,jdbcType=VARCHAR},
+		addtime =
+		#{record.addtime,jdbcType=TIMESTAMP},
+		state =
+		#{record.state,jdbcType=VARCHAR},
+		parid =
+		#{record.parid,jdbcType=VARCHAR},
+		isshow =
+		#{record.isshow,jdbcType=VARCHAR},
+		albums =
+		#{record.albums,jdbcType=VARCHAR},
+		ip =
+		#{record.ip,jdbcType=VARCHAR},
+		type = #{record.type,jdbcType=VARCHAR}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.gsccs.cms.module.model.Consult">
+		update cms_guestbook
+		<set>
+			<if test="siteid != null">
+				siteid = #{siteid,jdbcType=VARCHAR},
+			</if>
+			<if test="memberid != null">
+				memberid = #{memberid,jdbcType=VARCHAR},
+			</if>
+			<if test="iclassid != null">
+				iclassid = #{iclassid,jdbcType=VARCHAR},
+			</if>
+			<if test="name != null">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="sex != null">
+				sex = #{sex,jdbcType=CHAR},
+			</if>
+			<if test="email != null">
+				email = #{email,jdbcType=VARCHAR},
+			</if>
+			<if test="qq != null">
+				qq = #{qq,jdbcType=VARCHAR},
+			</if>
+			<if test="tel != null">
+				tel = #{tel,jdbcType=VARCHAR},
+			</if>
+			<if test="title != null">
+				title = #{title,jdbcType=VARCHAR},
+			</if>
+			<if test="content != null">
+				content = #{content,jdbcType=VARCHAR},
+			</if>
+			<if test="addtime != null">
+				addtime = #{addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="state != null">
+				state = #{state,jdbcType=VARCHAR},
+			</if>
+			<if test="parid != null">
+				parid = #{parid,jdbcType=VARCHAR},
+			</if>
+			<if test="isshow != null">
+				isshow = #{isshow,jdbcType=VARCHAR},
+			</if>
+			<if test="albums != null">
+				albums = #{albums,jdbcType=VARCHAR},
+			</if>
+			<if test="ip != null">
+				ip = #{ip,jdbcType=VARCHAR},
+			</if>
+			<if test="type != null">
+				type = #{type,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.module.model.Consult">
+		update
+		cms_guestbook
+		set siteid = #{siteid,jdbcType=VARCHAR},
+		memberid =
+		#{memberid,jdbcType=VARCHAR},
+		iclassid = #{iclassid,jdbcType=VARCHAR},
+		name = #{name,jdbcType=VARCHAR},
+		sex = #{sex,jdbcType=CHAR},
+		email =
+		#{email,jdbcType=VARCHAR},
+		qq = #{qq,jdbcType=VARCHAR},
+		tel =
+		#{tel,jdbcType=VARCHAR},
+		title = #{title,jdbcType=VARCHAR},
+		content =
+		#{content,jdbcType=VARCHAR},
+		addtime = #{addtime,jdbcType=TIMESTAMP},
+		state = #{state,jdbcType=VARCHAR},
+		parid = #{parid,jdbcType=VARCHAR},
+		isshow = #{isshow,jdbcType=VARCHAR},
+		albums =
+		#{albums,jdbcType=VARCHAR},
+		ip = #{ip,jdbcType=VARCHAR},
+		type =
+		#{type,jdbcType=VARCHAR}
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+
+
+	<select useCache="false" id="guestbookUpdateYearPage"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y') AS datename FROM
+		cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY DATE_FORMAT(ADDTIME, '%Y')
+		limit ${skip},${pageSize}
+	</select>
+	<select useCache="false" id="guestbookUpdateYear"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y') AS datename FROM
+		cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY DATE_FORMAT(ADDTIME, '%Y')
+	</select>
+	<select useCache="false" id="guestbookUpdateYearCount"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(distinct DATE_FORMAT(ADDTIME, '%Y'))
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<select useCache="false" id="guestbookUpdateYearSum"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(id)
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+
+
+	<select useCache="false" id="guestbookUpdateMonthPage"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m') AS datename
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m')
+		limit ${skip},${pageSize}
+	</select>
+	<select useCache="false" id="guestbookUpdateMonth"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m') AS datename
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m')
+	</select>
+	<select useCache="false" id="guestbookUpdateMonthCount"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(distinct DATE_FORMAT(ADDTIME, '%Y-%m'))
+		FROM cms_guestbook
+		g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<select useCache="false" id="guestbookUpdateMonthSum"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(id)
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+
+
+	<select useCache="false" id="guestbookUpdateDayPage"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m-%d') AS datename
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m-%d')
+		limit ${skip},${pageSize}
+	</select>
+	<select useCache="false" id="guestbookUpdateDay"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,DATE_FORMAT(ADDTIME, '%Y-%m-%d') AS datename
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY DATE_FORMAT(ADDTIME, '%Y-%m-%d')
+	</select>
+	<select useCache="false" id="guestbookUpdateDayCount"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(distinct DATE_FORMAT(ADDTIME, '%Y-%m-%d'))
+		FROM
+		cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<select useCache="false" id="guestbookUpdateDaySum"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(id)
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<select useCache="false" id="guestbookUpdateWeekSum"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(id)
+		FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+
+
+	<select useCache="false" id="guestbookUpdateWeek"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(id) countnum,
+		(CASE
+		WHEN WEEKDAY(ADDTIME)=0 THEN '星期一'
+		WHEN
+		WEEKDAY(ADDTIME)=1 THEN '星期二'
+		WHEN WEEKDAY(ADDTIME)=2 THEN '星期三'
+		WHEN
+		WEEKDAY(ADDTIME)=3 THEN '星期四'
+		WHEN WEEKDAY(ADDTIME)=4 THEN '星期五'
+		WHEN
+		WEEKDAY(ADDTIME)=5 THEN '星期六'
+		WHEN WEEKDAY(ADDTIME)=6 THEN '星期七'
+		END
+		) AS
+		datename FROM cms_guestbook g
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY WEEKDAY(ADDTIME)
+	</select>
+
+
+	<select useCache="false" id="sysSiteConsultPage"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(g.id) AS countnum ,siteid,max(s.name) sitename
+		FROM
+		cms_guestbook g
+		LEFT JOIN cms_site s ON siteid=s.id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY siteid ORDER BY countnum desc
+		limit ${skip},${pageSize}
+	</select>
+	<select useCache="false" id="sysSiteConsult"
+		parameterType="com.gsccs.cms.module.model.ConsultExample" resultMap="BaseResultMap">
+		SELECT COUNT(g.id) AS countnum ,siteid,max(s.name) sitename
+		FROM
+		cms_guestbook g
+		LEFT JOIN cms_site s ON siteid=s.id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		GROUP BY siteid ORDER BY countnum desc
+	</select>
+	<select useCache="false" id="sysSiteConsultCount"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(distinct siteid)
+		FROM cms_guestbook g
+		LEFT JOIN cms_site s
+		ON siteid=s.id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<select useCache="false" id="sysSiteConsultSum"
+		parameterType="com.gsccs.cms.module.model.ConsultExample"
+		resultType="java.lang.Integer">
+		SELECT COUNT(g.id)
+		FROM cms_guestbook g
+		LEFT JOIN cms_site s ON
+		siteid=s.id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<sql id="Example_Clause">
+		<foreach collection="oredCriteria" item="criteria" separator="or">
+			<if test="criteria.valid">
+				<trim>
+					<foreach collection="criteria.criteria" item="criterion">
+						<choose>
+							<when test="criterion.noValue">
+								and ${criterion.condition}
+							</when>
+							<when test="criterion.singleValue">
+								and ${criterion.condition} #{criterion.value}
+							</when>
+							<when test="criterion.betweenValue">
+								and ${criterion.condition} #{criterion.value} and
+								#{criterion.secondValue}
+							</when>
+							<when test="criterion.listValue">
+								and ${criterion.condition}
+								<foreach close=")" collection="criterion.value" item="listItem"
+									open="(" separator=",">
+									#{listItem}
+								</foreach>
+							</when>
+						</choose>
+					</foreach>
+				</trim>
+			</if>
+		</foreach>
+	</sql>
+</mapper>

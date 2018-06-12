@@ -1,0 +1,112 @@
+package com.gsccs.cms.controller.web;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.BaseController;
+import com.gsccs.cms.core.model.Channel;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.core.service.ContentService;
+import com.gsccs.cms.core.service.SiteService;
+
+/**
+ * 关于站点的相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ * nginx  zzb.pcdjw.cn 映射到  http://127.0.0.1/web/{wxappid}/
+ * 
+ * 
+ */
+
+@Controller("WebSiteController")
+//@RequestMapping("/web/{wxappid}")
+@RequestMapping("/web")
+public class WebSiteController extends BaseController {
+
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private ChannelService channelService;
+	@Resource
+	private ContentService contentService;
+	
+
+	/**
+	 * 站点预览
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/index.html")
+	public String index(String id, ModelMap map, HttpServletResponse response) {
+		Site site = siteService.findById(id);
+		map.put("site", site);
+		return "phoneWeb/index";
+	}
+
+	/**
+	 * 栏目页
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/c-{indexnum}.html")
+	public String channel(@PathVariable Integer indexnum, ModelMap map,
+			HttpServletResponse response) {
+		Site site = null;
+		Channel channel = channelService.findBySitePagemark(null, indexnum+"");
+		if (null != channel){
+			site = siteService.findById(channel.getSite());
+		}
+		map.put("site", site);
+		map.put("channel", channel);
+		return "phoneWeb/channel";
+	}
+	
+	/**
+	 * 栏目页
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/clist-{channelid}.html")
+	public String channelList(@PathVariable Integer channelid, ModelMap map,
+			HttpServletResponse response) {
+		return "phoneWeb/channel";
+	}
+
+
+	/**
+	 * 信息页
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/i-{indexnum}.html")
+	public String info(@PathVariable Integer indexnum, ModelMap map,
+			HttpServletResponse response) {
+		Site site = null;
+		Channel channel = null;
+		Content content = contentService.findByIndexnum(indexnum);
+		if (null != content){
+			site = siteService.findById(content.getSite());
+			channel = channelService.findById(content.getChannel());
+		}
+		map.put("site", site);
+		map.put("channel", channel);
+		map.put("content", content);
+		return "phoneWeb/info";
+	}
+}

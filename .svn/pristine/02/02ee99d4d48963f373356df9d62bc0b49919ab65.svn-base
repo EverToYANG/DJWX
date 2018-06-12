@@ -1,0 +1,141 @@
+package com.gsccs.cms.controller.module;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.core.service.SensitiveService;
+import com.gsccs.cms.module.model.VoteItem;
+import com.gsccs.cms.module.service.VoteItemService;
+
+/**
+ * 网上调查选项
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+public class VoteItemController extends CmsBaseController {
+	
+	@Resource
+	private VoteItemService answerService;
+	
+	@Resource
+	private SensitiveService sensitiveService;
+
+	/**
+	 * 管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/answer.do")
+	public String answer(String questionid, ModelMap map,
+			HttpServletResponse response){
+		map.put("list", answerService.findByQuestion(questionid, "", false));
+		return "cms/answer";
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/answerAdd.do")
+	public String answerAdd(VoteItem answer, HttpServletRequest request,
+			ModelMap map, HttpServletResponse response){
+		String id = "", result = "0", msg = "";
+		try {
+			// 敏感词处理
+			answer.setName(sensitiveService.replace(answer.getName().replace(
+					"<参数>", "&")));
+			result = "0";
+			msg = "添加调查选项 " + answer.getName() + " ";
+			answer.setSelectnum(0);
+			answerService.add(answer);
+			result = "1";
+			msg += "成功";
+			id = "<属性>" + answer.getId();
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = "0";
+			msg += "失败:" + e.toString();
+		}
+		operlogService.log(getLoginName(), msg, request);
+		ResponseUtil.writeUTF(response, result + msg + id);
+		return null;
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/answerUpdate.do")
+	public String answerUpdate(VoteItem answer, HttpServletRequest request,
+			ModelMap map, HttpServletResponse response) {
+		String id = "", result = "0", msg = "";
+		try {
+			// 敏感词处理
+			answer.setName(sensitiveService.replace(answer.getName().replace(
+					"<参数>", "&")));
+			result = "0";
+			msg = "修改调查选项 " + answer.getName() + " ";
+			// 获取老数据
+			VoteItem old = answerService.findById(answer.getId(), false);
+			if (old != null) {
+				old.setIsok(answer.getIsok());
+				old.setIsselect(answer.getIsselect());
+				old.setName(answer.getName());
+				old.setOrdernum(answer.getOrdernum());
+				answerService.update(old);
+				result = "1";
+				msg += "成功";
+			} else {
+				msg = "此调查选项不存在!";
+				ResponseUtil.writeUTF(response, result + msg);
+				return null;
+			}
+		} catch (Exception e) {
+			result = "0";
+			msg += "失败:" + e.toString();
+		}
+		operlogService.log(getLoginName(), msg, request);
+		ResponseUtil.writeUTF(response, result + msg + id);
+		return null;
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/answerDel.do")
+	public String answerDel(VoteItem answer, HttpServletRequest request,
+			ModelMap map, HttpServletResponse response){
+		String id = "", result = "0", msg = "";
+		try {
+			msg = "删除操作按钮 " + answer.getName() + " ";
+			answerService.del(answer.getId());
+			result = "1";
+			msg += "成功";
+			id = "<属性>" + answer.getId();
+		} catch (Exception e) {
+			result = "0";
+			msg += "失败:" + e.toString();
+		}
+		operlogService.log(getLoginName(), msg, request);
+		ResponseUtil.writeUTF(response, result + msg + id);
+		return null;
+	}
+}

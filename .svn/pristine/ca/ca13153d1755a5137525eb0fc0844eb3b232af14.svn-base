@@ -1,0 +1,106 @@
+package com.gsccs.cms.controller.gis;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.core.model.Site;
+import com.gsccs.cms.gis.model.GisMap;
+import com.gsccs.cms.gis.service.GisMapService;
+
+
+/**
+ * @author niu x j
+ *
+ * @date 2014年12月1日
+ */
+@Controller
+@RequestMapping("/gis")
+public class GisMapController extends CmsBaseController {
+
+	@Resource
+	private GisMapService gisMapService;
+	
+	/**
+	 * Gis地图列表
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/gisMap.do")
+	public String gisMap(GisMap gisMap,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = "") String order, ModelMap map,
+			HttpServletResponse response) {
+		List<GisMap> gisMapList = null;
+		//获得当前站点的siteId，根据当前站点获取当前站点下面的map属性
+		Site site = getManageSite();
+		gisMap.setSiteid(site.getId());
+		try {
+			gisMapList = gisMapService.find(gisMap, order, currPage,
+					pageSize);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		int totalCount = gisMapService.count(gisMap);
+		Pager pager = new Pager(request);
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("gisMap.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", gisMapList);
+		map.put("order", order);
+		return "gis/gisMap";
+	}
+	
+	
+	
+	/**
+	 * 
+	 * @param gisMapId
+	 * @param map
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/gisMap_json.do")
+	public List<GisMap> gisMapjson(String gisMapId, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		GisMap gisMap = null;
+		if(gisMapId !=null && gisMapId.trim().length()> 0){
+			gisMap = gisMapService.findById(gisMapId);
+		}
+		List<GisMap> gisMapList = null;
+		gisMapList = gisMapService.findGisMap(gisMap);
+		return gisMapList;
+	}
+	/**
+	 * 
+	 * @param map
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping("/mapEdit.do")
+	public String mapEdit(ModelMap map,
+			HttpServletResponse response) {
+	
+		return "gis/gisMapEdit";
+	}
+	
+}

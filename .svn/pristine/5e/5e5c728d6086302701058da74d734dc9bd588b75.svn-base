@@ -1,0 +1,44 @@
+package com.gsccs.cms.core.service;
+
+import javax.servlet.http.HttpServletRequest;
+
+
+
+public interface RoleChannelService {
+
+	/**
+	 * 根据角色删除
+	 * @param roleid
+	 */
+	public void delByRole(String roleid);
+	/**
+	 * 根据角色删除
+	 * @param roleid
+	 */
+	public void delByRoleSite(String roleid,String siteid);
+	/**
+	 * 保存
+	 * @param roleid
+	 * @param channelid
+	 */
+	public void save(String roleid,String channelid);
+	/**
+	 * 判断是否有权限
+	 * @param roleid
+	 * @param channelid
+	 */
+	public boolean have(String roleid,String channelid);
+	/**
+	 * 判断是否有权限
+	 * @param roleid
+	 * @param channelid
+	 */
+	public boolean haves(String roles,String channelid);
+	/**
+	 * 生成授权树
+	 * @param roleid
+	 * @return
+	 */
+	public String createTree(HttpServletRequest request,String roleid,String siteid);
+
+}

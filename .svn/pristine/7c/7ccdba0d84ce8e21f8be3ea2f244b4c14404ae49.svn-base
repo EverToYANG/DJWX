@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gsccs.cms.weixin.dao.WxAppMapper">
+	<resultMap id="BaseResultMap" type="com.gsccs.cms.weixin.model.WxApp">
+		<id column="app_id" property="appId" jdbcType="VARCHAR" />
+		<result column="secret" property="secret" jdbcType="VARCHAR" />
+		<result column="token" property="token" jdbcType="VARCHAR" />
+		<result column="access_token" property="accessToken" jdbcType="VARCHAR" />
+		<result column="aes_key" property="aesKey" jdbcType="VARCHAR" />
+		<result column="expirestime" property="expirestime" jdbcType="BIGINT" />
+		<result column="apikey" property="apikey" jdbcType="VARCHAR" />
+		<result column="mchid" property="mchid" jdbcType="VARCHAR" />
+		<result column="certlocalpath" property="certlocalpath"
+			jdbcType="VARCHAR" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		app_id, secret, token, access_token, aes_key,
+		expirestime,apikey,mchid,certlocalpath,title
+	</sql>
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.weixin.model.WxAppExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from cms_wx_app
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+
+
+	<select id="selectPageByExample" resultMap="BaseResultMap"
+		parameterType="com.gsccs.cms.weixin.model.WxAppExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from cms_wx_app
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+		limit ${skip},${pageSize}
+	</select>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from cms_wx_app
+		where app_id = #{appId,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from cms_wx_app
+		where app_id = #{appId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.gsccs.cms.weixin.model.WxAppExample">
+		delete from cms_wx_app
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" parameterType="com.gsccs.cms.weixin.model.WxApp">
+		insert into cms_wx_app (app_id, secret, token,
+		access_token, aes_key, expirestime,apikey,mchid,certlocalpath,title
+		)
+		values (#{appId,jdbcType=VARCHAR},
+		#{secret,jdbcType=VARCHAR},
+		#{token,jdbcType=VARCHAR},
+		#{accessToken,jdbcType=VARCHAR},
+		#{aesKey,jdbcType=VARCHAR},
+		#{expirestime,jdbcType=BIGINT},
+		#{apikey,jdbcType=VARCHAR},
+		#{mchid,jdbcType=VARCHAR},
+		#{certlocalpath,jdbcType=VARCHAR},
+		#{title,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<select id="countByExample" parameterType="com.gsccs.cms.weixin.model.WxAppExample"
+		resultType="java.lang.Integer">
+		select count(*) from cms_wx_app
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+
+	<update id="updateByExample" parameterType="map">
+		update cms_wx_app
+		set app_id = #{record.appId,jdbcType=VARCHAR},
+		secret = #{record.secret,jdbcType=VARCHAR},
+		token = #{record.token,jdbcType=VARCHAR},
+		access_token = #{record.accessToken,jdbcType=VARCHAR},
+		aes_key = #{record.aesKey,jdbcType=VARCHAR},
+		expirestime = #{record.expirestime,jdbcType=BIGINT},
+		apikey = #{record.apikey,jdbcType=VARCHAR},
+		mchid = #{record.mchid,jdbcType=VARCHAR},
+		title = #{record.title,jdbcType=VARCHAR}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+
+	<update id="updateByPrimaryKey" parameterType="com.gsccs.cms.weixin.model.WxApp">
+		update cms_wx_app
+		set secret = #{secret,jdbcType=VARCHAR},
+		token = #{token,jdbcType=VARCHAR},
+		access_token = #{accessToken,jdbcType=VARCHAR},
+		aes_key = #{aesKey,jdbcType=VARCHAR},
+		expirestime = #{expirestime,jdbcType=BIGINT},
+		apikey = #{apikey,jdbcType=VARCHAR},
+		mchid = #{mchid,jdbcType=VARCHAR},
+		title = #{title,jdbcType=VARCHAR}
+		where app_id = #{appId,jdbcType=VARCHAR}
+	</update>
+</mapper>

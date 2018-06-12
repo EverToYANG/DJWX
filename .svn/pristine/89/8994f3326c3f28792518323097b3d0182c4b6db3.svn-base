@@ -1,0 +1,116 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.ResponseUtil;
+import com.gsccs.cms.core.service.ChannelService;
+import com.gsccs.cms.core.service.SiteService;
+import com.gsccs.cms.member.service.CreditruleService;
+import com.gsccs.cms.module.model.Guestbook;
+import com.gsccs.cms.module.service.GuestBookService;
+
+/**
+ * 留言相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller("WebGuestbookController")
+@RequestMapping("/web")
+public class WebGuestbookController extends CmsBaseController {
+
+	@Resource
+	private GuestBookService guestbookService;
+	@Resource
+	private SiteService siteService;
+	@Resource
+	private CreditruleService creditruleService;
+	@Resource
+	private ChannelService channelService;
+
+	/**
+	 * 咨询列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbList.html")
+	public String guestbookList(
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "500") int pagesize, ModelMap map,
+			HttpServletResponse response) {
+		Guestbook param = new Guestbook();
+		List<Guestbook> guestbookList = guestbookService.find(param,
+				"addtime desc", page, pagesize, true);
+		if (null != guestbookList && guestbookList.size() > 0) {
+			for (Guestbook guestbook : guestbookList) {
+				List<Guestbook> replyList = guestbookService.findByParid(
+						guestbook.getId(), true);
+				guestbook.setReplyList(replyList);
+			}
+		}
+		map.put("guestbookList", guestbookList);
+		return "web/guestbook";
+	}
+
+	
+	/**
+	 * 发布咨询
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbAdd.html")
+	public String publish(ModelMap map, HttpServletResponse response) {
+		return "web/publish";
+	}
+	
+	
+
+	
+	/**
+	 * 发布咨询
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbQuery.html")
+	public String query(ModelMap map, HttpServletResponse response) {
+		return "web/search";
+	}
+
+	/**
+	 * 保存
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/gbSave.html")
+	public String guestbookSave(Guestbook guestbook,
+			String siteid, ModelMap map,
+			HttpServletResponse response) {
+		String msg="";
+		if (guestbook != null) {
+			guestbook.setAddtime(new Date());
+			guestbook.setIp(request.getRemoteAddr());
+			guestbook.setState("0");
+
+			guestbookService.add(guestbook);
+			msg = "感谢您的留言，我们会尽快回复并联系您！";
+			// 处理积分
+			//creditruleService.credit(getLoginMember(), "guestbook_pub");
+		}else{
+			msg="false";
+		}
+		ResponseUtil.writeUTF(response, msg);
+		return null;
+	}
+	
+	
+}

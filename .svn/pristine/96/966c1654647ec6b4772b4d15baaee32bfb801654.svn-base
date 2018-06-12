@@ -1,0 +1,70 @@
+package com.gsccs.cms.controller.web;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.auth.model.Unit;
+import com.gsccs.cms.auth.service.UnitService;
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.service.CourseService;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.PartyMember;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.member.service.PartyMemberService;
+
+/**
+ * 党支部
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ */
+@Controller("WebDeptController")
+@RequestMapping("/web/{appid}")
+public class WebDeptController {
+
+	@Resource
+	private UnitService unitService;
+	@Resource
+	private CourseService courseService;
+	@Resource
+	private PartyMemberService partyMemberService;
+
+	
+	/**
+	 * 党支部列表页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/unitList.html")
+	public String unitList(@PathVariable String appid, ModelMap map) {
+		List<Unit> unitList = unitService.selectUnit("101");
+		map.put("unitList", unitList);
+		return "web/unitList";
+	}
+
+	/**
+	 * 党支部详情页面
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/unit.html")
+	public String unitDetail(@PathVariable String appid, String id, ModelMap map) {
+		Unit unit = unitService.findById(id);
+		PartyMember memberParam = new PartyMember();
+		memberParam.setUnitid(id);
+		
+		List<PartyMember> memberList = partyMemberService.find(memberParam, "");
+		map.put("unit", unit);
+		map.put("memberList", memberList);
+		return "web/unit";
+	}
+	
+	
+
+}

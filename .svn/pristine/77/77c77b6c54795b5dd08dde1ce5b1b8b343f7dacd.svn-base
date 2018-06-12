@@ -1,0 +1,417 @@
+package com.gsccs.cms.controller.member;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.chanjar.weixin.common.exception.WxErrorException;
+import me.chanjar.weixin.mp.api.WxMpConfigStorage;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.api.WxMpUserService;
+import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
+import me.chanjar.weixin.mp.bean.result.WxMpUser;
+import me.chanjar.weixin.mp.bean.result.WxMpUserList;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.utils.FileUtil;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.member.model.Member;
+import com.gsccs.cms.member.model.Membergroup;
+import com.gsccs.cms.member.service.MemberService;
+import com.gsccs.cms.member.service.MembergroupService;
+import com.gsccs.cms.weixin.model.WxApp;
+import com.gsccs.cms.wx.service.WxMpInDBConfigStorage;
+
+/**
+ * 会员相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/member")
+public class MemberController extends CmsBaseController {
+
+	@Resource
+	WxMpConfigStorage wxMpConfigStorage;
+	@Resource
+	private MemberService memberService;
+	@Resource
+	private MembergroupService membergroupService;
+	@Autowired
+	private UserService userService;
+
+	@RequestMapping("/follow.do")
+	public void followUsers(String appid) {
+
+		wxMpConfigStorage.init(appid);
+		WxMpService wxMpService = new WxMpServiceImpl();
+		wxMpService.setWxMpConfigStorage(wxMpConfigStorage);
+
+		WxMpUserService wxMpUserService = null;
+		try {
+			wxMpUserService = wxMpService.getUserService();
+			WxMpUserList wxMpUserList = wxMpUserService.userList(null);
+			List<String> openids = wxMpUserList.getOpenIds();
+			if (null != openids && openids.size() > 0) {
+				for (String openid : openids) {
+					WxMpUser wxMpUser = wxMpUserService.userInfo(
+							openid, null);
+					Member member = new Member();
+					member.setId(openid);
+					member.setName(wxMpUser.getNickname());
+					member.setSex(wxMpUser.getSex());
+					member.setWxappid(appid);
+					member.setImg(wxMpUser.getHeadImgUrl());
+					memberService.add(member);
+				}
+			}
+
+		} catch (WxErrorException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * 列表
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/list.do")
+	public String memberList(Member member,
+			@RequestParam(defaultValue = "1") int currPage,
+			@RequestParam(defaultValue = "10") int pageSize,
+			@RequestParam(defaultValue = " ") String order, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		Membergroup membergroup = new Membergroup();
+		List<Membergroup> groupList = membergroupService.find(membergroup,
+				" ordernum ");
+		map.put("groupList", groupList);
+
+		List<Member> memberList = memberService.find(member, order, currPage,
+				pageSize);
+		int totalCount = memberService.count(member);
+		Pager pager = new Pager(request);
+		pager.appendParam("name");
+		pager.appendParam("wxappid");
+		pager.appendParam("isok");
+		pager.appendParam("pageSize", "" + pageSize);
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("list.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", memberList);
+		map.put("order", order);
+		return "member/list";
+	}
+
+	/**
+	 * 编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/edit.do")
+	public String memberEdit(Member member, ModelMap map,
+			HttpServletRequest request, HttpServletResponse response) {
+		Membergroup membergroup = new Membergroup();
+		List<Membergroup> groupList = membergroupService.find(membergroup,
+				" ordernum ");
+		map.put("groupList", groupList);
+		if (member != null && member.getId() != null
+				&& member.getId().trim().length() > 0) {
+			member = memberService.findById(member.getId());
+			map.put("member", member);
+
+			if (0 == member.getGrouptype() && member.getGroupid() != null
+					&& member.getGroupid().trim().length() > 0) {
+				// 提取当前会员所属组
+				membergroup = membergroupService.findById(member.getGroupid());
+				map.put("membergroup", membergroup);
+			}
+		}
+		return "member/edit";
+	}
+
+	/**
+	 * 编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/editDo.do")
+	public String memberEditDo(
+			Member member,
+			String pageFuncId,
+			String editpwd,
+			String oldImg,
+			@RequestParam(value = "imgfile", required = false) MultipartFile imgfile,
+			ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		String oper = "添加";
+		try {
+			if (StringUtils.isNotEmpty(member.getId())) {
+				// 更新
+				Member oldmember = memberService.findById(member.getId());
+				// 如果原来有和现在的logo不同则删除原来的logo文件
+				if (!oldImg.equals(oldmember.getImg())) {
+					if (oldmember.getImg() != null
+							&& oldmember.getImg().trim().length() > 0) {
+						FileUtil.del(request.getRealPath("/")
+								+ oldmember.getImg().trim());
+						member.setImg("");
+					}
+				} else {
+					member.setImg(oldImg);
+				}
+				if (imgfile != null && imgfile.getSize() > 0) {
+					// 生成目标文件
+					String root = request.getRealPath("/");
+					String ext = FileUtil.getExt(imgfile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "头像只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(root + "/upload/member/" + id
+							+ ext);
+					File folder = new File(root + "/upload/member/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(imgfile, targetFile);
+
+					// 生成访问地址
+					member.setImg("/upload/member/" + id + ext);
+				}
+
+				// 如果是经验会员则处理所属会员组
+				if (0 == member.getGrouptype()) {
+					if (member.getExperience() != null) {
+						Membergroup membergroup = membergroupService
+								.findByExperience(member.getExperience());
+						if (membergroup != null) {
+							member.setGroupid(membergroup.getId());
+						} else {
+							member.setGroupid("");
+						}
+					} else {
+						member.setGroupid("");
+					}
+				}
+				memberService.update(member);
+				oper += "会员成功 " + member.getName();
+			} else {
+				// 判断用户是否存在
+				if (memberService.have(member)) {
+					map.put("msg", "此会员名已存在!");
+					map.put("isBack", true);
+					return "admin/msg";
+				}
+				// 添加
+				if (imgfile != null && imgfile.getSize() > 0) {
+					// 生成目标文件
+					String root = request.getRealPath("/");
+					String ext = FileUtil.getExt(imgfile.getOriginalFilename())
+							.toLowerCase();
+					if (!".jpg".equals(ext) && !".jpeg".equals(ext)
+							&& !".gif".equals(ext) && !".png".equals(ext)) {
+						map.put("msg", "头像只能上传jpg,jpeg,gif,png格式的图片!");
+						map.put("isBack", true);
+						return "admin/msg";
+					}
+					String id = UUID.randomUUID().toString();
+					File targetFile = new File(root + "/upload/member/" + id
+							+ ext);
+					File folder = new File(root + "/upload/member/");
+					if (!folder.exists()) {
+						folder.mkdirs();
+					}
+					if (!targetFile.exists()) {
+						targetFile.createNewFile();
+					}
+					// 复制到目标文件
+					FileUtil.copy(imgfile, targetFile);
+
+					// 生成访问地址
+					member.setImg("/upload/member/" + id + ext);
+				}
+				member.setIsok("1");
+				// 如果是经验会员则处理所属会员组
+				if (0 == member.getGrouptype()) {
+					if (member.getExperience() != null) {
+						Membergroup membergroup = membergroupService
+								.findByExperience(member.getExperience());
+						if (membergroup != null) {
+							member.setGroupid(membergroup.getId());
+						} else {
+							member.setGroupid("");
+						}
+					} else {
+						member.setGroupid("");
+					}
+				}
+				memberService.add(member);
+				oper += "会员成功 " + member.getName();
+			}
+			map.put("isRefresh", true);
+			map.put("forwardUrl", "/list.do?pageFuncId=" + pageFuncId);
+			map.put("forwardSeconds", 3);
+		} catch (Exception e) {
+			e.printStackTrace();
+			oper += "会员失败 " + member.getName() + ":" + e.getMessage();
+			map.put("isBack", true);
+		}
+		operlogService.log(getLoginName(), oper, request);
+		map.put("msg", oper);
+		return "admin/msg";
+	}
+
+	/**
+	 * 启用/禁用
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/isok.do")
+	public String memberIsok(String ids, String pageFuncId, String names,
+			String isok, ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				String oper = "1".equals(isok) ? "启用" : "禁用";
+				try {
+					for (int i = 0; i < idArr.length; i++) {
+						if (idArr[i].trim().length() > 0) {
+							memberService.isok(idArr[i].trim(), isok);
+						}
+					}
+
+					msg = "" + oper + "会员(" + names + ")成功!";
+					map.put("forwardSeconds", 3);
+				} catch (Exception e) {
+					e.printStackTrace();
+					map.put("forwardSeconds", 0);
+					msg = "" + oper + "会员(" + names + ")失败:" + e.toString()
+							+ "!";
+				}
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "member/list.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 设置系统管理员
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/issysuser.do")
+	public String issysuser(String id, String pageFuncId, String names,
+			String isok, ModelMap map, HttpServletRequest request,
+			HttpServletResponse response) {
+		if (StringUtils.isNotEmpty(id)) {
+			String oper = "1".equals(isok) ? "启用" : "禁用";
+			try {
+				Users users = userService.findById(id);
+				if (null == users) {
+					users = new Users();
+					users.setId(id);
+					userService.save(users);
+				}
+				msg = "" + oper + "会员(" + names + ")成功!";
+				map.put("forwardSeconds", 3);
+			} catch (Exception e) {
+				e.printStackTrace();
+				map.put("forwardSeconds", 0);
+				msg = "" + oper + "会员(" + names + ")失败:" + e.toString() + "!";
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "member/list.do?pageFuncId=" + pageFuncId);
+		return "admin/msg";
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/del.do")
+	public String memberDel(String pageFuncId, String ids,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response) {
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Member member;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						member = memberService.findById(idArr[i]);
+						if (member != null) {
+							try {
+								memberService.del(idArr[i]);
+								operlogService.log(getLoginName(), "删除会员成功:"
+										+ member.getId(), request);
+							} catch (Exception e) {
+								operlogService.log(
+										getLoginName(),
+										"删除会员失败:" + member.getId() + " "
+												+ e.getMessage(), request);
+							}
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "member/list.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 日期型数据转换，将页面上的表示日期限的字符串，转换为Date型
+	 * **/
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		dateFormat.setLenient(true);
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, true));
+	}
+}

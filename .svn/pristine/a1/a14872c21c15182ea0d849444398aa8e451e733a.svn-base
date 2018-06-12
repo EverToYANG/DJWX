@@ -1,0 +1,82 @@
+package com.gsccs.cms.member.service.impl;
+
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.member.dao.MembergroupAuthMapper;
+import com.gsccs.cms.member.model.MembergroupAuth;
+import com.gsccs.cms.member.model.MembergroupAuthExample;
+import com.gsccs.cms.member.model.MembergroupAuthExample.Criteria;
+import com.gsccs.cms.member.service.MembergroupAuthService;
+
+/**
+ * 会员组权限服务
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Service
+public class MembergroupAuthServiceImpl implements MembergroupAuthService{
+
+	@Resource
+	private MembergroupAuthMapper membergroupAuthMapper;
+	
+
+	/**
+	 * 查询会员组下授权
+	 * @param groupid
+	 * @return
+	 */
+	public List<MembergroupAuth> findByGroup(String groupid){
+		MembergroupAuthExample example=new MembergroupAuthExample();
+		Criteria criteria=example.createCriteria();
+		criteria.andGroupidEqualTo(groupid);
+		return membergroupAuthMapper.selectByExample(example);
+	}
+	/**
+	 * 删除会员组下授权
+	 * @param groupid
+	 * @return
+	 */
+	public void delByGroup(String groupid){
+		MembergroupAuthExample example=new MembergroupAuthExample();
+		Criteria criteria=example.createCriteria();
+		criteria.andGroupidEqualTo(groupid);
+		membergroupAuthMapper.deleteByExample(example);
+	}
+	/**
+	 * 添加
+	 * @param question
+	 * @return
+	 */
+	public String add(MembergroupAuth membergroupAuth){
+		membergroupAuth.setId(UUID.randomUUID().toString());
+		membergroupAuthMapper.insert(membergroupAuth);
+		return membergroupAuth.getId();
+	}
+	/**
+	 * 判断会员组是否有权限
+	 * @param groupid
+	 * @param authcode
+	 * @return
+	 */
+	public boolean hasAuth(String groupid,String authcode){
+		MembergroupAuthExample example=new MembergroupAuthExample();
+		Criteria criteria=example.createCriteria();
+		criteria.andGroupidEqualTo(groupid);
+		criteria.andSql(" authid in (select id from cms_memberauth where code='"+authcode+"')");
+		return membergroupAuthMapper.countByExample(example)>0;
+	}
+	public MembergroupAuthMapper getMembergroupAuthMapper() {
+		return membergroupAuthMapper;
+	}
+
+	public void setMembergroupAuthMapper(MembergroupAuthMapper membergroupAuthMapper) {
+		this.membergroupAuthMapper = membergroupAuthMapper;
+	}
+}

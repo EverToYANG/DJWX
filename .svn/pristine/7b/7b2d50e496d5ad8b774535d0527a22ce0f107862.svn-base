@@ -1,0 +1,35 @@
+package com.gsccs.cms.member.model;
+
+public class MembergroupAuth {
+
+	private String id;
+
+	private String groupid;
+
+	private String authid;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getGroupid() {
+		return groupid;
+	}
+
+	public void setGroupid(String groupid) {
+		this.groupid = groupid;
+	}
+
+	public String getAuthid() {
+		return authid;
+	}
+
+	public void setAuthid(String authid) {
+		this.authid = authid;
+	}
+
+}

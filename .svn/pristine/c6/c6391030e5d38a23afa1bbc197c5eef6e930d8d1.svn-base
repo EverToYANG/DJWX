@@ -1,0 +1,135 @@
+package com.gsccs.cms.course.service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.course.dao.CourseFeedMapper;
+import com.gsccs.cms.course.dao.CourseInfoMapper;
+import com.gsccs.cms.course.dao.CourseMapper;
+import com.gsccs.cms.course.dao.CourseVoteMapper;
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseExample;
+import com.gsccs.cms.course.model.CourseFeed;
+import com.gsccs.cms.course.model.CourseFeedExample;
+import com.gsccs.cms.course.model.CourseInfo;
+import com.gsccs.cms.course.model.CourseInfoExample;
+import com.gsccs.cms.course.model.CourseVote;
+
+@Service
+public class CourseServiceImpl implements CourseService {
+
+	@Autowired
+	private CourseMapper courseMapper;
+	@Autowired
+	private CourseInfoMapper courseInfoMapper;
+	@Autowired
+	private CourseVoteMapper courseVoteMapper;
+	@Autowired
+	private CourseFeedMapper courseFeedMapper;
+
+	@Override
+	public List<Course> find(Course param,String orderstr,int page,int pagesize) {
+		CourseExample example = new CourseExample();
+		CourseExample.Criteria c = example.createCriteria();
+		proSearchParam(param, c);
+		example.setCurrPage(page);
+		example.setPageSize(pagesize);
+		return courseMapper.selectPageByExample(example);
+	}
+
+	@Override
+	public List<CourseInfo> findInfoList(String courseid) {
+		CourseInfoExample example = new CourseInfoExample();
+		CourseInfoExample.Criteria c = example.createCriteria();
+		if (StringUtils.isNotEmpty(courseid)) {
+			c.andCourseidEqualTo(courseid);
+		}
+		return courseInfoMapper.selectByExample(example);
+	}
+
+	@Override
+	public List<CourseFeed> findFeedList(String deptid, String courseid) {
+		CourseFeedExample example = new CourseFeedExample();
+		CourseFeedExample.Criteria c = example.createCriteria();
+		if (StringUtils.isNotEmpty(courseid)) {
+			c.andCourseidEqualTo(courseid);
+		}
+
+		if (StringUtils.isNotEmpty(deptid)) {
+			c.andDeptidEqualTo(deptid);
+		}
+		c.andParidIsNull();
+		return courseFeedMapper.selectByExample(example);
+	}
+
+	@Override
+	public List<CourseFeed> findByParid(String parid) {
+		if (StringUtils.isEmpty(parid)) {
+			return null;
+		}
+		CourseFeedExample example = new CourseFeedExample();
+		CourseFeedExample.Criteria c = example.createCriteria();
+		c.andParidEqualTo(parid);
+		return courseFeedMapper.selectByExample(example);
+	}
+
+	@Override
+	public List<CourseVote> findVoteList(String courseid) {
+		return null;
+	}
+
+	@Override
+	public Course getCourse(int id) {
+		return courseMapper.selectByPrimaryKey(id);
+	}
+
+	@Override
+	public void addCourseFed(CourseFeed courseFed) {
+		if (null != courseFed) {
+			courseFed.setId(UUID.randomUUID().toString());
+			courseFed.setAddtime(new Date());
+			courseFeedMapper.insert(courseFed);
+		}
+	}
+
+	/**
+	 * 处理查询条件
+	 * 
+	 * @param info
+	 * @param criteria
+	 */
+	public void proSearchParam(Course param, CourseExample.Criteria criteria) {
+		if (param != null) {
+/*			if (param.getUnitid() != null) {
+				criteria.andDeptidEqualTo(param.getUnitid());
+			}*/
+		}
+	}
+
+	@Override
+	public void delCourseById(int courseid) {
+		courseMapper.deleteByPrimaryKey(courseid);
+	}
+
+	@Override
+	public Integer count(Course param) {
+		CourseExample example = new CourseExample();
+		CourseExample.Criteria c = example.createCriteria();
+		proSearchParam(param, c);
+		return courseMapper.countByExample(example);
+	}
+
+	@Override
+	public int addCourse(Course param) {
+		CourseExample example = new CourseExample();
+		CourseExample.Criteria c = example.createCriteria();
+		proSearchParam(param, c);
+		return courseMapper.insert(param);
+	}
+
+}

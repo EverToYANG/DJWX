@@ -1,0 +1,48 @@
+package com.gsccs.cms.auth.utils;
+
+public class AuthConst {
+	
+	public static final String LOGIN_SESSION_DATANAME="users";
+	public static final String LOGIN_URL="login";
+	public static final String LOGIN_SUCCESS_URL="index";
+	public static final String LOGIN_LOGIN_OUT_URL="loginout";
+	public static final String LOGIN_MSG="loginMsg";
+	public static final String USERNAME_IS_NULL="用户名为空!";
+	public static final String LOGIN_IS_EXIST="该用户已登录!";
+	public static final String UNKNOWN_SESSION_EXCEPTION="异常会话!";
+	public static final String UNKNOWN_ACCOUNT_EXCEPTION="账号不存在!";
+	public static final String INCORRECT_CREDENTIALS_EXCEPTION="密码错误!";
+	public static final String LOCKED_ACCOUNT_EXCEPTION="账号已被锁定，请与系统管理员联系!";
+	public static final String INCORRECT_CAPTCHA_EXCEPTION= "验证码错误!";
+	public static final String AUTHENTICATION_EXCEPTION= "您没有授权!";
+	public static final String UNKNOWN_EXCEPTION= "出现未知异常,请与系统管理员联系!";
+	public static final String TREE_GRID_ADD_STATUS= "add";
+	public static final String POST_DATA_SUCCESS= "数据更新成功!";
+	public static final String POST_DATA_FAIL= "提交失败了!";
+	
+	public static final String SHIRO_USER = "SHIRO_USER";
+	public static final String SYSTEM_ADMINISTRATOR = "admin";
+	public static final String CURRENT_USER = "current_user";
+    public static final String SESSION_FORCE_LOGOUT_KEY = "session.force.logout";
+	
+    public static final String CURRENT_SITE = "current_site";
+    public static final String CURRENT_SITE_ROOT = "siteRoot";
+	
+	/**
+	 * 系统超级管理员角色
+	 */
+	public static final String SYS_ADMIN="sysAdmin";
+	
+	/**
+	 * 站点管理员角色
+	 */
+	public static final String SITE_ADMIN="siteAdmin";
+	
+	/**
+	 * 角色状态
+	 */
+	public static final String ROLE_STATE_OK="1";
+	public static final String ROLE_STATE_NO="0";
+	
+
+}

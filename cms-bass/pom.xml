@@ -1,0 +1,71 @@
+﻿<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.gsccs.cms</groupId>
+		<artifactId>cms-wx-master</artifactId>
+		<version>4.0-wx-SNAPSHOT</version>
+	</parent>
+	<artifactId>cms-bass</artifactId>
+	<name>cms-bass</name>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<dependencies>
+
+
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>${mail.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>dom4j</groupId>
+			<artifactId>dom4j</artifactId>
+			<version>${dom4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>${freemark.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.ant</groupId>
+			<artifactId>apache-ant-zip</artifactId>
+			<version>1.8.2</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/apache-ant-zip.jar</systemPath>
+		</dependency>
+		
+		
+		<!-- 加入spring mvc依赖包 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		
+	</dependencies>
+
+	<build>
+		<finalName>cms-bass</finalName>
+		<plugins>
+			<!-- 编译的时候使用JDK6和UTF8编码 -->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+
+</project>

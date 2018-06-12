@@ -1,0 +1,90 @@
+package com.gsccs.cms.auth.service.impl;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.auth.dao.ConfigMapper;
+import com.gsccs.cms.auth.model.Config;
+import com.gsccs.cms.auth.model.ConfigExample;
+import com.gsccs.cms.auth.model.ConfigExample.Criteria;
+import com.gsccs.cms.auth.service.ConfigService;
+
+/**
+ * 系统配置服务类
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Service
+public class ConfigServiceImpl implements ConfigService {
+
+	@Resource
+	private ConfigMapper configMapper;
+
+	/**
+	 * 查询所有系统配置项目
+	 * 
+	 * @return
+	 */
+	public List<Config> find() {
+		ConfigExample example = new ConfigExample();
+		example.setOrderByClause(" orderNum ");
+		return configMapper.selectByExample(example);
+	}
+
+	/**
+	 * 查询指定编码配置
+	 * 
+	 * @return
+	 */
+	public Config findByCode(String code) {
+		ConfigExample example = new ConfigExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andCodeEqualTo(code);
+		List<Config> list = configMapper.selectByExample(example);
+		if (list != null && list.size() > 0) {
+			return list.get(0);
+		}
+		return null;
+	}
+
+	/**
+	 * 查询指定编码配置并以分隔符处理数组
+	 * 
+	 * @return
+	 */
+	public String[] findArrayByCode(String code, String split) {
+		ConfigExample example = new ConfigExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andCodeEqualTo(code);
+		List<Config> list = configMapper.selectByExample(example);
+		if (list != null && list.size() > 0) {
+			Config config = list.get(0);
+			if (config.getCodeval() != null) {
+				if (split.length() > 0) {
+					// 有分隔符，以数组形式处理
+					return config.getCodeval().split(split);
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 更新配置项
+	 * 
+	 * @param code
+	 * @param configvalue
+	 */
+	public void update(String code, String configvalue) {
+		Config config = new Config();
+		config.setCode(code);
+		config.setCodeval(configvalue);
+		configMapper.updateByCode(config);
+	}
+
+}

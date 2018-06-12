@@ -1,0 +1,147 @@
+package com.gsccs.cms.controller.web;
+
+import java.io.IOException;
+import java.util.Date;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.controller.MemberBaseController;
+import com.gsccs.cms.bass.utils.HtmlCode;
+import com.gsccs.cms.core.model.Content;
+import com.gsccs.cms.core.service.ContentService;
+import com.gsccs.cms.core.service.SensitiveService;
+import com.gsccs.cms.member.service.CreditruleService;
+import com.gsccs.cms.member.service.MembergroupAuthService;
+import com.gsccs.cms.module.model.Comment;
+import com.gsccs.cms.module.service.CommentService;
+
+import freemarker.template.TemplateModelException;
+
+/**
+ * 评论相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller("WebCommentController")
+public class WebCommentController extends MemberBaseController {
+
+	@Resource
+	private SensitiveService sensitiveService;
+	@Resource
+	private MembergroupAuthService membergroupAuthService;
+	@Resource
+	private CommentService commentService;
+	@Resource
+	private CreditruleService creditruleService;
+	@Resource
+	private ContentService contentService;
+
+	/**
+	 * 提交评论
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws TemplateModelException
+	 */
+	@RequestMapping("/commentAdd.htm")
+	public String commentAdd(Comment comment, String ValidateCode,
+			String templetPath, ModelMap map, HttpServletResponse response){
+		String msg="";
+		map.put("forwardSeconds", 3);
+		if (ValidateCode != null
+				&& ValidateCode.equals(session.getAttribute("rand"))) {
+			if (comment != null && comment.getContent() != null
+					&& comment.getContent().trim().length() > 0) {
+				// 敏感词处理
+				comment.setContent(sensitiveService.replace(comment
+						.getContent()));
+				// 判断评论对象是否存在
+				boolean isSubmit = false;
+				// 判断系统是否允许评论
+				if ("是".equals(getConfigVal("iscomment").trim())) {
+					if ("info".equals(comment.getObjtype())) {
+						// 信息
+						Content info = contentService.findById(comment
+								.getObjid());
+						if (info != null) {
+							comment.setSiteid(info.getSite());
+							if (Content.ISCOMMENT_NO
+									.equals(info.getIscomment())) {
+								msg = "此信息不支持评论";
+							} else if (Content.ISCOMMENT_MEMBER.equals(info
+									.getIscomment())) {
+								if (getLoginMember() != null) {
+									// 判断会员是否有发表评论权限
+									if (getLoginMembergroup() != null
+											&& membergroupAuthService.hasAuth(
+													getLoginMembergroup()
+															.getId(),
+													"commentPub")) {
+										isSubmit = true;
+									} else {
+										msg = "您没有发表评论的权限";
+									}
+								} else {
+									msg = "会员登录后才能对此信息评论";
+								}
+							} else if (Content.ISCOMMENT_ALL.equals(info
+									.getIscomment())) {
+								if (getLoginMember() == null) {
+									// 如果没有会员登录默认设置为匿名
+									comment.setIsanonymous("1");
+								}
+								isSubmit = true;
+							}
+						} else {
+							msg = "此信息不存在";
+						}
+					}
+				} else {
+					msg = "系统不允许评论";
+				}
+				// 提交评论
+				if (isSubmit) {
+					comment.setContent(HtmlCode.replaceHtml(comment
+							.getContent()));
+					if (getLoginMember() != null) {
+						comment.setMemberid(getLoginMember().getId());
+					}
+					comment.setAddtime(new Date());
+					comment.setIp(request.getRemoteAddr());
+					if (getLoginMembergroup() != null
+							&& getLoginMembergroup().getCommentneedcheck() == 1) {
+						comment.setState("1");
+					} else {
+						comment.setState("0");
+					}
+					try {
+						commentService.add(comment);
+						// 处理积分
+						creditruleService.credit(getLoginMember(),
+								"comment_pub");
+						msg = "恭喜您,提交评论成功!";
+					} catch (Exception e) {
+						e.printStackTrace();
+						msg = "提交评论失败:" + e.toString();
+						map.put("forwardSeconds", 0);
+					}
+				}
+			} else {
+				msg = "请输入评论内容";
+			}
+		} else {
+			msg = "验证码错误";
+		}
+		map.put("forwardUrl", request.getHeader("Referer"));
+		map.put("msg", msg);
+		return "msg";
+	}
+}

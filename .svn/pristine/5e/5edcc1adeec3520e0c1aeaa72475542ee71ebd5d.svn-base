@@ -1,0 +1,66 @@
+package com.gsccs.cms.freemarker.directive;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.gsccs.cms.bass.base.BaseDirective;
+import com.gsccs.cms.core.model.ContentImg;
+import com.gsccs.cms.core.service.ContentImgService;
+
+import freemarker.core.Environment;
+import freemarker.ext.beans.ArrayModel;
+import freemarker.ext.beans.BeanModel;
+import freemarker.ext.beans.BeansWrapper;
+import freemarker.template.SimpleNumber;
+import freemarker.template.TemplateDirectiveBody;
+import freemarker.template.TemplateDirectiveModel;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateModel;
+
+/**
+ * 信息图片集标签
+ * 参数
+ * infoid		 信息id
+ * 返回值
+ * infoImgList			信息图片集对象列表
+ * 使用示例
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Service("infoImgDirective")
+public class InfoImgDirective extends BaseDirective implements TemplateDirectiveModel{
+
+	@Resource
+	private ContentImgService infoImgService;
+
+	public void execute(Environment env, Map params, TemplateModel[] loopVars, 
+			TemplateDirectiveBody body)throws TemplateException, IOException {
+		
+		//获取参数
+		//信息id
+		String infoid=getParam(params, "infoid");
+		Writer out =env.getOut();
+		if (body!=null) {
+			//设置循环变量
+			if (loopVars!=null && loopVars.length>0 && infoid.trim().length()>0) {
+				//查询信息图片集
+				ContentImg infoImg=new ContentImg();
+				infoImg.setInfoid(infoid);
+				List<ContentImg> infoImgList=infoImgService.find(infoImg, " ordernum ");
+				if (infoImgList!=null && infoImgList.size()>0) {
+					loopVars[0]=new ArrayModel(infoImgList.toArray(),new BeansWrapper()); 
+					body.render(env.getOut());  
+				}
+			}
+		}
+	}
+
+}

@@ -1,0 +1,224 @@
+package com.gsccs.cms.controller.core;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.gsccs.cms.auth.model.Users;
+import com.gsccs.cms.auth.service.UserService;
+import com.gsccs.cms.auth.shiro.annotation.CurrentUser;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+import com.gsccs.cms.bass.utils.Pager;
+import com.gsccs.cms.module.model.Applyopen;
+import com.gsccs.cms.module.service.ApplyopenService;
+
+/**
+ * 依申请公开
+ * 
+ * @author x.d zhang	
+ * @version 1.0
+ * 
+ */
+@Controller
+public class ApplyopenController extends CmsBaseController{
+
+	@Resource
+	private ApplyopenService applyopenService;
+	@Resource
+	private UserService userService;
+	
+
+	/**
+	 * 列表
+	 * @return
+	 */
+	@RequestMapping("/applyopen.do")
+	public String applyopen(@CurrentUser Users user,Applyopen applyopen,@RequestParam(defaultValue=" addtime desc ") String order,
+			@RequestParam(defaultValue="1") int currPage,@RequestParam(defaultValue="10") int pageSize,
+			ModelMap map,HttpServletResponse response){
+		
+		if (applyopen==null ){
+			applyopen=new Applyopen();
+		}
+		if (!isSysAdmin()) {
+			//不是admin,只能查看自己的
+			applyopen.setUserid(user.getId());
+		}
+		List<Applyopen> applyopenList=applyopenService.find(applyopen, order, currPage, pageSize,false);
+		int totalCount=applyopenService.count(applyopen,false);
+		Pager pager=new Pager(request);
+		pager.appendParam("querycode");
+		pager.appendParam("name");
+		pager.appendParam("state");
+		pager.appendParam("userid");
+		pager.appendParam("pageSize");
+		pager.appendParam("pageFuncId");
+		pager.setCurrPage(currPage);
+		pager.setPageSize(pageSize);
+		pager.setTotalCount(totalCount);
+		pager.setOutStrBootstrap("applyopen.do");
+		map.put("pageStr", pager.getOutStrBootstrap());
+		map.put("list", applyopenList);
+		map.put("order", order);
+		map.put("applyopen", applyopen);
+		
+		return "cms/applyopen";
+	}
+
+	/**
+	 * 转交 页面
+	 * @return
+	 */
+	@RequestMapping("/applyopenForward.do")
+	public String applyopenForward(Applyopen applyopen,
+			ModelMap map,HttpServletResponse response){
+		Users user=new Users();
+		List<Users> userList=userService.find(user,false);
+		map.put("userList", userList);
+		map.put("applyopen", applyopen);
+		return "cms/applyopenForward";
+	}
+
+	/**
+	 * 转交 
+	 * @return
+	 */
+	@RequestMapping("/applyopenForwardDo.do")
+	public String applyopenForwardDo(Applyopen applyopen,String forwardtype,
+			ModelMap map,HttpServletResponse response){
+		if (applyopen!=null && applyopen.getId()!=null && applyopen.getId().trim().length()>0) {
+			Applyopen updateApplyopen=new Applyopen();
+			updateApplyopen.setId(applyopen.getId());
+			//设置流转流程
+			Applyopen oldApplyopen=applyopenService.findById(applyopen.getId());
+			String proflow="";
+			if (oldApplyopen.getProflow()==null || oldApplyopen.getProflow().trim().length()==0) {
+				if (oldApplyopen.getUserid()!=null && oldApplyopen.getUserid().trim().length()>0) {
+					Users user=userService.findById(oldApplyopen.getUserid());
+					if (user!=null) {
+						proflow=user.getName();
+					}
+				}else {
+					proflow="其他";
+				}
+			}else {
+				proflow=oldApplyopen.getProflow();
+			}
+			proflow+=" --> ";
+			String toname="";
+			updateApplyopen.setUserid(applyopen.getUserid());
+			if (applyopen.getUserid()!=null && applyopen.getUserid().trim().length()>0) {
+				Users user=userService.findById(applyopen.getUserid());
+				if (user!=null) {
+					proflow+=user.getName();
+					toname=user.getName();
+				}
+			}else {
+				proflow+="其他";
+			}
+			updateApplyopen.setProflow(proflow);
+			try {
+				applyopenService.update(updateApplyopen);
+				msg=oldApplyopen.getName()+" 依申请公开转交给 "+toname+" 成功";
+			} catch (Exception e) {
+				msg=oldApplyopen.getName()+" 依申请公开转交给 "+toname+" 时失败:"+e.getMessage();
+			}finally{
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		return "admin/msg";
+	}
+
+	/**
+	 * 办理 页面
+	 * @return
+	 */
+	@RequestMapping("/applyopenPro.do")
+	public String applyopenPro(Applyopen applyopen,
+			ModelMap map,HttpServletResponse response)
+	throws AuthException,SiteCheckException{
+		if (applyopen!=null && applyopen.getId()!=null && applyopen.getId().trim().length()>0) {
+			applyopen=applyopenService.findById(applyopen.getId());
+		}
+		map.put("applyopen", applyopen);
+		return "cms/applyopenPro";
+	}
+
+	/**
+	 * 办理 
+	 * @return
+	 */
+	@RequestMapping("/applyopenProDo.do")
+	public String applyopenProDo(Applyopen applyopen,String pageFuncId,
+			ModelMap map,HttpServletResponse response)
+	throws AuthException,SiteCheckException{
+		if (applyopen!=null && applyopen.getId()!=null && applyopen.getId().trim().length()>0) {
+			Applyopen updateApplyopen=new Applyopen();
+			updateApplyopen.setId(applyopen.getId());
+			updateApplyopen.setRecontent(applyopen.getRecontent());
+			updateApplyopen.setRetime(new Date());
+			updateApplyopen.setState("1");
+			Applyopen oldApplyopen=applyopenService.findById(applyopen.getId());
+			try {
+				applyopenService.update(updateApplyopen);
+				msg=oldApplyopen.getName()+" 依申请公开办结成功 ";
+				map.put("forwardSeconds", 3);
+			} catch (Exception e) {
+				map.put("forwardSeconds", 0);
+				msg=oldApplyopen.getName()+" 依申请公开办结时失败:"+e.getMessage();
+			}finally{
+				operlogService.log(getLoginName(), msg, request);
+			}
+		}
+		map.put("msg", msg);
+		map.put("forwardUrl", "applyopen.do?pageFuncId="+pageFuncId);
+		return "admin/msg";
+	}
+	/**
+	 * 删除
+	 * @return
+	 */
+	@RequestMapping("/applyopenDel.do")
+	public String applyopenDel(String ids,String pageFuncId,ModelMap map,HttpServletResponse response)
+	throws AuthException,SiteCheckException{
+		if (ids!=null && ids.trim().length()>0) {
+			String[] idArr=ids.split(";");
+			if (idArr!=null && idArr.length>0) {
+				Applyopen applyopen=null;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length()>0) {
+						try {
+							applyopen=applyopenService.findById(idArr[i]);
+							if (applyopen!=null) {
+								applyopenService.del(applyopen.getId());
+								msg="删除依申请公开("+applyopen.getName()+")成功!";
+								map.put("forwardSeconds", 3);
+							}
+						} catch (Exception e) {
+							map.put("forwardSeconds", 0);
+							e.printStackTrace();
+							msg="删除依申请公开("+applyopen.getName()+")失败:"+e.toString()+"!";
+						}
+						operlogService.log(getLoginName(), msg, request);
+					}
+				}
+			}
+		}
+		
+		map.put("msg", msg);
+		map.put("forwardUrl", "applyopen.do?pageFuncId="+pageFuncId);
+		return "admin/msg";
+	}
+}

@@ -1,0 +1,20 @@
+package com.gsccs.cms.course.service;
+
+import java.util.List;
+
+import com.gsccs.cms.course.model.Course;
+import com.gsccs.cms.course.model.CourseFeed;
+import com.gsccs.cms.course.model.CourseInfo;
+import com.gsccs.cms.course.model.CourseVote;
+
+public interface CourseService {
+
+	public List<Course> find(Course param);
+	public List<CourseInfo> findInfoList(String courseid);
+	public List<CourseFeed> findFeedList(String deptid,String courseid);
+	public List<CourseFeed> findByParid(String parid);
+	public List<CourseVote> findVoteList(String courseid);
+	public Course getCourse(String id);
+	public void addCourseFed(CourseFeed courseFed);
+	
+}

@@ -1,0 +1,315 @@
+package com.gsccs.cms.controller.auth;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.gsccs.cms.auth.model.Unit;
+import com.gsccs.cms.auth.service.OperlogService;
+import com.gsccs.cms.auth.service.UnitService;
+import com.gsccs.cms.bass.controller.CmsBaseController;
+import com.gsccs.cms.bass.exception.AuthException;
+import com.gsccs.cms.bass.exception.SiteCheckException;
+
+/**
+ * 单位管理相关操作
+ * 
+ * @author x.d zhang
+ * @version 1.0
+ * 
+ */
+@Controller
+@RequestMapping("/sysmg")
+public class DeptController extends CmsBaseController {
+
+	@Resource
+	private UnitService unitService;
+	@Resource
+	private OperlogService operlogService;
+
+	/**
+	 * 单位管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unit.do")
+	public String unit(ModelMap map, HttpServletResponse response){
+		// 查询一级
+		List<Unit> list = unitService.selectUnit(0L);
+		if (list != null && list.size() > 0) {
+			for (int i = 0; i < list.size(); i++) {
+				if (unitService.hasChildren(list.get(i).getId())) {
+					list.get(i).setHasChildren("true");
+				}
+			}
+		}
+		map.put("list", list);
+		return "sysmg/unit";
+	}
+
+	
+	/**
+	 * 单位管理页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitSon.do")
+	public String unitSon(Long pid, String plevel, ModelMap map,
+			HttpServletResponse response) {
+		if (null != pid && StringUtils.isNotEmpty(plevel)) {
+			// 提取子单位
+			List<Unit> list = unitService.selectUnit(pid);
+			if (list != null && list.size() > 0) {
+				for (int i = 0; i < list.size(); i++) {
+					if (unitService.hasChildren(list.get(i).getId())) {
+						list.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("list", list);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "sysmg/unitSon";
+	}
+
+	/**
+	 * 单位编辑页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitEdit.do")
+	public String unitEdit(Long pid, Long id, ModelMap map,
+			HttpServletResponse response){
+		if (null==getWxApp()) {
+			map.put("msg", "无权限操作，请用公众号管理员帐号登录");
+			map.put("isCloseWindow", true);
+			map.put("isRefresh", true);
+			return "admin/msg";
+		}
+		if (null != id) {
+			// 编辑页面
+			map.put("unit", unitService.findById(id));
+		} else {
+			// 添加页面
+			Unit unit = new Unit();
+			unit.setParid(pid);
+			map.put("unit", unit);
+		}
+		return "sysmg/unitEdit";
+	}
+
+	/**
+	 * 单位编辑
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitEditDo.do")
+	public String unitEditDo(Unit unit, ModelMap map,
+			HttpServletResponse response){
+		String msg = "";
+		try {
+			if (unit.getId() != null) {
+				msg = "修改";
+				unitService.update(unit);
+			} else {
+				msg = "添加";
+				if (null==getWxApp()) {
+					map.put("msg", "无权限操作，请用公众号管理员帐号登录");
+					map.put("isCloseWindow", true);
+					map.put("isRefresh", true);
+					return "admin/msg";
+				}
+				unit.setCorpid(getWxApp().getId());
+				unitService.insert(unit);
+			}
+		} catch (Exception e) {
+			msg += "单位 " + unit.getName() + " 失败:" + e.toString();
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		msg += "单位 " + unit.getName() + " 成功";
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 单位转移页面
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitTree.do")
+	public String unitTree(String id, HttpServletRequest request, ModelMap map,
+			HttpServletResponse response){
+		// 查询一级单位
+		List<Unit> list = unitService.selectUnit(0l);
+		if (list != null && list.size() > 0) {
+			for (int i = 0; i < list.size(); i++) {
+				if (unitService.hasChildren(list.get(i).getId())) {
+					list.get(i).setHasChildren("true");
+				}
+			}
+		}
+		map.put("list", list);
+		return "sysmg/unitTree";
+	}
+
+	/**
+	 * 单位子
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitSonTree.do")
+	public String unitSonTree(Long pid, String plevel, ModelMap map,
+			HttpServletResponse response) {
+		if (null != pid && StringUtils.isNotEmpty(plevel)) {
+			// 提取子单位
+			List<Unit> list = unitService.selectUnit(pid);
+			if (list != null && list.size() > 0) {
+				for (int i = 0; i < list.size(); i++) {
+					if (unitService.hasChildren(list.get(i).getId())) {
+						list.get(i).setHasChildren("true");
+					}
+				}
+			}
+			map.put("list", list);
+			try {
+				map.put("level", Integer.parseInt(plevel) + 1);
+			} catch (Exception e) {
+			}
+		}
+		return "sysmg/unitSonTree";
+	}
+
+	/**
+	 * 单位转移处理
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitPar.do")
+	public String unitPar(Long id, Long pid,
+			HttpServletRequest request, ModelMap map,
+			HttpServletResponse response){
+		String msg = "";
+		if (null != id) {
+			Unit unit = unitService.findById(id);
+			if (unit != null) {
+				if (null != pid) {
+					Unit parunit = unitService.findById(pid);
+					if (parunit != null) {
+						msg = "改变单位 " + unit.getName() + " 的所属单位为 "
+								+ parunit.getName() + " ";
+					}
+				} else {
+					msg = "改变单位 " + unit.getName() + " 的所属单位为 根单位 ";
+				}
+				try {
+					unit.setParid(pid);
+					unitService.update(unit);
+					msg += "成功!";
+				} catch (Exception e) {
+					msg += "失败:" + e.toString();
+				}
+			}
+		}
+		map.put("isCloseWindow", true);
+		map.put("isRefresh", true);
+		map.put("msg", msg);
+		return "admin/msg";
+	}
+
+	/**
+	 * 单位删除
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitDel.do")
+	public String unitDel(String pageFuncId,
+			String ids, HttpServletRequest request, ModelMap map,
+			HttpServletResponse response){
+		if (ids != null && ids.trim().length() > 0) {
+			String[] idArr = ids.split(";");
+			if (idArr != null && idArr.length > 0) {
+				Unit unit;
+				for (int i = 0; i < idArr.length; i++) {
+					if (idArr[i].trim().length() > 0) {
+						unit = unitService.findById(Long.valueOf(idArr[i]));
+						if (unit != null) {
+							try {
+								unitService.delete(Long.valueOf(idArr[i]));
+							} catch (Exception e) {
+								
+							}
+						}
+					}
+				}
+			}
+		}
+		map.put("msg", "操作成功");
+		map.put("forwardUrl", "unit.do?pageFuncId=" + pageFuncId);
+		map.put("forwardSeconds", 3);
+		return "admin/msg";
+	}
+
+	/**
+	 * 单位排序
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitOrder.do")
+	public String unitOrder(Long id, String type,
+			ModelMap map, HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		if (null != id) {
+			Unit unit = unitService.findById(id);
+			if (unit != null) {
+				String msg = "";
+				try {
+					if ("up".equals(type)) {
+						msg += "上升";
+						unitService.up(unit);
+					} else if ("down".equals(type)) {
+						msg += "下降";
+						unitService.down(unit);
+					}
+				} catch (Exception e) {
+					msg += "单位 " + unit.getName() + " 失败:" + e.toString();
+				}
+				msg += "单位 " + unit.getName() + " 成功";
+			}
+		}
+		return unit(map, response);
+	}
+
+	/**
+	 * 选择单位
+	 * 
+	 * @param map
+	 * @return
+	 */
+	@RequestMapping("/unitSelect.do")
+	public String unitSelect(String selectUnitIds, ModelMap map,
+			HttpServletResponse response) throws AuthException,
+			SiteCheckException {
+		map.put("treeHtml", unitService.createTree(request, selectUnitIds));
+		return "sysmg/unitSelect";
+	}
+}

@@ -1,0 +1,35 @@
+package com.gsccs.cms.core.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.gsccs.cms.core.model.RoleChannel;
+import com.gsccs.cms.core.model.RoleChannelExample;
+
+public interface RoleChannelMapper {
+
+	int countByExample(RoleChannelExample example);
+
+	int deleteByExample(RoleChannelExample example);
+
+	int deleteByPrimaryKey(String id);
+
+	int insert(RoleChannel record);
+
+	int insertSelective(RoleChannel record);
+
+	List<RoleChannel> selectByExample(RoleChannelExample example);
+
+	RoleChannel selectByPrimaryKey(String id);
+
+	int updateByExampleSelective(@Param("record") RoleChannel record,
+			@Param("example") RoleChannelExample example);
+
+	int updateByExample(@Param("record") RoleChannel record,
+			@Param("example") RoleChannelExample example);
+
+	int updateByPrimaryKeySelective(RoleChannel record);
+
+	int updateByPrimaryKey(RoleChannel record);
+}
